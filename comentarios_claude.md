@@ -775,3 +775,31 @@ El stack técnico no cambia; el renaming es solo copy y config (`WEB_BASE_URL`, 
 4. **Signup público de profesional** (sin clínica) — canal individual no escala solo con invitaciones.
 5. **Revisión legal de documentos** (camino crítico del piloto; sin el abogado no se puede lanzar).
 - Verificación visual del flujo en navegador quedó del lado del usuario (hot-reload aplicado; hard refresh recomendado para purgar estado viejo).
+
+---
+
+## Actualización — 2026-06-15: especialidad en onboarding y consistencia de perfiles demo
+
+### Qué se hizo
+
+- **Selección de especialidad en onboarding:** cuando el usuario elige el rol Profesional, aparece un selector de tarjetas (5 opciones con ícono). El submit queda bloqueado hasta elegir. La especialidad viaja en el mismo PATCH `/api/me` junto al nombre y rol. Los módulos del nav (recetas, tareas, nutrición) se activan inmediatamente sin pasos adicionales.
+
+- **Sincronización de seed en cada arranque:** `EnsureSeedSpecialtiesAsync` en el seeder garantiza que los 4 profesionales demo tengan siempre sus especialidades correctas aunque la BD fuera creada antes de que el campo tuviera sentido.
+
+- **Bug fixes de sesión (sesión anterior, ahora commiteados):**
+  - `app-shell.tsx`: `navReady = ready` (no depende de `sessionError`) + `"guest"` incluido en el item de "Sesión" → el usuario siempre puede re-autenticarse.
+  - `appsettings.Development.json`: cadena de conexión `HealthHubDb` agregada → el API ya no crashea al arrancar.
+
+### Recomendación: portal del profesional como próximo foco de UX
+
+El onboarding ahora captura nombre + rol + especialidad. El paso natural siguiente es que el portal profesional oriente al usuario recién registrado hacia completar su perfil (bio, precio, disponibilidad) antes de que empiece a operar. La bandera `ProfessionalOnboardingStatus` ya existe en el backend — falta consumirla en el frontend con un checklist o wizard de activación.
+
+Este flujo de "activación post-registro" es crítico para el piloto: sin él, un profesional nuevo no sabrá qué hacer después del onboarding y el perfil quedará incompleto (bio genérica, precio en 0, sin servicios). La tasa de conversión del signup a "profesional activo" depende directamente de este paso.
+
+### Próximo foco (orden de impacto)
+
+1. **Verificar onboarding en navegador** — confirmar selector de especialidad funciona con cuenta Clerk real.
+2. **Wizard de activación en portal profesional** — consumir `ProfessionalOnboardingStatus`, guiar a completar bio/precio/disponibilidad/servicios.
+3. **Definir y registrar nombre de marca + dominio** — desbloquea Resend real y la identidad pública.
+4. **Páginas públicas SEO de profesionales** — `/profesionales/{slug}`, og:tags, schema.org.
+5. **Revisión legal de documentos** (camino crítico del piloto).

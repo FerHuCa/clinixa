@@ -2229,3 +2229,38 @@ El renaming es principalmente copy/config — el stack técnico no cambia:
 - Clerk dashboard: nombre de la aplicación + dominios autorizados
 - `apps/web/app/bienvenida/`: hero y copy de landing
 - `apps/web/components/app-shell.tsx`: nombre del logo
+
+---
+
+## Selección de especialidad en onboarding + sincronización de perfiles seed — 2026-06-15
+
+### Contexto
+
+Los módulos de especialidad (recetas, tareas, nutrición) ya filtraban el nav y protegían los endpoints por `Professional.Specialty`. Sin embargo, no había forma de que un profesional nuevo asignara su especialidad al registrarse: el campo quedaba en `"other"` hasta que alguien lo editara manualmente en el portal. Adicionalmente, los perfiles demo podían quedar con especialidad incorrecta si la BD fue sembrada antes de que el campo tuviera valores útiles.
+
+### Qué se hizo (commit `db70b6a`)
+
+**Backend:**
+
+- `DatabaseSeeder.cs` — `EnsureSeedSpecialtiesAsync` se ejecuta en cada arranque (no gateada por `AnyAsync`). Asegura que los 4 profesionales demo tengan siempre sus especialidades correctas: Laura Vega → nutritionist, Miguel Torres → physiotherapist, Nora Ibarra → psychologist, Andres Campos → doctor.
+- `ApiContracts.cs` — `UpdateMyProfileRequest` ahora incluye `Specialty?` (campo opcional).
+- `Program.cs` PATCH `/api/me` — cuando el usuario es profesional y se provee `Specialty`, se aplica `NormalizeSpecialty` y persiste en `Professional.Specialty`. El cambio es libre (no solo desde `"other"`), para permitir correcciones de especialidad desde el onboarding.
+
+**Frontend:**
+
+- `healthhub-store.ts` — `updateAccountProfile` acepta `specialty?: string` y lo incluye en el PATCH.
+- `onboarding-page-client.tsx` — cuando el usuario selecciona el rol **Profesional**, aparece un selector de 5 tarjetas con ícono: Medicina General (`doctor`), Psicología (`psychologist`), Fisioterapia (`physiotherapist`), Nutrición (`nutritionist`), Otra especialidad (`other`). El botón "Continuar" queda deshabilitado hasta que se seleccione una especialidad. Al guardar, viaja junto al nombre y el rol en el mismo PATCH `/api/me`.
+
+### Validaciones
+
+- `dotnet build apps/api`: **0 errores**, 1 warning preexistente (CS8625, no relacionado).
+- `npm run lint:web`: limpio.
+- Verificación visual en navegador local (`localhost:3000/onboarding`): pendiente del usuario (el preview MCP queda en blanco con Clerk).
+
+### Siguientes pasos
+
+1. **Verificar onboarding en navegador** — abrir `/onboarding` con una cuenta nueva de Clerk y confirmar que el selector de especialidad aparece al elegir "Profesional" y que al guardar el nav muestra solo las rutas de esa especialidad.
+2. **Definir y registrar nombre de marca + dominio** — desbloquea Resend real, Clerk producción y la identidad pública del producto.
+3. **Resend productivo** — dominio verificado + `RESEND_API_KEY`/`RESEND_FROM` → emails reales (infraestructura ya lista).
+4. **Páginas públicas SEO de profesionales** — `/profesionales/{slug}`, og:tags, schema.org, botón "Agendar".
+5. **Revisión legal de documentos** (camino crítico del piloto).
