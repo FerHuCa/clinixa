@@ -851,3 +851,24 @@ Quitar `.RequireAuthorization()` (FIX 1) destapó un **500 latente**: los POST d
 3. **Smoke test R-2** (recorrer `/api/*` con dev-auth y fallar ante 401/500 con header válido) para que la regresión de especialidad no vuelva.
 4. **Reset de DB dev** para la pollución QA diferida (8 citas `apt-17815*` + 4 pagos + 31 usuarios QA) cuando convenga.
 5. Verificar onboarding en navegador · wizard de activación · marca/dominio → Resend · revisión legal (sin cambios respecto al foco anterior).
+
+---
+
+## Actualización — 2026-06-15: cierre (PR, re-verificación, limpieza de DB)
+
+### Qué se hizo
+
+- **Push + PR:** `fix/qa-flow-findings` → `origin` y **PR [#1](https://github.com/FerHuCa/clinixa/pull/1)** contra `main`. (El remoto no existía; se configuró `origin` y se resolvió el auth de git vía `gh auth login` + token en la URL de push, tras 403 por cuenta cruzada.)
+- **Re-verificación de los 6 fixes** contra la API viva (:5050) y **limpieza de la DB diferida**, ejecutadas **en paralelo** por dos agentes Sonnet (plan trazado en Opus, scripts en `scripts/qa-verify-2026-06-15.sh` y `scripts/qa-cleanup-2026-06-15.sql`). Detalle en `seguimiento-proyecto.md`.
+
+### Por qué el borrado selectivo y no el reset que recomendaba el plan
+
+El plan proponía `DROP DATABASE healthhub; CREATE` + re-seed para la pollución diferida. Pero la consigna fue correr la verificación y la limpieza **al mismo tiempo**: un reset destruiría la DB mientras la verificación la consulta. La salida fue **fijar los ids exactos** (8 citas `apt-17815*`, 4 pagos, 31 usuarios/profesionales QA) y borrarlos en una transacción, sobre filas **disjuntas** de las 4 personas que ejercita la verificación → cero colisión bajo MVCC. Lección: cuando dos pasos comparten el entorno, la granularidad del cambio (id exacto vs. `LIKE`/reset) es lo que habilita el paralelismo seguro.
+
+### El "fallo" 12.º que no era fallo
+
+El agente de verificación marcó en rojo `FIX4 payments ?userId` por devolver **403** donde el script esperaba 401. Es la semántica preexistente ya discutida: paciente autenticado-no-profesional → 403, y la impersonación igualmente se bloquea. El agente no tenía ese contexto y lo reportó como regresión. **Recordatorio:** los "expected" de un plan de QA pueden estar más estrictos que la semántica acordada; el veredicto de seguridad lo da la propiedad (¿se filtró el dato?), no el código HTTP exacto.
+
+### `audit_logs` preservados
+
+La limpieza dejó intactos los `audit_logs` que referencian entidades QA (no hay FK que obligue a borrarlos). Un registro de auditoría debe sobrevivir al borrado de la entidad auditada; las referencias huérfanas son inocuas. En un reset completo se habrían perdido.

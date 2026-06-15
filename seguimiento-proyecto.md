@@ -2342,3 +2342,49 @@ Borrado quirúrgico: relación/citas/SOAP cruzados `nora→ana`, dieta de prueba
 - `git push` de la rama / abrir PR cuando se decida.
 - Reset de DB dev para la pollución diferida (opcional).
 - **Frontend de FIX 6:** el backend ya expone la lectura del paciente, pero no hay UI que la consuma.
+
+---
+
+## Cierre QA — push/PR, re-verificación y limpieza de DB — 2026-06-15
+
+### PR abierto
+
+Rama `fix/qa-flow-findings` pusheada a `origin` (`github.com/FerHuCa/clinixa`) y **PR [#1](https://github.com/FerHuCa/clinixa/pull/1)** abierto contra `main` (3 commits: `effefd2`, `919f6cb`, `2389d0a`). Auth de git resuelta vía `gh` + token en la URL de push.
+
+### Re-verificación de los 6 fixes contra API viva (:5050)
+
+Ejecutada por un agente **Sonnet** en paralelo con la limpieza, vía `scripts/qa-verify-2026-06-15.sh` (plan trazado en Opus). **11/12 checks verdes**; el único "mismatch" es esperado y ya documentado:
+
+| Check | Esperado | Real | Veredicto |
+|-------|----------|------|-----------|
+| FIX1 diet POST laura(dueña) | 201 | 201 | ✅ |
+| FIX1 task GET nora(dueña) | 200 | 200 | ✅ |
+| FIX1 presc POST laura(no-doc) | 403 | 403 | ✅ |
+| FIX6 diet GET ana(propia) | 200 | 200 | ✅ |
+| FIX2 cross-book nora→ana | 403 | 403 | ✅ |
+| FIX3 SOAP POST nora→ana | 403 | 403 | ✅ |
+| FIX3 SOAP GET nora fuga(ana) | 0 | 0 | ✅ |
+| FIX4 me header-forjado | 401 | 401 | ✅ |
+| FIX4 me ?userId (forjado) | 401 | 401 | ✅ |
+| FIX4 me laura-real | 200 | 200 | ✅ |
+| FIX4 payments ?userId imperson. | 401 | **403** | ✅ (semántica correcta — ver nota) |
+| FIX5 slots dedup laura | total==únicos | 40==40 | ✅ |
+
+**Nota del 403 en payments:** el actor es `usr-ana-martinez` (paciente autenticado, no profesional). La impersonación por `?userId` **sí se bloquea** (no recibe datos de Laura); el código devuelve **403** (autenticado-no-autorizado) en vez del 401 que el script esperaba. Es la semántica correcta y preexistente, ya registrada en `comentarios_claude.md`. La propiedad de seguridad se mantiene: **los 6 fixes verifican correctamente**.
+
+### Limpieza de DB diferida — APLICADA (borrado selectivo, no reset)
+
+Ejecutada por un agente **Sonnet** en paralelo con la verificación, vía `scripts/qa-cleanup-2026-06-15.sql` (transacción única `BEGIN/COMMIT`). Se eligió **borrado selectivo por id exacto** en vez de `DROP/CREATE` precisamente para poder correr **en paralelo** con la verificación sin riesgo de colisión sobre datos concurrentes. Eliminado:
+
+- 8 citas `apt-17815*` + 4 pagos (cascade FK `payments.AppointmentId`)
+- 31 usuarios QA + 31 profesionales + 30 servicios + 30 disponibilidades + 31 `clinic_memberships` + 31 `user_roles` + 61 sesiones + 93 `notification_preferences` + 6 notificaciones
+
+**Preservado a propósito:** `audit_logs` (sin FK; el registro de auditoría se conserva — las referencias huérfanas a entidades QA son inocuas). Las 4 personas legítimas (laura, nora, ana, sofia) quedan intactas. Re-conteo independiente post-limpieza: **todo 0**. Scripts versionados en `scripts/`.
+
+### Pendiente actualizado
+
+- ~~`git push` / abrir PR~~ ✅ hecho (PR [#1](https://github.com/FerHuCa/clinixa/pull/1)).
+- ~~Limpieza de la pollución de DB diferida~~ ✅ hecho (borrado selectivo, audit_logs preservados).
+- **Frontend de FIX 6 (Opción B):** el backend ya deja al paciente leer recetas/tareas/dietas, falta UI.
+- **Smoke test R-2:** recorrer `/api/*` con dev-auth y fallar ante 401/500 con header válido (evita que la regresión de especialidad vuelva).
+- (Opcional) Unificar a 403 la respuesta de `dashboard`/`onboarding`/`subscription` para paciente-no-profesional, igual que `payments`.
