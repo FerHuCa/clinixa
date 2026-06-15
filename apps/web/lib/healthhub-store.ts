@@ -284,6 +284,32 @@ export type Prescription = {
   issuedAt: string;
   expiresAt: string | null;
 };
+export type PatientDiet = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  title: string;
+  content: string;
+  validFrom: string;
+  validUntil: string | null;
+  status: "active" | "archived";
+  createdAt: string;
+};
+export type BodyMeasurement = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  measuredAt: string;
+  weightKg: number | null;
+  heightCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  armCm: number | null;
+  bodyFatPercentage: number | null;
+  muscleMassKg: number | null;
+  notes: string | null;
+  createdAt: string;
+};
 export type PatientTask = {
   id: string;
   patientId: string;
@@ -1641,6 +1667,45 @@ export function useHealthHubStore() {
         const task = await apiPatch<PatientTask>(`/api/patient-tasks/${id}/status`, body);
         setApiStatus("connected");
         return task;
+      },
+      async loadPatientDiets(patientId?: string): Promise<PatientDiet[]> {
+        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+        const diets = await apiGet<PatientDiet[]>(`/api/patient-diets${query}`);
+        setApiStatus("connected");
+        return diets;
+      },
+      async createPatientDiet(data: {
+        patientId: string;
+        title: string;
+        content: string;
+        validFrom: string;
+        validUntil?: string;
+      }): Promise<PatientDiet> {
+        const diet = await apiPost<PatientDiet>("/api/patient-diets", data);
+        setApiStatus("connected");
+        return diet;
+      },
+      async loadBodyMeasurements(patientId?: string): Promise<BodyMeasurement[]> {
+        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+        const measurements = await apiGet<BodyMeasurement[]>(`/api/body-measurements${query}`);
+        setApiStatus("connected");
+        return measurements;
+      },
+      async createBodyMeasurement(data: {
+        patientId: string;
+        measuredAt: string;
+        weightKg?: number;
+        heightCm?: number;
+        waistCm?: number;
+        hipCm?: number;
+        armCm?: number;
+        bodyFatPercentage?: number;
+        muscleMassKg?: number;
+        notes?: string;
+      }): Promise<BodyMeasurement> {
+        const measurement = await apiPost<BodyMeasurement>("/api/body-measurements", data);
+        setApiStatus("connected");
+        return measurement;
       },
       resetDemoState() {
         invalidateSession();
