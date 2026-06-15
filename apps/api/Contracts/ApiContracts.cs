@@ -6,7 +6,8 @@ public sealed record CurrentUserDto(
     string Email,
     string PrimaryRole,
     string? PatientId,
-    string? ProfessionalId);
+    string? ProfessionalId,
+    string? Specialty);
 
 public sealed record DemoSessionDto(
     string Id,
@@ -15,7 +16,8 @@ public sealed record DemoSessionDto(
     string PrimaryRole,
     string? PatientId,
     string? ProfessionalId,
-    string Label);
+    string Label,
+    string? Specialty);
 
 public sealed record AuthResponseDto(
     string Token,

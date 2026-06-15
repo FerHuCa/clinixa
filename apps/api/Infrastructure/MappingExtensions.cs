@@ -38,7 +38,8 @@ public static class MappingExtensions
             user.Email,
             user.PrimaryRole,
             user.Patient?.Id,
-            user.Professional?.Id);
+            user.Professional?.Id,
+            user.Professional?.Specialty);
 
     public static DemoSessionDto ToDemoSessionDto(this User user) =>
         new(
@@ -54,7 +55,8 @@ public static class MappingExtensions
                 "clinic_admin" => $"Admin clínica · {user.FullName}",
                 "internal_admin" => $"Admin HealthHub · {user.FullName}",
                 _ => $"Profesional · {user.FullName}"
-            });
+            },
+            user.Professional?.Specialty);
 
     public static PatientDto ToDto(this Patient patient) =>
         new(

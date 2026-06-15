@@ -43,6 +43,7 @@ export type CurrentUser = {
   primaryRole: string;
   patientId: string | null;
   professionalId: string | null;
+  specialty: string | null;
 };
 export type DemoSession = CurrentUser & { label: string };
 export type AuthResponse = {
@@ -293,7 +294,8 @@ const guestUser: CurrentUser = {
   email: "",
   primaryRole: "guest",
   patientId: null,
-  professionalId: null
+  professionalId: null,
+  specialty: null
 };
 
 // hasRealCredentials: hay credencial dev (cookie/localStorage) o Clerk habilitado.

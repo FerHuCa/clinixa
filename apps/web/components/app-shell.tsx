@@ -14,6 +14,7 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   roles: string[];
+  specialty?: string[];
 };
 
 const allNavItems: NavItem[] = [
@@ -35,8 +36,12 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
-function getNavItems(userRole: string): NavItem[] {
-  return allNavItems.filter((item) => item.roles.includes(userRole));
+function getNavItems(userRole: string, userSpecialty: string | null): NavItem[] {
+  return allNavItems.filter((item) => {
+    if (!item.roles.includes(userRole)) return false;
+    if (item.specialty && (!userSpecialty || !item.specialty.includes(userSpecialty))) return false;
+    return true;
+  });
 }
 
 function getHomeHref(userRole: string): string {
@@ -87,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // el logo a una ruta por rol: evita renderizar el menu/destino de una identidad
   // seed/stale. Con sessionError el rol es "guest" y tampoco hay menu.
   const navReady = ready && !sessionError;
-  const navItems = navReady ? getNavItems(currentUser.primaryRole) : [];
+  const navItems = navReady ? getNavItems(currentUser.primaryRole, currentUser.specialty ?? null) : [];
   // Logo inerte mientras no haya sesion: apunta a la ruta actual (no a "/" con rol
   // equivocado).
   const homeHref = navReady ? getHomeHref(currentUser.primaryRole) : pathname || "#";

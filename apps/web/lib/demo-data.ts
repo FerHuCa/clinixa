@@ -10,7 +10,8 @@ export const currentUser = {
   email: "ana.martinez@example.com",
   primaryRole: "patient",
   patientId: "ana-martinez",
-  professionalId: null
+  professionalId: null,
+  specialty: null
 };
 
 export const demoSessions = [
@@ -21,7 +22,8 @@ export const demoSessions = [
     primaryRole: "patient",
     patientId: "ana-martinez",
     professionalId: null,
-    label: "Paciente · Ana Martinez"
+    label: "Paciente · Ana Martinez",
+    specialty: null
   },
   {
     id: "usr-carlos-ruiz",
@@ -30,7 +32,8 @@ export const demoSessions = [
     primaryRole: "patient",
     patientId: "carlos-ruiz",
     professionalId: null,
-    label: "Paciente · Carlos Ruiz"
+    label: "Paciente · Carlos Ruiz",
+    specialty: null
   },
   {
     id: "usr-sofia-leon",
@@ -39,7 +42,8 @@ export const demoSessions = [
     primaryRole: "patient",
     patientId: "sofia-leon",
     professionalId: null,
-    label: "Paciente · Sofia Leon"
+    label: "Paciente · Sofia Leon",
+    specialty: null
   },
   {
     id: "usr-laura-vega",
@@ -48,7 +52,8 @@ export const demoSessions = [
     primaryRole: "professional",
     patientId: null,
     professionalId: "pro-laura-vega",
-    label: "Profesional · Dra. Laura Vega"
+    label: "Profesional · Dra. Laura Vega",
+    specialty: "nutritionist"
   },
   {
     id: "usr-clinic-admin",
@@ -57,7 +62,8 @@ export const demoSessions = [
     primaryRole: "clinic_admin",
     patientId: null,
     professionalId: null,
-    label: "Admin clínica · Admin Clínica Bienestar"
+    label: "Admin clínica · Admin Clínica Bienestar",
+    specialty: null
   }
 ];
 
