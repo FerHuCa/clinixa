@@ -3632,6 +3632,88 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
         ToPrescriptionDto(prescription, patient?.FullName));
 }).RequireAuthorization();
 
+app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
+    if (err is not null) return err;
+
+    var query = db.PatientTasks
+        .Include(t => t.Patient)
+        .Where(t => t.ProfessionalId == pro!.Id);
+
+    if (!string.IsNullOrWhiteSpace(patientId))
+        query = query.Where(t => t.PatientId == patientId);
+
+    var tasks = await query
+        .OrderByDescending(t => t.CreatedAt)
+        .Take(100)
+        .ToListAsync();
+
+    return Results.Ok(tasks.Select(t => ToPatientTaskDto(t, t.Patient?.FullName)).ToList());
+});
+
+app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, CreatePatientTaskRequest req) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
+    if (err is not null) return err;
+
+    var owned = await db.ProfessionalPatients
+        .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
+    if (!owned) return Results.Forbid();
+
+    DateTimeOffset? dueDate = null;
+    if (!string.IsNullOrWhiteSpace(req.DueDate))
+    {
+        if (!DateTimeOffset.TryParse(req.DueDate, out var parsed))
+            return Results.BadRequest("Fecha de vencimiento inválida.");
+        dueDate = parsed;
+    }
+
+    var task = new PatientTask
+    {
+        PatientId = req.PatientId,
+        ProfessionalId = pro!.Id,
+        AppointmentId = req.AppointmentId,
+        Title = req.Title,
+        Description = req.Description,
+        DueDate = dueDate,
+    };
+
+    db.PatientTasks.Add(task);
+    await db.SaveChangesAsync();
+
+    var patient = await db.Patients.FindAsync(task.PatientId);
+    return Results.Created($"/api/patient-tasks/{task.Id}", ToPatientTaskDto(task, patient?.FullName));
+});
+
+app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, HealthHubDbContext db, string id, UpdatePatientTaskStatusRequest req) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
+    if (err is not null) return err;
+
+    var allowed = new[] { "pending", "completed", "skipped" };
+    if (!allowed.Contains(req.Status))
+        return Results.BadRequest($"Estado inválido. Usa: {string.Join(", ", allowed)}");
+
+    var task = await db.PatientTasks
+        .Include(t => t.Patient)
+        .FirstOrDefaultAsync(t => t.Id == id && t.ProfessionalId == pro!.Id);
+
+    if (task is null) return Results.NotFound();
+
+    task.Status = req.Status;
+    task.UpdatedAt = DateTimeOffset.UtcNow;
+    task.PatientNotes = req.PatientNotes ?? task.PatientNotes;
+
+    if (req.Status == "completed" && task.CompletedAt is null)
+        task.CompletedAt = DateTimeOffset.UtcNow;
+    else if (req.Status != "completed")
+        task.CompletedAt = null;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(ToPatientTaskDto(task, task.Patient?.FullName));
+});
+
 app.Run();
 
 static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional(
@@ -3655,6 +3737,13 @@ static PrescriptionDto ToPrescriptionDto(Prescription p, string? patientName = n
     p.Instructions, p.Refills, p.Status,
     p.IssuedAt.ToString("yyyy-MM-dd"),
     p.ExpiresAt?.ToString("yyyy-MM-dd"));
+
+static PatientTaskDto ToPatientTaskDto(PatientTask t, string? patientName = null) => new(
+    t.Id, t.PatientId, patientName ?? t.Patient?.FullName ?? "",
+    t.AppointmentId, t.Title, t.Description,
+    t.DueDate?.ToString("yyyy-MM-dd"), t.Status,
+    t.CompletedAt?.ToString("o"), t.PatientNotes,
+    t.CreatedAt.ToString("o"));
 
 static async Task<User?> GetUserFromRequestAsync(HttpRequest request, HealthHubDbContext db)
 {

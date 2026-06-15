@@ -500,3 +500,27 @@ public sealed record CreatePrescriptionRequest(
     string Instructions,
     int Refills,
     string? ExpiresAt);
+
+public sealed record PatientTaskDto(
+    string Id,
+    string PatientId,
+    string PatientName,
+    string? AppointmentId,
+    string Title,
+    string Description,
+    string? DueDate,
+    string Status,
+    string? CompletedAt,
+    string? PatientNotes,
+    string CreatedAt);
+
+public sealed record CreatePatientTaskRequest(
+    string PatientId,
+    string? AppointmentId,
+    string Title,
+    string Description,
+    string? DueDate);
+
+public sealed record UpdatePatientTaskStatusRequest(
+    string Status,
+    string? PatientNotes);
