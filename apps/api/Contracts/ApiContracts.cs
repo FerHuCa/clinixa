@@ -524,3 +524,48 @@ public sealed record CreatePatientTaskRequest(
 public sealed record UpdatePatientTaskStatusRequest(
     string Status,
     string? PatientNotes);
+
+public sealed record PatientDietDto(
+    string Id,
+    string PatientId,
+    string PatientName,
+    string Title,
+    string Content,
+    string ValidFrom,
+    string? ValidUntil,
+    string Status,
+    string CreatedAt);
+
+public sealed record CreatePatientDietRequest(
+    string PatientId,
+    string Title,
+    string Content,
+    string ValidFrom,
+    string? ValidUntil);
+
+public sealed record BodyMeasurementDto(
+    string Id,
+    string PatientId,
+    string PatientName,
+    string MeasuredAt,
+    decimal? WeightKg,
+    decimal? HeightCm,
+    decimal? WaistCm,
+    decimal? HipCm,
+    decimal? ArmCm,
+    decimal? BodyFatPercentage,
+    decimal? MuscleMassKg,
+    string? Notes,
+    string CreatedAt);
+
+public sealed record CreateBodyMeasurementRequest(
+    string PatientId,
+    string MeasuredAt,
+    decimal? WeightKg,
+    decimal? HeightCm,
+    decimal? WaistCm,
+    decimal? HipCm,
+    decimal? ArmCm,
+    decimal? BodyFatPercentage,
+    decimal? MuscleMassKg,
+    string? Notes);

@@ -3717,6 +3717,123 @@ app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, Healt
     return Results.Ok(ToPatientTaskDto(task, task.Patient?.FullName));
 }).RequireAuthorization();
 
+app.MapGet("/api/patient-diets", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
+    if (err is not null) return err;
+
+    var query = db.PatientDiets
+        .AsNoTracking()
+        .Include(d => d.Patient)
+        .Where(d => d.ProfessionalId == pro!.Id);
+
+    if (!string.IsNullOrWhiteSpace(patientId))
+        query = query.Where(d => d.PatientId == patientId);
+
+    var diets = await query
+        .OrderByDescending(d => d.CreatedAt)
+        .Take(100)
+        .ToListAsync();
+
+    return Results.Ok(diets.Select(d => ToPatientDietDto(d, d.Patient?.FullName)).ToList());
+}).RequireAuthorization();
+
+app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext db, CreatePatientDietRequest req) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
+    if (err is not null) return err;
+
+    var owned = await db.ProfessionalPatients
+        .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
+    if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    if (!DateTimeOffset.TryParse(req.ValidFrom, out var validFrom))
+        return Results.BadRequest(new { errors = new[] { "Fecha de inicio inválida." } });
+
+    DateTimeOffset? validUntil = null;
+    if (!string.IsNullOrWhiteSpace(req.ValidUntil))
+    {
+        if (!DateTimeOffset.TryParse(req.ValidUntil, out var parsed))
+            return Results.BadRequest(new { errors = new[] { "Fecha de fin inválida." } });
+        validUntil = parsed;
+    }
+
+    var patient = await db.Patients.FindAsync(req.PatientId);
+    if (patient is null) return Results.NotFound();
+
+    var diet = new PatientDiet
+    {
+        PatientId = req.PatientId,
+        ProfessionalId = pro!.Id,
+        Title = req.Title,
+        Content = req.Content,
+        ValidFrom = validFrom,
+        ValidUntil = validUntil,
+    };
+
+    db.PatientDiets.Add(diet);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/patient-diets/{diet.Id}", ToPatientDietDto(diet, patient.FullName));
+}).RequireAuthorization();
+
+app.MapGet("/api/body-measurements", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
+    if (err is not null) return err;
+
+    var query = db.BodyMeasurements
+        .AsNoTracking()
+        .Include(m => m.Patient)
+        .Where(m => m.ProfessionalId == pro!.Id);
+
+    if (!string.IsNullOrWhiteSpace(patientId))
+        query = query.Where(m => m.PatientId == patientId);
+
+    var measurements = await query
+        .OrderByDescending(m => m.MeasuredAt)
+        .Take(50)
+        .ToListAsync();
+
+    return Results.Ok(measurements.Select(m => ToBodyMeasurementDto(m, m.Patient?.FullName)).ToList());
+}).RequireAuthorization();
+
+app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbContext db, CreateBodyMeasurementRequest req) =>
+{
+    var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
+    if (err is not null) return err;
+
+    var owned = await db.ProfessionalPatients
+        .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
+    if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    if (!DateTimeOffset.TryParse(req.MeasuredAt, out var measuredAt))
+        return Results.BadRequest(new { errors = new[] { "Fecha de medición inválida." } });
+
+    var patient = await db.Patients.FindAsync(req.PatientId);
+    if (patient is null) return Results.NotFound();
+
+    var measurement = new BodyMeasurement
+    {
+        PatientId = req.PatientId,
+        ProfessionalId = pro!.Id,
+        MeasuredAt = measuredAt,
+        WeightKg = req.WeightKg,
+        HeightCm = req.HeightCm,
+        WaistCm = req.WaistCm,
+        HipCm = req.HipCm,
+        ArmCm = req.ArmCm,
+        BodyFatPercentage = req.BodyFatPercentage,
+        MuscleMassKg = req.MuscleMassKg,
+        Notes = req.Notes,
+    };
+
+    db.BodyMeasurements.Add(measurement);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/body-measurements/{measurement.Id}", ToBodyMeasurementDto(measurement, patient.FullName));
+}).RequireAuthorization();
+
 app.Run();
 
 static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional(
@@ -3746,6 +3863,19 @@ static PatientTaskDto ToPatientTaskDto(PatientTask t, string? patientName = null
     t.DueDate?.ToString("yyyy-MM-dd"), t.Status,
     t.CompletedAt?.ToString("o"), t.PatientNotes,
     t.CreatedAt.ToString("o"));
+
+static PatientDietDto ToPatientDietDto(PatientDiet d, string? patientName = null) => new(
+    d.Id, d.PatientId, patientName ?? d.Patient?.FullName ?? "",
+    d.Title, d.Content,
+    d.ValidFrom.ToString("yyyy-MM-dd"), d.ValidUntil?.ToString("yyyy-MM-dd"),
+    d.Status, d.CreatedAt.ToString("o"));
+
+static BodyMeasurementDto ToBodyMeasurementDto(BodyMeasurement m, string? patientName = null) => new(
+    m.Id, m.PatientId, patientName ?? m.Patient?.FullName ?? "",
+    m.MeasuredAt.ToString("o"),
+    m.WeightKg, m.HeightCm, m.WaistCm, m.HipCm, m.ArmCm,
+    m.BodyFatPercentage, m.MuscleMassKg, m.Notes,
+    m.CreatedAt.ToString("o"));
 
 static async Task<User?> GetUserFromRequestAsync(HttpRequest request, HealthHubDbContext db)
 {
