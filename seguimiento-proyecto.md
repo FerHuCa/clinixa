@@ -2302,3 +2302,43 @@ Plan detallado y autocontenido en [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-20
 5. **FIX 6** (H-3 producto, opcional) — ruta de lectura del paciente a sus datos clínicos.
 
 Incluye validación final (build/lint/test:api), re-verificación E2E y limpieza de la DB dev (artefactos `apt-178155*`, `soap-178155*`, disponibilidades duplicadas).
+
+## Aplicación del plan de fixes QA — 2026-06-15
+
+### Qué se hizo
+
+Se aplicó [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-2026-06-15.md) de principio a fin en la rama `fix/qa-flow-findings` (commit `effefd2`, **sin push**). Único archivo tocado: `apps/api/Program.cs` (101+/91−). Cada fix se localizó por su ancla de búsqueda, se recompiló y se verificó con `curl` antes de avanzar al siguiente.
+
+| Fix | Resuelve | Verificación | Resultado |
+|-----|----------|--------------|-----------|
+| FIX 1 | C-3/H-3/M-2 — quitar 9 `.RequireAuthorization()` | diet POST 201 · task GET 200 · cross 403 · paciente 403 | ✅ |
+| FIX 2 | H-1 — guard de relación activa al agendar | cross-book nora→ana 403 (antes 201) | ✅ |
+| FIX 3 | C-2 — acceso clínico sólo por relación activa | SOAP nora→ana 403 · GET de nora sin `ana-martinez` (0) | ✅ |
+| FIX 4 | C-1/H-2 — identidad limpia (sin `DefaultDemoUserId` ni `?userId`) | forjado 401 · `?userId` 401 · real 200 · vector H-2 401 | ✅ |
+| FIX 5 | M-1 — dedup de slots + idempotencia de disponibilidad | total==únicos (40/40) · POST duplicado 409 | ✅ |
+| FIX 6 | H-3 producto (**Opción B**) — paciente lee sus datos | ana lee dietas/recetas 200 · sin fuga cruzada · path pro intacto | ✅ |
+
+### Desviaciones del plan (todas aprobadas en sesión)
+
+- **Fix de UTC (no estaba en el plan):** FIX 1 destapó un bug latente — los 5 `DateTimeOffset.TryParse` de los POST de especialidad (`prescriptions.ExpiresAt`, `patient-tasks.DueDate`, `patient-diets.ValidFrom`/`ValidUntil`, `body-measurements.MeasuredAt`) escribían offset local a columnas `timestamptz` → **500**. Se normalizan con `.ToUniversalTime()`. Sin esto, FIX 1 no llegaba a 201.
+- **FIX 4 / payments:** `/professional-portal/payments` devuelve **403** (no el 401 que esperaba el plan) para un paciente autenticado-no-profesional. Es correcto (autenticado pero no autorizado) y preexistente; se dejó así. El vector real de H-2 (header que no resuelve + `?userId`) sí da 401.
+- **Limpieza de DB quirúrgica (no reset):** se eligió borrado selectivo para preservar las disponibilidades duplicadas y poder probar de verdad el dedup de FIX 5.
+- **FIX 6 = Opción B:** se permitió al propio paciente leer sus datos en los GET de especialidad (`actor.Patient.Id == patientId`), filtrando recetas/dietas a `Status=="active"`.
+
+### Validación final
+
+- `dotnet build apps/api` → **0 errores**
+- `npm run lint:web` → **limpio**
+- `npm run test:api` → **passed**
+
+### Limpieza de DB dev
+
+Borrado quirúrgico: relación/citas/SOAP cruzados `nora→ana`, dieta de prueba "Plan QA", franja de FIX 5b, 28 disponibilidades duplicadas de Laura (29→1) y 2 SOAP `soap-17815*`.
+
+**Diferido** (territorio de reset completo, NO tocado por riesgo de cascada FK sobre datos financieros): 8 citas `apt-17815*` + 4 pagos asociados + 31 usuarios QA (`usr-profesional-qa-*`, `usr-dra-demo-curl`). Se limpian con el `DROP/CREATE healthhub` + re-seed que documenta el plan.
+
+### Pendiente
+
+- `git push` de la rama / abrir PR cuando se decida.
+- Reset de DB dev para la pollución diferida (opcional).
+- **Frontend de FIX 6:** el backend ya expone la lectura del paciente, pero no hay UI que la consuma.
