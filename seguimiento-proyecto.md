@@ -2264,3 +2264,41 @@ Los módulos de especialidad (recetas, tareas, nutrición) ya filtraban el nav y
 3. **Resend productivo** — dominio verificado + `RESEND_API_KEY`/`RESEND_FROM` → emails reales (infraestructura ya lista).
 4. **Páginas públicas SEO de profesionales** — `/profesionales/{slug}`, og:tags, schema.org, botón "Agendar".
 5. **Revisión legal de documentos** (camino crítico del piloto).
+
+---
+
+## Pruebas internas multi-agente + plan de fixes — 2026-06-15
+
+### Qué se hizo
+
+Se ejecutó una corrida de QA multi-agente (4 personas simuladas: 2 profesionales Laura/Nora, 2 pacientes Ana/Sofia + adversario de autorización) contra el API real en `:5050` con dev-auth (`X-HealthHub-Dev-User`). 13 agentes, ~45 flujos ejercitados, cada bug candidato **verificado adversarialmente**. Reporte completo en [REPORTE-QA-FLUJOS-2026-06-15.md](REPORTE-QA-FLUJOS-2026-06-15.md) (commit `19debc7`).
+
+**8 bugs confirmados, 0 falsos positivos:**
+
+| # | Sev | Hallazgo |
+|---|-----|----------|
+| C-1 | Critical | Header dev forjado → autentica como usuario demo por defecto (lee/escribe datos reales) |
+| C-2 | Critical | Profesional lee/crea **notas SOAP de paciente ajeno** (fuga PHI, NOM-024) |
+| C-3 | Critical | `.RequireAuthorization()` en los 9 endpoints de especialidad → **401 hasta para el dueño** bajo dev-auth |
+| H-1 | High | Profesional agenda cita para paciente sin relación (entrada a C-2) |
+| H-2 | High | `/api/me?userId=<cualquiera>` → suplanta/enumera usuarios |
+| H-3 | High | Paciente y pro dueño no pueden leer datos de especialidad (mismo origen que C-3) |
+| M-1 | Medium | `available-slots` con 28 slots duplicados; falta dedup + unicidad |
+| M-2 | Medium | (consolidado en H-3) paciente recibe 401 en vez de 403/200 |
+
+### Encuadre corregido (tras releer el código para el plan)
+
+- **`IsDevAuthEnabled` ya está endurecido** (`IsDevelopment()` + flag + loopback) → **C-1 y H-2 son dev-local, NO un hueco de producción**. Se arreglan igual (correctitud/defensa en profundidad), prioridad media.
+- **C-2 y H-1 SÍ aplican en producción** (lógica de autorización, independiente del dev-auth) → **prioridad de seguridad #1**.
+
+### Plan de fixes (listo para correr)
+
+Plan detallado y autocontenido en [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-2026-06-15.md): por cada fix trae archivo, ancla de búsqueda, snippet antes/después y verificación con `curl`. Orden recomendado:
+
+1. **FIX 1** (C-3/H-3/M-2) — quitar 9 `.RequireAuthorization()`. Riesgo mínimo, desbloquea recetas/tareas/nutrición en dev local.
+2. **FIX 2 + FIX 3** (H-1 + C-2) — guard de relación al agendar + acceso clínico sólo por relación activa. La cadena de seguridad prod-relevante.
+3. **FIX 4** (C-1/H-2) — eliminar los 7 fallbacks de identidad (`DefaultDemoUserId` + `?userId`).
+4. **FIX 5** (M-1) — dedup de slots + guard de unicidad de disponibilidad.
+5. **FIX 6** (H-3 producto, opcional) — ruta de lectura del paciente a sus datos clínicos.
+
+Incluye validación final (build/lint/test:api), re-verificación E2E y limpieza de la DB dev (artefactos `apt-178155*`, `soap-178155*`, disponibilidades duplicadas).

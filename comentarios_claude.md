@@ -803,3 +803,27 @@ Este flujo de "activación post-registro" es crítico para el piloto: sin él, u
 3. **Definir y registrar nombre de marca + dominio** — desbloquea Resend real y la identidad pública.
 4. **Páginas públicas SEO de profesionales** — `/profesionales/{slug}`, og:tags, schema.org.
 5. **Revisión legal de documentos** (camino crítico del piloto).
+
+---
+
+## Actualización — 2026-06-15: QA multi-agente de flujos + plan de fixes
+
+### Qué se hizo
+
+Corrida de QA con 4 agentes simulados (2 profesionales + 2 pacientes, uno adversario de autorización) contra el API real con dev-auth. 8 bugs confirmados, 0 falsos positivos. Reporte: [REPORTE-QA-FLUJOS-2026-06-15.md](REPORTE-QA-FLUJOS-2026-06-15.md). Plan de remediación listo para correr: [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-2026-06-15.md).
+
+### Recomendación: priorizar la cadena de autorización antes de cualquier piloto
+
+De los 8 hallazgos, **C-2 (fuga de PHI entre pacientes) y H-1 (agendar para paciente ajeno) son los únicos relevantes en producción** — son lógica de autorización independiente del dev-auth, así que aplican también bajo Clerk JWT real. C-1 y H-2 (header forjado, `?userId`) están confinados a dev local porque `IsDevAuthEnabled` ya exige `IsDevelopment()` + flag + loopback; siguen valiendo la pena por correctitud y defensa en profundidad, pero no son un hueco de prod.
+
+C-3 es el de mejor relación impacto/esfuerzo: un solo patrón (`.RequireAuthorization()` sobre 9 endpoints de especialidad, en contra del antipatrón documentado en `Program.cs`) deja **/recetas, /tareas-paciente y /nutricion devolviendo 401 en dev local** — es decir, los módulos de especialidad recién construidos no se pueden ejercitar localmente. Quitarlo es de bajo riesgo y desbloquea 3 hallazgos.
+
+**Lección de proceso:** los módulos de especialidad se añadieron con `.RequireAuthorization()` pese a que el código ya documentaba explícitamente que rompe los tokens dev/legacy. Vale la pena un test de humo que recorra todos los `/api/*` con dev-auth y falle si alguno devuelve 401 con header válido (recomendación R-2 del reporte), para que esta regresión no se repita.
+
+### Próximo foco actualizado
+
+1. **Aplicar PLAN-FIXES-QA-2026-06-15.md** (empezar por FIX 1, luego la cadena C-2/H-1) — antes de exponer los módulos a usuarios reales.
+2. **Verificar onboarding en navegador** (especialidad).
+3. **Wizard de activación en portal profesional.**
+4. **Nombre de marca + dominio → Resend productivo.**
+5. **Revisión legal de documentos.**
