@@ -270,6 +270,20 @@ export type MarketplacePendingItem = {
   verificationStatus: string;
   connectedAt: string | null;
 };
+export type Prescription = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  medicationName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  refills: number;
+  status: string;
+  issuedAt: string;
+  expiresAt: string | null;
+};
 
 type HealthHubState = {
   patients: Patient[];
@@ -1567,6 +1581,34 @@ export function useHealthHubStore() {
         });
 
         return newNote;
+      },
+      async loadPrescriptions(patientId?: string) {
+        const url = patientId
+          ? `${API_BASE_URL}/api/prescriptions?patientId=${patientId}`
+          : `${API_BASE_URL}/api/prescriptions`;
+        const res = await fetch(url, { headers: await getAuthHeaders() });
+        if (!res.ok) throw new Error("No se pudieron cargar las recetas.");
+        setApiStatus("connected");
+        return res.json() as Promise<Prescription[]>;
+      },
+      async createPrescription(data: {
+        patientId: string;
+        medicationName: string;
+        dosage: string;
+        frequency: string;
+        duration: string;
+        instructions: string;
+        refills: number;
+        expiresAt?: string;
+      }) {
+        const res = await fetch(`${API_BASE_URL}/api/prescriptions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error("No se pudo crear la receta.");
+        setApiStatus("connected");
+        return res.json() as Promise<Prescription>;
       },
       resetDemoState() {
         invalidateSession();

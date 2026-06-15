@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Activity, CalendarDays, ClipboardList, HeartPulse, Home, LogIn, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { Activity, CalendarDays, ClipboardList, HeartPulse, Home, LogIn, Pill, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { clsx } from "clsx";
 import { LegalFooter } from "@/components/legal-footer";
 import { useHealthHubStore, type SubscriptionStatus } from "@/lib/healthhub-store";
@@ -24,6 +24,7 @@ const allNavItems: NavItem[] = [
   { href: "/portal-profesional", label: "Configuración", icon: Settings, roles: ["professional", "internal_admin"] },
   { href: "/agenda", label: "Agenda", icon: CalendarDays, roles: ["professional", "internal_admin"] },
   { href: "/expediente", label: "Expediente", icon: ClipboardList, roles: ["professional", "internal_admin"] },
+  { href: "/recetas", label: "Recetas", icon: Pill, roles: ["professional"], specialty: ["doctor"] },
   { href: "/seguridad", label: "Seguridad", icon: ShieldCheck, roles: ["clinic_admin", "internal_admin"] },
   { href: "/sesion", label: "Sesión", icon: LogIn, roles: ["patient", "professional", "clinic_admin", "internal_admin"] }
 ];
