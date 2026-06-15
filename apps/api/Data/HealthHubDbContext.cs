@@ -27,6 +27,10 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<ProfessionalMercadoPago> ProfessionalMercadoPagos => Set<ProfessionalMercadoPago>();
     public DbSet<CommissionTier> CommissionTiers => Set<CommissionTier>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+    public DbSet<PatientTask> PatientTasks => Set<PatientTask>();
+    public DbSet<PatientDiet> PatientDiets => Set<PatientDiet>();
+    public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -538,6 +542,104 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
             entity.Property(tier => tier.CommissionPercentage).HasColumnType("numeric(5,2)");
             entity.Property(tier => tier.Status).HasMaxLength(40).IsRequired();
             entity.HasIndex(tier => new { tier.LicenseType, tier.MinAppointmentsThreshold }).IsUnique();
+        });
+
+        modelBuilder.Entity<Prescription>(entity =>
+        {
+            entity.ToTable("prescriptions");
+            entity.HasKey(prescription => prescription.Id);
+            entity.Property(prescription => prescription.Id).HasMaxLength(120);
+            entity.Property(prescription => prescription.PatientId).HasMaxLength(120).IsRequired();
+            entity.Property(prescription => prescription.ProfessionalId).HasMaxLength(120).IsRequired();
+            entity.Property(prescription => prescription.AppointmentId).HasMaxLength(120);
+            entity.Property(prescription => prescription.MedicationName).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.Dosage).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.Frequency).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.Duration).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.Instructions).HasMaxLength(1000).IsRequired();
+            entity.Property(prescription => prescription.Status).HasMaxLength(40).IsRequired();
+            entity.HasOne(prescription => prescription.Patient)
+                .WithMany()
+                .HasForeignKey(prescription => prescription.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(prescription => prescription.Professional)
+                .WithMany()
+                .HasForeignKey(prescription => prescription.ProfessionalId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(prescription => new { prescription.PatientId, prescription.Status });
+            entity.HasIndex(prescription => new { prescription.ProfessionalId, prescription.Status });
+        });
+
+        modelBuilder.Entity<PatientTask>(entity =>
+        {
+            entity.ToTable("patient_tasks");
+            entity.HasKey(task => task.Id);
+            entity.Property(task => task.Id).HasMaxLength(120);
+            entity.Property(task => task.PatientId).HasMaxLength(120).IsRequired();
+            entity.Property(task => task.ProfessionalId).HasMaxLength(120).IsRequired();
+            entity.Property(task => task.AppointmentId).HasMaxLength(120);
+            entity.Property(task => task.Title).HasMaxLength(200).IsRequired();
+            entity.Property(task => task.Description).HasMaxLength(1000).IsRequired();
+            entity.Property(task => task.Status).HasMaxLength(40).IsRequired();
+            entity.Property(task => task.PatientNotes).HasMaxLength(1000);
+            entity.HasOne(task => task.Patient)
+                .WithMany()
+                .HasForeignKey(task => task.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(task => task.Professional)
+                .WithMany()
+                .HasForeignKey(task => task.ProfessionalId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(task => new { task.PatientId, task.Status });
+            entity.HasIndex(task => new { task.ProfessionalId, task.Status });
+        });
+
+        modelBuilder.Entity<PatientDiet>(entity =>
+        {
+            entity.ToTable("patient_diets");
+            entity.HasKey(diet => diet.Id);
+            entity.Property(diet => diet.Id).HasMaxLength(120);
+            entity.Property(diet => diet.PatientId).HasMaxLength(120).IsRequired();
+            entity.Property(diet => diet.ProfessionalId).HasMaxLength(120).IsRequired();
+            entity.Property(diet => diet.Title).HasMaxLength(200).IsRequired();
+            entity.Property(diet => diet.Content).HasMaxLength(3000).IsRequired();
+            entity.Property(diet => diet.Status).HasMaxLength(40).IsRequired();
+            entity.HasOne(diet => diet.Patient)
+                .WithMany()
+                .HasForeignKey(diet => diet.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(diet => diet.Professional)
+                .WithMany()
+                .HasForeignKey(diet => diet.ProfessionalId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(diet => new { diet.PatientId, diet.Status });
+            entity.HasIndex(diet => new { diet.ProfessionalId, diet.Status });
+        });
+
+        modelBuilder.Entity<BodyMeasurement>(entity =>
+        {
+            entity.ToTable("body_measurements");
+            entity.HasKey(measurement => measurement.Id);
+            entity.Property(measurement => measurement.Id).HasMaxLength(120);
+            entity.Property(measurement => measurement.PatientId).HasMaxLength(120).IsRequired();
+            entity.Property(measurement => measurement.ProfessionalId).HasMaxLength(120).IsRequired();
+            entity.Property(measurement => measurement.WeightKg).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.HeightCm).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.WaistCm).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.HipCm).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.ArmCm).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.BodyFatPercentage).HasColumnType("numeric(5,2)");
+            entity.Property(measurement => measurement.MuscleMassKg).HasColumnType("numeric(7,2)");
+            entity.Property(measurement => measurement.Notes).HasMaxLength(500);
+            entity.HasOne(measurement => measurement.Patient)
+                .WithMany()
+                .HasForeignKey(measurement => measurement.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(measurement => measurement.Professional)
+                .WithMany()
+                .HasForeignKey(measurement => measurement.ProfessionalId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(measurement => new { measurement.PatientId, measurement.MeasuredAt });
         });
     }
 }
