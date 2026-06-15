@@ -827,3 +827,27 @@ C-3 es el de mejor relación impacto/esfuerzo: un solo patrón (`.RequireAuthori
 3. **Wizard de activación en portal profesional.**
 4. **Nombre de marca + dominio → Resend productivo.**
 5. **Revisión legal de documentos.**
+
+---
+
+## Actualización — 2026-06-15: aplicación del plan de fixes QA
+
+### Qué se hizo
+
+Se aplicó el plan completo en `apps/api/Program.cs` (rama `fix/qa-flow-findings`, commit `effefd2`, sin push). Los 8 hallazgos quedan cubiertos por 6 fixes, cada uno verificado con `curl` antes de avanzar al siguiente. Validación final verde: `build:api` 0 errores, `lint:web` limpio, `test:api` passed. Detalle operativo en `seguimiento-proyecto.md`.
+
+### El hallazgo que el plan no anticipó: la misma "degradación silenciosa" otra vez
+
+Quitar `.RequireAuthorization()` (FIX 1) destapó un **500 latente**: los POST de especialidad parseaban fechas a `DateTimeOffset` con offset local y las escribían a columnas `timestamptz`, que en Npgsql exige offset 0 (UTC). Nunca se había disparado porque el `.RequireAuthorization()` devolvía 401 **antes** de llegar al `SaveChangesAsync` — exactamente el patrón "el bug vive en el código nunca ejercitado" que ya mordió en la sesión 9 (caso "Ana Martínez"). El arreglo fue normalizar a `.ToUniversalTime()` en los 5 sitios (`prescriptions.ExpiresAt`, `patient-tasks.DueDate`, `patient-diets.ValidFrom`/`ValidUntil`, `body-measurements.MeasuredAt`). **Refuerza la recomendación R-2:** un smoke test que recorra todos los `/api/*` con dev-auth habría atrapado tanto el 401 como, al pasar el 401, el 500.
+
+### Nota sobre payments
+
+`/professional-portal/payments` responde **403** (no 401) a un paciente autenticado que no es profesional. Es la semántica correcta (autenticado pero no autorizado) y es preexistente; se dejó como está. Hay una inconsistencia menor: `dashboard`/`onboarding`/`subscription` usan 401 para el mismo caso. Vale la pena unificar a 403 en algún momento, pero no es bloqueante.
+
+### Próximo foco actualizado
+
+1. **`git push` + PR** de `fix/qa-flow-findings` (o merge) — el código está verde y commiteado, falta integrarlo.
+2. **Frontend de FIX 6 (Opción B):** el backend ya deja al paciente leer sus recetas/tareas/dietas, pero no hay UI que lo consuma.
+3. **Smoke test R-2** (recorrer `/api/*` con dev-auth y fallar ante 401/500 con header válido) para que la regresión de especialidad no vuelva.
+4. **Reset de DB dev** para la pollución QA diferida (8 citas `apt-17815*` + 4 pagos + 31 usuarios QA) cuando convenga.
+5. Verificar onboarding en navegador · wizard de activación · marca/dominio → Resend · revisión legal (sin cambios respecto al foco anterior).
