@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: healthhub-postgres
+    environment:
+      POSTGRES_USER: healthhub
+      POSTGRES_PASSWORD: healthhub_dev
+      POSTGRES_DB: healthhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - healthhub_postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: healthhub-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  healthhub_postgres:
