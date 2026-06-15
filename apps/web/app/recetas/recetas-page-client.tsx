@@ -40,7 +40,9 @@ export function RecetasPageClient() {
     if (!ready) return;
     loadPrescriptions()
       .then(setPrescriptions)
-      .catch(() => {})
+      .catch(() => {
+        setMessage({ kind: "error", text: "No se pudieron cargar las recetas." });
+      })
       .finally(() => setLoading(false));
   }, [ready, loadPrescriptions]);
 

@@ -1583,13 +1583,10 @@ export function useHealthHubStore() {
         return newNote;
       },
       async loadPrescriptions(patientId?: string) {
-        const url = patientId
-          ? `${API_BASE_URL}/api/prescriptions?patientId=${patientId}`
-          : `${API_BASE_URL}/api/prescriptions`;
-        const res = await fetch(url, { headers: await getAuthHeaders() });
-        if (!res.ok) throw new Error("No se pudieron cargar las recetas.");
+        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+        const prescriptions = await apiGet<Prescription[]>(`/api/prescriptions${query}`);
         setApiStatus("connected");
-        return res.json() as Promise<Prescription[]>;
+        return prescriptions;
       },
       async createPrescription(data: {
         patientId: string;
@@ -1601,14 +1598,9 @@ export function useHealthHubStore() {
         refills: number;
         expiresAt?: string;
       }) {
-        const res = await fetch(`${API_BASE_URL}/api/prescriptions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(await getAuthHeaders()) },
-          body: JSON.stringify(data)
-        });
-        if (!res.ok) throw new Error("No se pudo crear la receta.");
+        const prescription = await apiPost<Prescription>("/api/prescriptions", data);
         setApiStatus("connected");
-        return res.json() as Promise<Prescription>;
+        return prescription;
       },
       resetDemoState() {
         invalidateSession();
