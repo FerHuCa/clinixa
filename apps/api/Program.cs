@@ -3579,6 +3579,7 @@ app.MapGet("/api/prescriptions", async (HttpRequest request, HealthHubDbContext 
     if (error is not null) return error;
 
     var query = db.Prescriptions
+        .AsNoTracking()
         .Include(p => p.Patient)
         .Where(p => p.ProfessionalId == pro!.Id);
 
@@ -3598,13 +3599,13 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
     var patientRelation = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
     if (!patientRelation)
-        return Results.NotFound("Paciente no encontrado o no asociado a tu cuenta.");
+        return Results.NotFound(new { errors = new[] { "Paciente no encontrado o no asociado a tu cuenta." } });
 
     DateTimeOffset? expiresAt = null;
     if (!string.IsNullOrEmpty(req.ExpiresAt))
     {
         if (!DateTimeOffset.TryParse(req.ExpiresAt, out var parsed))
-            return Results.BadRequest(new { error = "Fecha de vencimiento inválida." });
+            return Results.BadRequest(new { errors = new[] { "Fecha de vencimiento inválida." } });
         expiresAt = parsed;
     }
 
@@ -3747,6 +3748,9 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
     if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
 
+    var patient = await db.Patients.FindAsync(req.PatientId);
+    if (patient is null) return Results.NotFound();
+
     if (!DateTimeOffset.TryParse(req.ValidFrom, out var validFrom))
         return Results.BadRequest(new { errors = new[] { "Fecha de inicio inválida." } });
 
@@ -3757,9 +3761,6 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
             return Results.BadRequest(new { errors = new[] { "Fecha de fin inválida." } });
         validUntil = parsed;
     }
-
-    var patient = await db.Patients.FindAsync(req.PatientId);
-    if (patient is null) return Results.NotFound();
 
     var diet = new PatientDiet
     {
@@ -3807,11 +3808,11 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
     if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
 
-    if (!DateTimeOffset.TryParse(req.MeasuredAt, out var measuredAt))
-        return Results.BadRequest(new { errors = new[] { "Fecha de medición inválida." } });
-
     var patient = await db.Patients.FindAsync(req.PatientId);
     if (patient is null) return Results.NotFound();
+
+    if (!DateTimeOffset.TryParse(req.MeasuredAt, out var measuredAt))
+        return Results.BadRequest(new { errors = new[] { "Fecha de medición inválida." } });
 
     var measurement = new BodyMeasurement
     {
@@ -3841,11 +3842,11 @@ static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional
 {
     var user = await GetUserFromRequestAsync(request, db);
 
-    if (user?.Professional is null)
-        return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
+    if (user is null) return (null, Results.Unauthorized());
+    if (user.Professional is null) return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
 
     if (requiredSpecialty is not null && user.Professional.Specialty != requiredSpecialty)
-        return (null, Results.Json(new { errors = new[] { "Esta función solo está disponible para tu especialidad." } }, statusCode: 403));
+        return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
 
     return (user.Professional, null);
 }
