@@ -1031,7 +1031,7 @@ export function useHealthHubStore() {
         broadcastCurrentUser(user);
         return user;
       },
-      async updateAccountProfile(input: { fullName: string; role?: string }) {
+      async updateAccountProfile(input: { fullName: string; role?: string; specialty?: string }) {
         const user = await apiPatch<CurrentUser>("/api/me", input);
         sessionPromise = Promise.resolve(user);
         persistUserRole(user.primaryRole);

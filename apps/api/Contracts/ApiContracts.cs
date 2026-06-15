@@ -26,7 +26,8 @@ public sealed record AuthResponseDto(
 
 public sealed record UpdateMyProfileRequest(
     string FullName,
-    string? Role);
+    string? Role,
+    string? Specialty);
 
 public sealed record PatientDto(
     string Id,

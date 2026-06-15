@@ -255,10 +255,22 @@ app.MapPatch("/api/me", async (HttpRequest request, UpdateMyProfileRequest updat
         user.Patient.UpdatedAt = now;
     }
 
-    if (user.Professional is not null &&
-        (user.Professional.DisplayName == previousName || user.Professional.DisplayName == user.Email))
+    if (user.Professional is not null)
     {
-        user.Professional.DisplayName = fullName;
+        if (user.Professional.DisplayName == previousName || user.Professional.DisplayName == user.Email)
+        {
+            user.Professional.DisplayName = fullName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(updateRequest.Specialty))
+        {
+            var normalized = NormalizeSpecialty(updateRequest.Specialty);
+            if (user.Professional.Specialty == "other" || user.Professional.Specialty != normalized)
+            {
+                user.Professional.Specialty = normalized;
+            }
+        }
+
         user.Professional.UpdatedAt = now;
     }
 

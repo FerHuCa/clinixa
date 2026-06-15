@@ -28,7 +28,7 @@ const allNavItems: NavItem[] = [
   { href: "/tareas-paciente", label: "Tareas", icon: ClipboardCheck, roles: ["professional"], specialty: ["psychologist"] },
   { href: "/nutricion", label: "Nutrición", icon: Salad, roles: ["professional"], specialty: ["nutritionist"] },
   { href: "/seguridad", label: "Seguridad", icon: ShieldCheck, roles: ["clinic_admin", "internal_admin"] },
-  { href: "/sesion", label: "Sesión", icon: LogIn, roles: ["patient", "professional", "clinic_admin", "internal_admin"] }
+  { href: "/sesion", label: "Sesión", icon: LogIn, roles: ["guest", "patient", "professional", "clinic_admin", "internal_admin"] }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -94,7 +94,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Hasta que la sesion no este resuelta no filtramos el nav por rol ni enlazamos
   // el logo a una ruta por rol: evita renderizar el menu/destino de una identidad
   // seed/stale. Con sessionError el rol es "guest" y tampoco hay menu.
-  const navReady = ready && !sessionError;
+  // Con sessionError el rol es "guest": solo se muestra el ítem Sesión para que el
+  // usuario pueda re-autenticarse sin quedarse con el nav vacío.
+  const navReady = ready;
   const navItems = navReady ? getNavItems(currentUser.primaryRole, currentUser.specialty ?? null) : [];
   // Logo inerte mientras no haya sesion: apunta a la ruta actual (no a "/" con rol
   // equivocado).

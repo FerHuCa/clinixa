@@ -183,11 +183,32 @@ public static class DatabaseSeeder
     {
         await SeedUsersAsync(db);
         await SeedProfessionalsAsync(db);
+        await EnsureSeedSpecialtiesAsync(db);
         await SeedPortalRelationsAsync(db);
         await SeedClinicsAndMembershipsAsync(db);
         await SeedOperationalNotificationsAsync(db);
         await SeedNotificationPreferencesAsync(db);
         await LinkExistingClinicalDemoAsync(db);
+    }
+
+    private static async Task EnsureSeedSpecialtiesAsync(HealthHubDbContext db)
+    {
+        var specialties = new Dictionary<string, string>
+        {
+            ["pro-laura-vega"] = "nutritionist",
+            ["pro-miguel-torres"] = "physiotherapist",
+            ["pro-nora-ibarra"] = "psychologist",
+            ["pro-andres-campos"] = "doctor"
+        };
+
+        foreach (var (id, specialty) in specialties)
+        {
+            var pro = await db.Professionals.FindAsync(id);
+            if (pro is not null && pro.Specialty != specialty)
+            {
+                pro.Specialty = specialty;
+            }
+        }
     }
 
     private static async Task SeedUsersAsync(HealthHubDbContext db)
