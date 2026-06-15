@@ -475,3 +475,28 @@ public sealed record MercadoPagoMarketplaceOAuthCallbackRequest(
 public sealed record VerifyMercadoPagoRequest(
     string Status,
     string? Notes = null);
+
+public sealed record PrescriptionDto(
+    string Id,
+    string PatientId,
+    string PatientName,
+    string MedicationName,
+    string Dosage,
+    string Frequency,
+    string Duration,
+    string Instructions,
+    int Refills,
+    string Status,
+    string IssuedAt,
+    string? ExpiresAt);
+
+public sealed record CreatePrescriptionRequest(
+    string PatientId,
+    string? AppointmentId,
+    string MedicationName,
+    string Dosage,
+    string Frequency,
+    string Duration,
+    string Instructions,
+    int Refills,
+    string? ExpiresAt);

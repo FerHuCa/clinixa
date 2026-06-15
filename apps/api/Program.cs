@@ -3572,7 +3572,89 @@ soapNotesApi.MapDelete("/{id}", async (HttpRequest request, string id, HealthHub
 // TODO IA futura (NO implementar todavia): Consentimiento IA (tipo nuevo en ConsentDocuments),
 // transcripcion (Whisper), integracion OpenAI y SOAP asistido con revision profesional obligatoria.
 
+// GET /api/prescriptions?patientId={id}
+app.MapGet("/api/prescriptions", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
+{
+    var (pro, error) = await GetAuthorizedProfessional(request, db, "doctor");
+    if (error is not null) return error;
+
+    var query = db.Prescriptions
+        .Include(p => p.Patient)
+        .Where(p => p.ProfessionalId == pro!.Id);
+
+    if (!string.IsNullOrEmpty(patientId))
+        query = query.Where(p => p.PatientId == patientId);
+
+    var items = await query.OrderByDescending(p => p.IssuedAt).Take(100).ToListAsync();
+    return Results.Ok(items.Select(p => ToPrescriptionDto(p)));
+}).RequireAuthorization();
+
+// POST /api/prescriptions
+app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext db, CreatePrescriptionRequest req) =>
+{
+    var (pro, error) = await GetAuthorizedProfessional(request, db, "doctor");
+    if (error is not null) return error;
+
+    var patientRelation = await db.ProfessionalPatients
+        .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
+    if (!patientRelation)
+        return Results.NotFound("Paciente no encontrado o no asociado a tu cuenta.");
+
+    DateTimeOffset? expiresAt = null;
+    if (!string.IsNullOrEmpty(req.ExpiresAt))
+    {
+        if (!DateTimeOffset.TryParse(req.ExpiresAt, out var parsed))
+            return Results.BadRequest(new { error = "Fecha de vencimiento inválida." });
+        expiresAt = parsed;
+    }
+
+    var prescription = new Prescription
+    {
+        Id = Guid.NewGuid().ToString(),
+        PatientId = req.PatientId,
+        ProfessionalId = pro!.Id,
+        AppointmentId = req.AppointmentId,
+        MedicationName = req.MedicationName.Trim(),
+        Dosage = req.Dosage.Trim(),
+        Frequency = req.Frequency.Trim(),
+        Duration = req.Duration.Trim(),
+        Instructions = req.Instructions.Trim(),
+        Refills = req.Refills,
+        ExpiresAt = expiresAt,
+    };
+
+    db.Prescriptions.Add(prescription);
+    await db.SaveChangesAsync();
+
+    var patient = await db.Patients.FindAsync(req.PatientId);
+    return Results.Created(
+        $"/api/prescriptions/{prescription.Id}",
+        ToPrescriptionDto(prescription, patient?.FullName));
+}).RequireAuthorization();
+
 app.Run();
+
+static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional(
+    HttpRequest request, HealthHubDbContext db, string? requiredSpecialty = null)
+{
+    var user = await GetUserFromRequestAsync(request, db);
+
+    if (user?.Professional is null)
+        return (null, Results.Forbid());
+
+    if (requiredSpecialty is not null && user.Professional.Specialty != requiredSpecialty)
+        return (null, Results.Problem(
+            "Esta función solo está disponible para tu especialidad.", statusCode: 403));
+
+    return (user.Professional, null);
+}
+
+static PrescriptionDto ToPrescriptionDto(Prescription p, string? patientName = null) => new(
+    p.Id, p.PatientId, patientName ?? p.Patient?.FullName ?? "",
+    p.MedicationName, p.Dosage, p.Frequency, p.Duration,
+    p.Instructions, p.Refills, p.Status,
+    p.IssuedAt.ToString("yyyy-MM-dd"),
+    p.ExpiresAt?.ToString("yyyy-MM-dd"));
 
 static async Task<User?> GetUserFromRequestAsync(HttpRequest request, HealthHubDbContext db)
 {
