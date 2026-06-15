@@ -3638,6 +3638,7 @@ app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext 
     if (err is not null) return err;
 
     var query = db.PatientTasks
+        .AsNoTracking()
         .Include(t => t.Patient)
         .Where(t => t.ProfessionalId == pro!.Id);
 
@@ -3650,7 +3651,7 @@ app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext 
         .ToListAsync();
 
     return Results.Ok(tasks.Select(t => ToPatientTaskDto(t, t.Patient?.FullName)).ToList());
-});
+}).RequireAuthorization();
 
 app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, CreatePatientTaskRequest req) =>
 {
@@ -3659,15 +3660,18 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
 
     var owned = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
-    if (!owned) return Results.Forbid();
+    if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
 
     DateTimeOffset? dueDate = null;
     if (!string.IsNullOrWhiteSpace(req.DueDate))
     {
         if (!DateTimeOffset.TryParse(req.DueDate, out var parsed))
-            return Results.BadRequest("Fecha de vencimiento inválida.");
+            return Results.BadRequest(new { errors = new[] { "Fecha de vencimiento inválida." } });
         dueDate = parsed;
     }
+
+    var patient = await db.Patients.FindAsync(req.PatientId);
+    if (patient is null) return Results.NotFound();
 
     var task = new PatientTask
     {
@@ -3682,9 +3686,8 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
     db.PatientTasks.Add(task);
     await db.SaveChangesAsync();
 
-    var patient = await db.Patients.FindAsync(task.PatientId);
-    return Results.Created($"/api/patient-tasks/{task.Id}", ToPatientTaskDto(task, patient?.FullName));
-});
+    return Results.Created($"/api/patient-tasks/{task.Id}", ToPatientTaskDto(task, patient.FullName));
+}).RequireAuthorization();
 
 app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, HealthHubDbContext db, string id, UpdatePatientTaskStatusRequest req) =>
 {
@@ -3693,7 +3696,7 @@ app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, Healt
 
     var allowed = new[] { "pending", "completed", "skipped" };
     if (!allowed.Contains(req.Status))
-        return Results.BadRequest($"Estado inválido. Usa: {string.Join(", ", allowed)}");
+        return Results.BadRequest(new { errors = new[] { $"Estado inválido. Usa: {string.Join(", ", allowed)}" } });
 
     var task = await db.PatientTasks
         .Include(t => t.Patient)
@@ -3712,7 +3715,7 @@ app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, Healt
 
     await db.SaveChangesAsync();
     return Results.Ok(ToPatientTaskDto(task, task.Patient?.FullName));
-});
+}).RequireAuthorization();
 
 app.Run();
 
@@ -3722,11 +3725,10 @@ static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional
     var user = await GetUserFromRequestAsync(request, db);
 
     if (user?.Professional is null)
-        return (null, Results.Forbid());
+        return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
 
     if (requiredSpecialty is not null && user.Professional.Specialty != requiredSpecialty)
-        return (null, Results.Problem(
-            "Esta función solo está disponible para tu especialidad.", statusCode: 403));
+        return (null, Results.Json(new { errors = new[] { "Esta función solo está disponible para tu especialidad." } }, statusCode: 403));
 
     return (user.Professional, null);
 }
