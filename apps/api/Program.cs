@@ -1872,9 +1872,14 @@ professionalPortalApi.MapGet("/dashboard", async (HttpRequest request, HealthHub
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
 
-    if (currentUser?.Professional is null)
+    if (currentUser is null)
     {
         return Results.Unauthorized();
+    }
+
+    if (currentUser.Professional is null)
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
     var professional = await db.Professionals
@@ -2083,9 +2088,14 @@ professionalPortalApi.MapGet("/onboarding", async (HttpRequest request, HealthHu
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
 
-    if (currentUser?.Professional is null)
+    if (currentUser is null)
     {
         return Results.Unauthorized();
+    }
+
+    if (currentUser.Professional is null)
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
     var professional = await db.Professionals
@@ -3703,16 +3713,30 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
 
 app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, HealthHubDbContext db, string id, UpdatePatientTaskStatusRequest req) =>
 {
-    var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
-    if (err is not null) return err;
-
     var allowed = new[] { "pending", "completed", "skipped" };
     if (!allowed.Contains(req.Status))
         return Results.BadRequest(new { errors = new[] { $"Estado inválido. Usa: {string.Join(", ", allowed)}" } });
 
-    var task = await db.PatientTasks
-        .Include(t => t.Patient)
-        .FirstOrDefaultAsync(t => t.Id == id && t.ProfessionalId == pro!.Id);
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+
+    PatientTask? task;
+
+    // FIX 6 (opción B): el propio paciente puede actualizar el estado de sus tareas.
+    if (actor is { PrimaryRole: "patient", Patient: not null })
+    {
+        task = await db.PatientTasks
+            .Include(t => t.Patient)
+            .FirstOrDefaultAsync(t => t.Id == id && t.PatientId == actor.Patient.Id);
+    }
+    else
+    {
+        var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
+        if (err is not null) return err;
+        task = await db.PatientTasks
+            .Include(t => t.Patient)
+            .FirstOrDefaultAsync(t => t.Id == id && t.ProfessionalId == pro!.Id);
+    }
 
     if (task is null) return Results.NotFound();
 

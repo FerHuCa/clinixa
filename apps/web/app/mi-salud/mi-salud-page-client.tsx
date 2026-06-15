@@ -63,6 +63,7 @@ export function MiSaludPageClient() {
     loadPrescriptions,
     loadPatientTasks,
     loadPatientDiets,
+    updatePatientTaskStatus,
   } = useHealthHubStore();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("recetas");
@@ -82,7 +83,45 @@ export function MiSaludPageClient() {
   const [errorTasks, setErrorTasks] = useState<string | null>(null);
   const [errorDiets, setErrorDiets] = useState<string | null>(null);
 
+  // Task status update state
+  const [savingTaskIds, setSavingTaskIds] = useState<Set<string>>(new Set());
+  const [taskErrors, setTaskErrors] = useState<Record<string, string>>({});
+
   const patientId = currentUser.patientId;
+
+  async function handleToggleTaskStatus(task: PatientTask) {
+    const newStatus: "completed" | "pending" =
+      task.status === "completed" ? "pending" : "completed";
+
+    setSavingTaskIds((prev) => {
+      const next = new Set(prev);
+      next.add(task.id);
+      return next;
+    });
+    setTaskErrors((prev) => {
+      const next = { ...prev };
+      delete next[task.id];
+      return next;
+    });
+
+    try {
+      const updated = await updatePatientTaskStatus(task.id, newStatus);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t))
+      );
+    } catch {
+      setTaskErrors((prev) => ({
+        ...prev,
+        [task.id]: "No se pudo actualizar. Intenta de nuevo.",
+      }));
+    } finally {
+      setSavingTaskIds((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     if (!patientId) return;
@@ -269,42 +308,93 @@ export function MiSaludPageClient() {
               <div className="p-4 text-sm text-slate-500">Aún no tienes tareas asignadas.</div>
             ) : (
               <div className="divide-y divide-border">
-                {tasks.map((task) => (
-                  <div className="flex items-start gap-3 p-4" key={task.id}>
-                    <span className="mt-0.5 shrink-0">{taskStatusIcon(task.status)}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p
-                          className={`font-medium ${
-                            task.status === "completed" ? "line-through text-slate-400" : ""
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            task.status === "completed"
-                              ? "bg-teal-100 text-teal-700"
-                              : task.status === "skipped"
-                              ? "bg-slate-100 text-slate-500"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
-                          {taskStatusLabel(task.status)}
-                        </span>
+                {tasks.map((task) => {
+                  const isSaving = savingTaskIds.has(task.id);
+                  const rowError = taskErrors[task.id];
+                  return (
+                    <div className="flex items-start gap-3 p-4" key={task.id}>
+                      <button
+                        aria-label={
+                          task.status === "completed"
+                            ? "Marcar pendiente"
+                            : "Marcar completada"
+                        }
+                        className="mt-0.5 shrink-0 disabled:opacity-50"
+                        disabled={isSaving}
+                        onClick={() => { void handleToggleTaskStatus(task); }}
+                        type="button"
+                      >
+                        {taskStatusIcon(task.status)}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p
+                            className={`font-medium ${
+                              task.status === "completed" ? "line-through text-slate-400" : ""
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                              task.status === "completed"
+                                ? "bg-teal-100 text-teal-700"
+                                : task.status === "skipped"
+                                ? "bg-slate-100 text-slate-500"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {taskStatusLabel(task.status)}
+                          </span>
+                        </div>
+                        {task.description ? (
+                          <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
+                        ) : null}
+                        {task.dueDate ? (
+                          <p className="mt-0.5 text-xs text-slate-400">Límite: {task.dueDate}</p>
+                        ) : null}
+                        {task.patientNotes ? (
+                          <p className="mt-1 text-sm italic text-slate-500">Nota: {task.patientNotes}</p>
+                        ) : null}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                          {task.status !== "completed" && (
+                            <button
+                              className="text-xs font-medium text-teal-600 hover:text-teal-800 disabled:opacity-50"
+                              disabled={isSaving}
+                              onClick={() => { void handleToggleTaskStatus(task); }}
+                              type="button"
+                            >
+                              {isSaving ? "Guardando..." : "Marcar completada"}
+                            </button>
+                          )}
+                          {task.status === "completed" && (
+                            <button
+                              className="text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                              disabled={isSaving}
+                              onClick={() => { void handleToggleTaskStatus(task); }}
+                              type="button"
+                            >
+                              {isSaving ? "Guardando..." : "Marcar pendiente"}
+                            </button>
+                          )}
+                          {task.status === "skipped" && (
+                            <button
+                              className="text-xs font-medium text-amber-600 hover:text-amber-800 disabled:opacity-50"
+                              disabled={isSaving}
+                              onClick={() => { void handleToggleTaskStatus(task); }}
+                              type="button"
+                            >
+                              {isSaving ? "Guardando..." : "Marcar pendiente"}
+                            </button>
+                          )}
+                        </div>
+                        {rowError ? (
+                          <p className="mt-1 text-xs text-red-500">{rowError}</p>
+                        ) : null}
                       </div>
-                      {task.description ? (
-                        <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
-                      ) : null}
-                      {task.dueDate ? (
-                        <p className="mt-0.5 text-xs text-slate-400">Límite: {task.dueDate}</p>
-                      ) : null}
-                      {task.patientNotes ? (
-                        <p className="mt-1 text-sm italic text-slate-500">Nota: {task.patientNotes}</p>
-                      ) : null}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Panel>

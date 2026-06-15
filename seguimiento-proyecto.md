@@ -2414,7 +2414,43 @@ Página **read-only** consolidada en `/mi-salud` con tres pestañas (Recetas / T
 
 ### Pendiente tras esta sesión
 
-- (Opcional) Permitir al paciente marcar tareas como completadas (`PATCH /api/patient-tasks/{id}/status`) una vez confirmada la autorización del paciente en ese endpoint; hoy `/mi-salud` es sólo lectura.
-- (Opcional) Unificar a 403 `dashboard`/`onboarding`/`subscription` para paciente-no-profesional.
+- ~~Permitir al paciente marcar tareas como completadas~~ ✅ hecho (Step 2 — ver abajo).
+- ~~Unificar a 403 `dashboard`/`onboarding`/`subscription`~~ ✅ hecho (Step 3 — `subscription`/`payments` ya estaban; faltaban `dashboard`/`onboarding`).
 - (Opcional) Extender el smoke a rutas de escritura con limpieza propia (los endpoints de especialidad que tuvieron el 500 de UTC no tienen DELETE, así que requeriría limpieza vía DB).
 - Verificación visual de `/mi-salud` en el navegador del usuario (el preview MCP no sirve con Clerk).
+
+---
+
+## Steps 2-4 — PATCH paciente, unificación 401/403, auditoría onboarding — 2026-06-15
+
+Plan en **Opus**, ejecución en **paralelo por 3 agentes Sonnet** (vía Workflow), **divididos por propiedad de archivo** (backend / frontend / auditoría) para que no colisionen — Steps 2-backend y 3 tocan el mismo `Program.cs`, así que un solo agente lo posee.
+
+### Step 2 — el paciente marca sus propias tareas (completar/pendiente)
+
+- **Backend** (`apps/api/Program.cs`, PATCH `/api/patient-tasks/{id}/status`): nueva rama de paciente-dueño que espeja FIX 6 — si el actor es paciente y la tarea es suya (`task.PatientId == actor.Patient.Id`), puede cambiar el estado; si no, cae al path del psicólogo.
+- **Frontend** (`apps/web/app/mi-salud/mi-salud-page-client.tsx`, pestaña Tareas): toggle completar↔pendiente con estado de "Guardando..." por fila, actualización desde el objeto devuelto y error inline por fila. Recetas/Nutrición siguen estrictamente read-only.
+- **Verificado (curl):** PATCH tarea propia como `usr-sofia-leon` → **200**; misma tarea como `usr-ana-martinez` → **404** (aislamiento); path del profesional (`usr-nora-ibarra`) → **200**.
+
+### Step 3 — unificar 401 vs 403 en dashboard + onboarding
+
+- Sólo `dashboard` (L1875) y `onboarding` (L2086) tenían el patrón conflado `currentUser?.Professional is null → 401`; `payments` y `subscription` **ya eran correctos**. Se dividió en `currentUser is null → 401` + `currentUser.Professional is null → 403`, idéntico a payments/subscription.
+- **Verificado (curl):** dashboard/onboarding como paciente → **403** (antes 401); como profesional → **200**; header inválido → **401**.
+
+### Step 4 — auditoría del flujo onboarding → activación → publicar (read-only)
+
+- Doc: [AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md](AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md) (229 líneas). **Sin cambios de código de producto**: decisión deliberada — el "wizard de activación" estaba subespecificado para construir a ciegas, así que se entrega auditoría + plan priorizado para que el usuario decida.
+- **Hallazgo P0 (bloqueante):** el campo de **cédula/`LicenseNumber` falta en la UI del portal profesional** → `VerificationStatus` queda en "pending" para siempre y el profesional **no puede publicar**. El backend ya acepta el campo (`PATCH /api/professional-portal/profile`). Segundo P0: el checklist de onboarding existe en Inicio pero no en Configuración.
+- Plan P0/P1/P2 con punteros a archivo en el doc (9 huecos catalogados HUE-01..HUE-09).
+
+### Validación
+
+- `build:api` **0 errores** · `smoke:api` **31/31** · `lint:web` **limpio** · `tsc --noEmit` **limpio** (todo re-corrido de forma independiente).
+
+### Datos para la revisión manual
+
+- Las tareas son dominio de psicólogo, así que el paciente con tareas es **`sofia-leon`** (su psicóloga es `nora-ibarra`), no `ana-martinez`. Se sembraron 2 tareas reales para sofia — "Diario de emociones" (pendiente) y "Respiración 4-7-8" (completada) — para probar el toggle en ambos sentidos. **Para revisar la pestaña Tareas + toggle, iniciar sesión como `sofia-leon`.** (`ana-martinez` sirve para ver Recetas/Nutrición.)
+
+### Pendiente
+
+- Implementar el plan del audit (P0: cédula en portal profesional + checklist en Configuración).
+- Verificación visual del toggle de tareas en `/mi-salud` como `sofia-leon`.

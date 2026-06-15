@@ -901,3 +901,33 @@ El lado profesional tiene `/recetas`, `/tareas-paciente`, `/nutricion` separadas
 2. (Opcional) PATCH de tareas por el paciente + smoke de escritura con limpieza.
 3. (Opcional) Unificar a 403 `dashboard`/`onboarding`/`subscription`.
 4. Onboarding en navegador · wizard de activación · marca/dominio → Resend · revisión legal (sin cambios).
+
+---
+
+## Actualización — 2026-06-15: steps 2-4 (PATCH paciente, 401/403, auditoría onboarding)
+
+### Qué se hizo
+
+Plan en **Opus**, ejecución **paralela por 3 agentes Sonnet divididos por propiedad de archivo** (no por feature):
+- **Backend** (dueño de `Program.cs`): Step 2 (paciente puede PATCH su propia tarea) + Step 3 (dashboard/onboarding → split 401/403). Build 0 err, 8/8 curl checks, smoke 31/31.
+- **Frontend** (dueño de `mi-salud-page-client.tsx`): toggle de tareas. Lint + tsc limpios.
+- **Auditoría** (read-only + un doc nuevo): Step 4. `AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md`.
+
+### La decisión de arquitectura que importó: dividir por archivo, no por feature
+
+Steps 2-backend y 3 caían **en el mismo `Program.cs`**. Si hubiera asignado "un agente por feature", dos Sonnet habrían editado el mismo archivo en paralelo y se habrían pisado. La salida fue **un solo agente dueño del backend** (ambos cambios de `Program.cs`), otro dueño del frontend, y el de auditoría escribiendo sólo un doc nuevo. Regla general para fan-out con edición concurrente: **partir por propiedad de archivo**, no por unidad lógica de trabajo.
+
+### Step 4 lo entregué como auditoría, no como código
+
+"Wizard de activación profesional" estaba subespecificado para que un agente lo construyera sin arriesgar el scope equivocado. En vez de adivinar, el agente produjo una auditoría con evidencia (file:line) y un plan P0/P1/P2. El **P0 más jugoso** es un bug real de producto: el campo de **cédula no existe en la UI del portal**, aunque el backend ya lo acepta → el profesional registrado por sign-up público **nunca puede publicar** (su `VerificationStatus` se queda en "pending" sin forma de cambiarlo). Eso solo justificó la auditoría.
+
+### Detalle de datos para la revisión
+
+Las tareas son dominio de psicólogo; el paciente con tareas es **`sofia-leon`** (no `ana-martinez`, cuya profesional es nutrióloga). Sembré 2 tareas reales para sofia (una pendiente, una completada) y borré los 2 artefactos "Tarea verificación" que dejó el agente de backend al probar. Para revisar el toggle: **entrar como `sofia-leon`**.
+
+### Próximo foco
+
+1. **Revisión visual:** toggle de tareas en `/mi-salud` como `sofia-leon`; tabs Recetas/Nutrición como `ana-martinez`.
+2. **Implementar P0 del audit:** input de cédula en `professional-portal-page-client.tsx` + checklist de onboarding en Configuración (desbloquea publicar).
+3. (Opcional) P1 del audit: surface de `missing[]`, email al pasar a "pending", anchors a servicios/disponibilidad.
+4. Marca/dominio → Resend · revisión legal (sin cambios).
