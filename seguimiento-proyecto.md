@@ -2385,6 +2385,36 @@ Ejecutada por un agente **Sonnet** en paralelo con la verificación, vía `scrip
 
 - ~~`git push` / abrir PR~~ ✅ hecho (PR [#1](https://github.com/FerHuCa/clinixa/pull/1)).
 - ~~Limpieza de la pollución de DB diferida~~ ✅ hecho (borrado selectivo, audit_logs preservados).
-- **Frontend de FIX 6 (Opción B):** el backend ya deja al paciente leer recetas/tareas/dietas, falta UI.
-- **Smoke test R-2:** recorrer `/api/*` con dev-auth y fallar ante 401/500 con header válido (evita que la regresión de especialidad vuelva).
+- ~~Frontend de FIX 6 (Opción B)~~ ✅ hecho (página `/mi-salud` — ver abajo).
+- ~~Smoke test R-2~~ ✅ hecho (`scripts/smoke-api.mjs` — ver abajo).
 - (Opcional) Unificar a 403 la respuesta de `dashboard`/`onboarding`/`subscription` para paciente-no-profesional, igual que `payments`.
+
+---
+
+## Frontend FIX 6 + smoke test R-2 — 2026-06-15 (continuación)
+
+Plan trazado en **Opus**, ejecutado en **paralelo por dos agentes Sonnet** (vía Workflow), editando archivos disjuntos. Ambos verdes y verificados de forma independiente.
+
+### FIX 6 (Opción B) — UI del paciente para sus datos clínicos
+
+Página **read-only** consolidada en `/mi-salud` con tres pestañas (Recetas / Tareas / Nutrición), que consume los GET de auto-lectura del paciente ya habilitados en el backend (`loadPrescriptions`/`loadPatientTasks`/`loadPatientDiets` con `currentUser.patientId`). Sin formularios ni mutaciones (no hay PATCH): el alcance verificado del backend es sólo lectura.
+
+- **Archivos nuevos:** `apps/web/app/mi-salud/page.tsx`, `apps/web/app/mi-salud/mi-salud-page-client.tsx`.
+- **Editado:** `apps/web/components/app-shell.tsx` — un ítem de nav `{ href: "/mi-salud", label: "Mi salud", roles: ["patient"] }`.
+- **Patrón:** espeja `nutricion-page-client.tsx` (pestañas) + `Panel`/`PageHeader`/`AppShell`/`UserMenu`. Estados de carga, error por pestaña y vacío; guardas para `!ready`/`sessionError`/no-paciente.
+- **Decisión:** una sola página con pestañas (menos ruido de nav para el paciente) en vez de tres rutas separadas como en el lado profesional.
+- **Validación:** `npm run lint:web` limpio · `tsc --noEmit` limpio (re-corridos de forma independiente).
+
+### Smoke test R-2 — tripwire de 401/500 con auth válida
+
+`scripts/smoke-api.mjs` + script `npm run smoke:api`. Recorre **31 endpoints GET `/api/*`** con la persona dev-auth correcta y **falla si alguno devuelve 401 o 500** (200/201/204/403/404 pasan — no impone semántica de negocio). Espeja el harness de `test-api.mjs`.
+
+- **GET-only / idempotente** a propósito: no escribe en la DB, así que es seguro correrlo repetidas veces (no re-contamina lo que se acaba de limpiar). La cobertura de rutas de escritura vive en `test:api`.
+- **Resultado:** **31/31 PASS**, exit 0 (re-corrido de forma independiente). Cubre público, paciente (`usr-ana-martinez`), profesional (`usr-laura-vega`), psicólogo (`usr-nora-ibarra`) y admin (`usr-master`). Habría atrapado la regresión de especialidad (todos los GET de especialidad daban 401 antes de FIX 1).
+
+### Pendiente tras esta sesión
+
+- (Opcional) Permitir al paciente marcar tareas como completadas (`PATCH /api/patient-tasks/{id}/status`) una vez confirmada la autorización del paciente en ese endpoint; hoy `/mi-salud` es sólo lectura.
+- (Opcional) Unificar a 403 `dashboard`/`onboarding`/`subscription` para paciente-no-profesional.
+- (Opcional) Extender el smoke a rutas de escritura con limpieza propia (los endpoints de especialidad que tuvieron el 500 de UTC no tienen DELETE, así que requeriría limpieza vía DB).
+- Verificación visual de `/mi-salud` en el navegador del usuario (el preview MCP no sirve con Clerk).

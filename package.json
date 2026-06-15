@@ -11,6 +11,7 @@
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",
-    "test:api": "node scripts/test-api.mjs"
+    "test:api": "node scripts/test-api.mjs",
+    "smoke:api": "node scripts/smoke-api.mjs"
   }
 }

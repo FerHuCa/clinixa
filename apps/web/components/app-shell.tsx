@@ -21,6 +21,7 @@ const allNavItems: NavItem[] = [
   { href: "/", label: "Inicio", icon: Home, roles: ["professional", "internal_admin"] },
   { href: "/pacientes", label: "Pacientes", icon: UserRound, roles: ["professional", "internal_admin"] },
   { href: "/portal-paciente", label: "Portal paciente", icon: HeartPulse, roles: ["patient", "internal_admin"] },
+  { href: "/mi-salud", label: "Mi salud", icon: ClipboardList, roles: ["patient"] },
   { href: "/portal-profesional", label: "Configuración", icon: Settings, roles: ["professional", "internal_admin"] },
   { href: "/agenda", label: "Agenda", icon: CalendarDays, roles: ["professional", "internal_admin"] },
   { href: "/expediente", label: "Expediente", icon: ClipboardList, roles: ["professional", "internal_admin"] },

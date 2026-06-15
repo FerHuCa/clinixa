@@ -872,3 +872,32 @@ El agente de verificación marcó en rojo `FIX4 payments ?userId` por devolver *
 ### `audit_logs` preservados
 
 La limpieza dejó intactos los `audit_logs` que referencian entidades QA (no hay FK que obligue a borrarlos). Un registro de auditoría debe sobrevivir al borrado de la entidad auditada; las referencias huérfanas son inocuas. En un reset completo se habrían perdido.
+
+---
+
+## Actualización — 2026-06-15: frontend FIX 6 + smoke test R-2
+
+### Qué se hizo
+
+Plan en **Opus**, ejecución en **paralelo por dos agentes Sonnet** (archivos disjuntos):
+- **FIX 6 (UI):** página read-only `/mi-salud` con pestañas Recetas/Tareas/Nutrición que consume la auto-lectura del paciente. Lint + typecheck limpios.
+- **Smoke R-2:** `scripts/smoke-api.mjs` (`npm run smoke:api`), 31 GET `/api/*` con dev-auth, falla ante 401/500. 31/31 PASS. Detalle en `seguimiento-proyecto.md`.
+
+### Por qué el smoke es GET-only (y qué no cubre)
+
+R-2 nació de que la regresión de especialidad era doble: 401 (por `.RequireAuthorization`) y, al pasarlo, 500 (por UTC en los POST). El smoke captura **el 401 de forma exhaustiva** sobre todas las rutas de lectura. El **500 de escritura no lo cubre a propósito**: los endpoints que lo sufrían (`patient-diets`/`patient-tasks`/`prescriptions`/`body-measurements`) **no tienen DELETE**, así que un smoke de POST dejaría basura permanente — justo lo que acabábamos de limpiar. Un smoke debe ser idempotente; la cobertura de escritura vive en `test:api`. Si se quiere cerrar ese hueco, hace falta una variante con limpieza vía DB.
+
+### Decisión de UX: una página con pestañas, no tres rutas
+
+El lado profesional tiene `/recetas`, `/tareas-paciente`, `/nutricion` separadas (cada especialidad ve la suya). El paciente no tiene especialidad y vería las tres → en vez de tres ítems de nav, una sola entrada "Mi salud" con pestañas. Menos ruido y mejor para un paciente que quizá sólo usa una.
+
+### Lo que quedó fuera (a propósito)
+
+`/mi-salud` es **sólo lectura**. Que el paciente marque una tarea como completada (`PATCH /api/patient-tasks/{id}/status`) es deseable, pero la autorización del **paciente** sobre ese PATCH no está verificada (FIX 6 fue GET-only). No se ships un botón que podría dar 403. Queda como follow-up tras confirmar el backend.
+
+### Próximo foco actualizado
+
+1. **Verificación visual de `/mi-salud`** en el navegador (el preview MCP no sirve con Clerk; lo valida el usuario).
+2. (Opcional) PATCH de tareas por el paciente + smoke de escritura con limpieza.
+3. (Opcional) Unificar a 403 `dashboard`/`onboarding`/`subscription`.
+4. Onboarding en navegador · wizard de activación · marca/dominio → Resend · revisión legal (sin cambios).
