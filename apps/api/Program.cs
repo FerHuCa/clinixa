@@ -125,7 +125,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-const string DefaultDemoUserId = "usr-ana-martinez";
 const int SessionHours = 8;
 const int MaxActiveSessionsPerUser = 5;
 
@@ -176,21 +175,11 @@ app.MapGet("/health", async (HealthHubDbContext db) =>
     });
 });
 
-app.MapGet("/api/me", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+app.MapGet("/api/me", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var user = await GetUserFromRequestAsync(request, db);
 
-    if (user is null && IsDevAuthEnabled(request))
-    {
-        var sessionUserId = string.IsNullOrWhiteSpace(userId) ? DefaultDemoUserId : userId.Trim();
-        user = await db.Users
-            .AsNoTracking()
-            .Include(item => item.Patient)
-            .Include(item => item.Professional)
-            .FirstOrDefaultAsync(item => item.Id == sessionUserId);
-    }
-
-    return user is null ? Results.NotFound() : Results.Ok(user.ToCurrentUserDto());
+    return user is null ? Results.Unauthorized() : Results.Ok(user.ToCurrentUserDto());
 });
 
 app.MapPatch("/api/me", async (HttpRequest request, UpdateMyProfileRequest updateRequest, HealthHubDbContext db) =>
@@ -745,6 +734,23 @@ appointmentsApi.MapPost("/", async (HttpRequest httpRequest, CreateAppointmentRe
         AddAuditLog(db, httpRequest, actor, "appointment.create.denied", "appointment", "new", patient.Id, professional?.Id, "denied");
         await db.SaveChangesAsync();
         return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    // NUEVO: un profesional sólo puede agendar para pacientes con relación activa previa.
+    // (El flujo legítimo profesional->paciente nuevo se crea cuando el PACIENTE agenda; ver auto-relación abajo.)
+    if (actor is { PrimaryRole: "professional", Professional: not null } && professional is not null
+        && actor.Professional.Id == professional.Id)
+    {
+        var hasRelation = await db.ProfessionalPatients
+            .AnyAsync(pp => pp.ProfessionalId == professional.Id
+                         && pp.PatientId == patient.Id
+                         && pp.Status == "active");
+        if (!hasRelation)
+        {
+            AddAuditLog(db, httpRequest, actor, "appointment.create.denied", "appointment", "new", patient.Id, professional.Id, "no_relation");
+            await db.SaveChangesAsync();
+            return Results.StatusCode(StatusCodes.Status403Forbidden);
+        }
     }
 
     var appointment = new Appointment
@@ -1808,18 +1814,9 @@ professionalsApi.MapGet("/{id}/available-slots", async (string id, string servic
 
 var patientPortalApi = app.MapGroup("/api/patient-portal");
 
-patientPortalApi.MapGet("/appointments", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+patientPortalApi.MapGet("/appointments", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request))
-    {
-        var sessionUserId = string.IsNullOrWhiteSpace(userId) ? DefaultDemoUserId : userId.Trim();
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Patient)
-            .FirstOrDefaultAsync(user => user.Id == sessionUserId);
-    }
 
     if (currentUser?.Patient is null)
     {
@@ -1843,18 +1840,9 @@ patientPortalApi.MapGet("/appointments", async (HttpRequest request, string? use
         .ToList());
 });
 
-patientPortalApi.MapGet("/records", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+patientPortalApi.MapGet("/records", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request))
-    {
-        var sessionUserId = string.IsNullOrWhiteSpace(userId) ? DefaultDemoUserId : userId.Trim();
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Patient)
-            .FirstOrDefaultAsync(user => user.Id == sessionUserId);
-    }
 
     if (currentUser?.Patient is null)
     {
@@ -1880,17 +1868,9 @@ patientPortalApi.MapGet("/records", async (HttpRequest request, string? userId, 
 
 var professionalPortalApi = app.MapGroup("/api/professional-portal");
 
-professionalPortalApi.MapGet("/dashboard", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+professionalPortalApi.MapGet("/dashboard", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request) && !string.IsNullOrWhiteSpace(userId))
-    {
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Professional)
-            .FirstOrDefaultAsync(user => user.Id == userId.Trim());
-    }
 
     if (currentUser?.Professional is null)
     {
@@ -2029,6 +2009,17 @@ professionalPortalApi.MapPost("/availability", async (HttpRequest request, Creat
         return Results.BadRequest(new { errors });
     }
 
+    var duplicate = await db.ProfessionalAvailability.AnyAsync(item =>
+        item.ProfessionalId == actor.Professional.Id &&
+        item.Weekday == availabilityRequest.Weekday &&
+        item.StartsAt == availabilityRequest.StartsAt.Trim() &&
+        item.EndsAt == availabilityRequest.EndsAt.Trim() &&
+        item.Status == "active");
+    if (duplicate)
+    {
+        return Results.Conflict(new { errors = new[] { "Ya existe una franja activa idéntica." } });
+    }
+
     var availability = new ProfessionalAvailability
     {
         Id = $"av-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-{Guid.NewGuid():N}",
@@ -2088,17 +2079,9 @@ professionalPortalApi.MapPatch("/availability/{id}", async (HttpRequest request,
     return Results.Ok(availability.ToDto());
 });
 
-professionalPortalApi.MapGet("/onboarding", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+professionalPortalApi.MapGet("/onboarding", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request) && !string.IsNullOrWhiteSpace(userId))
-    {
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Professional)
-            .FirstOrDefaultAsync(user => user.Id == userId.Trim());
-    }
 
     if (currentUser?.Professional is null)
     {
@@ -2222,17 +2205,9 @@ professionalPortalApi.MapPost("/publish", async (HttpRequest request, HealthHubD
 
 // Estado de cuenta mensual del profesional autenticado: pagos de sus citas con desglose
 // bruto/comision/neto y totales por metodo. month=YYYY-MM (default: mes actual UTC).
-professionalPortalApi.MapGet("/payments", async (HttpRequest request, string? month, string? userId, HealthHubDbContext db) =>
+professionalPortalApi.MapGet("/payments", async (HttpRequest request, string? month, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request) && !string.IsNullOrWhiteSpace(userId))
-    {
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Professional)
-            .FirstOrDefaultAsync(user => user.Id == userId.Trim());
-    }
 
     if (currentUser is null)
     {
@@ -2316,17 +2291,9 @@ professionalPortalApi.MapGet("/payments", async (HttpRequest request, string? mo
 
 // Estado del trial y planes de suscripcion del piloto. El trial corre desde la creacion de la
 // cuenta (User.CreatedAt) y dura 14 dias. Lectura ligera de configuracion propia: no se audita.
-professionalPortalApi.MapGet("/subscription", async (HttpRequest request, string? userId, HealthHubDbContext db) =>
+professionalPortalApi.MapGet("/subscription", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
-
-    if (currentUser is null && IsDevAuthEnabled(request) && !string.IsNullOrWhiteSpace(userId))
-    {
-        currentUser = await db.Users
-            .AsNoTracking()
-            .Include(user => user.Professional)
-            .FirstOrDefaultAsync(user => user.Id == userId.Trim());
-    }
 
     if (currentUser is null)
     {
@@ -3587,6 +3554,22 @@ soapNotesApi.MapDelete("/{id}", async (HttpRequest request, string id, HealthHub
 // GET /api/prescriptions?patientId={id}
 app.MapGet("/api/prescriptions", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
 {
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+
+    // FIX 6 (opción B): el propio paciente puede leer sus recetas activas.
+    if (actor is { PrimaryRole: "patient", Patient: not null })
+    {
+        var ownPrescriptions = await db.Prescriptions
+            .AsNoTracking()
+            .Include(p => p.Patient)
+            .Where(p => p.PatientId == actor.Patient.Id && p.Status == "active")
+            .OrderByDescending(p => p.IssuedAt)
+            .Take(100)
+            .ToListAsync();
+        return Results.Ok(ownPrescriptions.Select(p => ToPrescriptionDto(p)));
+    }
+
     var (pro, error) = await GetAuthorizedProfessional(request, db, "doctor");
     if (error is not null) return error;
 
@@ -3600,7 +3583,7 @@ app.MapGet("/api/prescriptions", async (HttpRequest request, HealthHubDbContext 
 
     var items = await query.OrderByDescending(p => p.IssuedAt).Take(100).ToListAsync();
     return Results.Ok(items.Select(p => ToPrescriptionDto(p)));
-}).RequireAuthorization();
+});
 
 // POST /api/prescriptions
 app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext db, CreatePrescriptionRequest req) =>
@@ -3618,7 +3601,7 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
     {
         if (!DateTimeOffset.TryParse(req.ExpiresAt, out var parsed))
             return Results.BadRequest(new { errors = new[] { "Fecha de vencimiento inválida." } });
-        expiresAt = parsed;
+        expiresAt = parsed.ToUniversalTime();
     }
 
     var prescription = new Prescription
@@ -3643,10 +3626,26 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
     return Results.Created(
         $"/api/prescriptions/{prescription.Id}",
         ToPrescriptionDto(prescription, patient?.FullName));
-}).RequireAuthorization();
+});
 
 app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
 {
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+
+    // FIX 6 (opción B): el propio paciente puede leer sus tareas.
+    if (actor is { PrimaryRole: "patient", Patient: not null })
+    {
+        var ownTasks = await db.PatientTasks
+            .AsNoTracking()
+            .Include(t => t.Patient)
+            .Where(t => t.PatientId == actor.Patient.Id)
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+        return Results.Ok(ownTasks.Select(t => ToPatientTaskDto(t, t.Patient?.FullName)).ToList());
+    }
+
     var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
     if (err is not null) return err;
 
@@ -3664,7 +3663,7 @@ app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext 
         .ToListAsync();
 
     return Results.Ok(tasks.Select(t => ToPatientTaskDto(t, t.Patient?.FullName)).ToList());
-}).RequireAuthorization();
+});
 
 app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, CreatePatientTaskRequest req) =>
 {
@@ -3680,7 +3679,7 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
     {
         if (!DateTimeOffset.TryParse(req.DueDate, out var parsed))
             return Results.BadRequest(new { errors = new[] { "Fecha de vencimiento inválida." } });
-        dueDate = parsed;
+        dueDate = parsed.ToUniversalTime();
     }
 
     var patient = await db.Patients.FindAsync(req.PatientId);
@@ -3700,7 +3699,7 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/patient-tasks/{task.Id}", ToPatientTaskDto(task, patient.FullName));
-}).RequireAuthorization();
+});
 
 app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, HealthHubDbContext db, string id, UpdatePatientTaskStatusRequest req) =>
 {
@@ -3728,10 +3727,26 @@ app.MapPatch("/api/patient-tasks/{id}/status", async (HttpRequest request, Healt
 
     await db.SaveChangesAsync();
     return Results.Ok(ToPatientTaskDto(task, task.Patient?.FullName));
-}).RequireAuthorization();
+});
 
 app.MapGet("/api/patient-diets", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
 {
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+
+    // FIX 6 (opción B): el propio paciente puede leer sus dietas activas.
+    if (actor is { PrimaryRole: "patient", Patient: not null })
+    {
+        var ownDiets = await db.PatientDiets
+            .AsNoTracking()
+            .Include(d => d.Patient)
+            .Where(d => d.PatientId == actor.Patient.Id && d.Status == "active")
+            .OrderByDescending(d => d.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+        return Results.Ok(ownDiets.Select(d => ToPatientDietDto(d, d.Patient?.FullName)).ToList());
+    }
+
     var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
     if (err is not null) return err;
 
@@ -3749,7 +3764,7 @@ app.MapGet("/api/patient-diets", async (HttpRequest request, HealthHubDbContext 
         .ToListAsync();
 
     return Results.Ok(diets.Select(d => ToPatientDietDto(d, d.Patient?.FullName)).ToList());
-}).RequireAuthorization();
+});
 
 app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext db, CreatePatientDietRequest req) =>
 {
@@ -3771,7 +3786,7 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
     {
         if (!DateTimeOffset.TryParse(req.ValidUntil, out var parsed))
             return Results.BadRequest(new { errors = new[] { "Fecha de fin inválida." } });
-        validUntil = parsed;
+        validUntil = parsed.ToUniversalTime();
     }
 
     var diet = new PatientDiet
@@ -3780,7 +3795,7 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
         ProfessionalId = pro!.Id,
         Title = req.Title,
         Content = req.Content,
-        ValidFrom = validFrom,
+        ValidFrom = validFrom.ToUniversalTime(),
         ValidUntil = validUntil,
     };
 
@@ -3788,7 +3803,7 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/patient-diets/{diet.Id}", ToPatientDietDto(diet, patient.FullName));
-}).RequireAuthorization();
+});
 
 app.MapGet("/api/body-measurements", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
 {
@@ -3809,7 +3824,7 @@ app.MapGet("/api/body-measurements", async (HttpRequest request, HealthHubDbCont
         .ToListAsync();
 
     return Results.Ok(measurements.Select(m => ToBodyMeasurementDto(m, m.Patient?.FullName)).ToList());
-}).RequireAuthorization();
+});
 
 app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbContext db, CreateBodyMeasurementRequest req) =>
 {
@@ -3830,7 +3845,7 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
     {
         PatientId = req.PatientId,
         ProfessionalId = pro!.Id,
-        MeasuredAt = measuredAt,
+        MeasuredAt = measuredAt.ToUniversalTime(),
         WeightKg = req.WeightKg,
         HeightCm = req.HeightCm,
         WaistCm = req.WaistCm,
@@ -3845,7 +3860,7 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/body-measurements/{measurement.Id}", ToBodyMeasurementDto(measurement, patient.FullName));
-}).RequireAuthorization();
+});
 
 app.Run();
 
@@ -4633,19 +4648,12 @@ static async Task<List<string>?> GetAccessiblePatientIdsAsync(User actor, Health
         }
 
         var professionalId = actor.Professional.Id;
-        var relationPatientIds = await db.ProfessionalPatients
+        return await db.ProfessionalPatients
             .AsNoTracking()
             .Where(relation => relation.ProfessionalId == professionalId && relation.Status == "active")
             .Select(relation => relation.PatientId)
-            .ToListAsync();
-        var appointmentPatientIds = await db.Appointments
-            .AsNoTracking()
-            .Where(appointment => appointment.ProfessionalId == professionalId)
-            .Select(appointment => appointment.PatientId)
             .Distinct()
             .ToListAsync();
-
-        return relationPatientIds.Union(appointmentPatientIds).Distinct().ToList();
     }
 
     if (actor.PrimaryRole == "clinic_admin")
@@ -5041,6 +5049,8 @@ static List<AvailableSlotDto> BuildAvailableSlots(
     }
 
     return slots
+        .GroupBy(item => item.Id)
+        .Select(group => group.First())
         .OrderBy(item => item.Date)
         .ThenBy(item => item.Time)
         .Take(40)
