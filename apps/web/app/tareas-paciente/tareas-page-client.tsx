@@ -36,7 +36,7 @@ export function TareasPageClient() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "completed" | "skipped">("pending");
+  const [activeTab, setActiveTab] = useState<(typeof STATUS_TABS)[number]["value"]>("pending");
   const [message, setMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -74,6 +74,7 @@ export function TareasPageClient() {
   }
 
   async function handleToggle(task: PatientTask) {
+    if (task.status === "skipped") return;
     const nextStatus = task.status === "pending" ? "completed" : "pending";
     try {
       const updated = await updatePatientTaskStatus(task.id, nextStatus);

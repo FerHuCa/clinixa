@@ -292,7 +292,7 @@ export type PatientTask = {
   title: string;
   description: string;
   dueDate: string | null;
-  status: string;
+  status: "pending" | "completed" | "skipped";
   completedAt: string | null;
   patientNotes: string | null;
   createdAt: string;
@@ -1636,7 +1636,9 @@ export function useHealthHubStore() {
         status: string,
         patientNotes?: string
       ): Promise<PatientTask> {
-        const task = await apiPatch<PatientTask>(`/api/patient-tasks/${id}/status`, { status, patientNotes });
+        const body: { status: string; patientNotes?: string } = { status };
+        if (patientNotes !== undefined) body.patientNotes = patientNotes;
+        const task = await apiPatch<PatientTask>(`/api/patient-tasks/${id}/status`, body);
         setApiStatus("connected");
         return task;
       },
