@@ -284,6 +284,19 @@ export type Prescription = {
   issuedAt: string;
   expiresAt: string | null;
 };
+export type PatientTask = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  appointmentId: string | null;
+  title: string;
+  description: string;
+  dueDate: string | null;
+  status: string;
+  completedAt: string | null;
+  patientNotes: string | null;
+  createdAt: string;
+};
 
 type HealthHubState = {
   patients: Patient[];
@@ -1601,6 +1614,31 @@ export function useHealthHubStore() {
         const prescription = await apiPost<Prescription>("/api/prescriptions", data);
         setApiStatus("connected");
         return prescription;
+      },
+      async loadPatientTasks(patientId?: string): Promise<PatientTask[]> {
+        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+        const tasks = await apiGet<PatientTask[]>(`/api/patient-tasks${query}`);
+        setApiStatus("connected");
+        return tasks;
+      },
+      async createPatientTask(data: {
+        patientId: string;
+        title: string;
+        description: string;
+        dueDate?: string;
+      }): Promise<PatientTask> {
+        const task = await apiPost<PatientTask>("/api/patient-tasks", data);
+        setApiStatus("connected");
+        return task;
+      },
+      async updatePatientTaskStatus(
+        id: string,
+        status: string,
+        patientNotes?: string
+      ): Promise<PatientTask> {
+        const task = await apiPatch<PatientTask>(`/api/patient-tasks/${id}/status`, { status, patientNotes });
+        setApiStatus("connected");
+        return task;
       },
       resetDemoState() {
         invalidateSession();
