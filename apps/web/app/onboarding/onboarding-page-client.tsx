@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Activity, Brain, Plus, Salad, Stethoscope, UserRound } from "lucide-react";
+import { Activity, Brain, Plus, Salad, Stethoscope, UserRound, type LucideIcon } from "lucide-react";
 import { useHealthHubStore } from "@/lib/healthhub-store";
+import { SPECIALTY_OPTIONS } from "@/lib/specialty-labels";
 
 type OnboardingData = {
   fullName: string;
@@ -19,13 +20,15 @@ const ROLE_CONSENT: Record<"patient" | "professional", string> = {
   professional: "professional_data_processing"
 };
 
-const SPECIALTIES = [
-  { value: "doctor", label: "Medicina General", icon: Stethoscope },
-  { value: "psychologist", label: "Psicología", icon: Brain },
-  { value: "physiotherapist", label: "Fisioterapia", icon: Activity },
-  { value: "nutritionist", label: "Nutrición", icon: Salad },
-  { value: "other", label: "Otra especialidad", icon: Plus }
-] as const;
+// Los labels/valores son la fuente única en specialty-labels.ts (R6); aquí solo se
+// mapea un ícono por especialidad para las tarjetas de selección.
+const SPECIALTY_ICONS: Record<string, LucideIcon> = {
+  doctor: Stethoscope,
+  nutritionist: Salad,
+  other: Plus,
+  physiotherapist: Activity,
+  psychologist: Brain
+};
 
 export function OnboardingPageClient() {
   const router = useRouter();
@@ -121,7 +124,9 @@ export function OnboardingPageClient() {
       });
       await recordConsent([...PRIVACY_AND_TERMS, ROLE_CONSENT[data.role]]);
       const user = await refreshSession();
-      const portalHref = user.primaryRole === "professional" ? "/portal-profesional" : "/portal-paciente";
+      // El profesional recién onboardeado nunca está publicado: lo llevamos al wizard
+      // de activación guiada en lugar del portal completo.
+      const portalHref = user.primaryRole === "professional" ? "/activacion" : "/portal-paciente";
       router.push(portalHref);
     } catch {
       setError("No se pudo guardar tu perfil o consentimiento. Intenta de nuevo o ve a sesión.");
@@ -231,7 +236,10 @@ export function OnboardingPageClient() {
                 <span className="ml-1 text-red-500">*</span>
               </label>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {SPECIALTIES.map(({ value, label, icon: Icon }) => (
+                {SPECIALTY_OPTIONS.map(({ value, label }) => {
+                  const Icon = SPECIALTY_ICONS[value] ?? Plus;
+
+                  return (
                   <button
                     key={value}
                     className={`flex flex-col items-center gap-1.5 rounded-md border-2 px-3 py-3 text-xs font-medium transition ${
@@ -246,7 +254,8 @@ export function OnboardingPageClient() {
                     <Icon size={20} />
                     {label}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

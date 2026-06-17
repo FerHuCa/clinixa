@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import { Activity, CalendarDays, ClipboardCheck, ClipboardList, HeartPulse, Home, LogIn, Pill, Salad, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { clsx } from "clsx";
 import { LegalFooter } from "@/components/legal-footer";
-import { useHealthHubStore, type SubscriptionStatus } from "@/lib/healthhub-store";
+import { useHealthHubStore, type ProfessionalOnboarding, type SubscriptionStatus } from "@/lib/healthhub-store";
 
 type NavItem = {
   href: string;
@@ -59,10 +59,20 @@ function getHomeHref(userRole: string): string {
   }
 }
 
+function activationStepsDone(onboarding: ProfessionalOnboarding): number {
+  return [
+    onboarding.profileComplete,
+    onboarding.hasServices,
+    onboarding.hasAvailability,
+    onboarding.profileComplete && onboarding.hasServices && onboarding.hasAvailability && onboarding.canPublish
+  ].filter(Boolean).length;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { currentUser, loadSubscription, ready, sessionError, apiStatus } = useHealthHubStore();
+  const { currentUser, loadProfessionalOnboarding, loadSubscription, ready, sessionError, apiStatus } = useHealthHubStore();
   const [subscriptionState, setSubscriptionState] = useState<{ userId: string; data: SubscriptionStatus | null } | null>(null);
+  const [activationState, setActivationState] = useState<{ userId: string; done: number } | null>(null);
 
   const isProfessional = ready && !sessionError && currentUser.primaryRole === "professional";
 
@@ -86,12 +96,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [currentUser.id, isProfessional, loadSubscription]);
 
+  // Indicador de activación para profesionales no publicados. Degrada silencioso
+  // si el endpoint falla o el profesional ya está publicado.
+  useEffect(() => {
+    if (!isProfessional) {
+      return;
+    }
+
+    let cancelled = false;
+
+    loadProfessionalOnboarding().then((next) => {
+      if (!cancelled && next && !next.isPublished) {
+        setActivationState({ done: activationStepsDone(next), userId: currentUser.id });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser.id, isProfessional, loadProfessionalOnboarding]);
+
   // El estado queda amarrado al usuario que lo cargó: al cambiar de sesión no se
   // muestra el trial de la identidad anterior mientras llega el nuevo.
   const subscription = subscriptionState && subscriptionState.userId === currentUser.id ? subscriptionState.data : null;
 
   // En /suscripcion la página ya muestra el estado completo del plan: sin banner.
   const trialBanner = isProfessional && subscription && !pathname.startsWith("/suscripcion") ? subscription : null;
+  // Indicador pequeño de activación: solo para profesionales no publicados y fuera de /activacion.
+  const activation =
+    isProfessional && activationState && activationState.userId === currentUser.id && !pathname.startsWith("/activacion")
+      ? activationState
+      : null;
   // Hasta que la sesion no este resuelta no filtramos el nav por rol ni enlazamos
   // el logo a una ruta por rol: evita renderizar el menu/destino de una identidad
   // seed/stale. Con sessionError el rol es "guest" y tampoco hay menu.
@@ -133,6 +168,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {activation ? (
+          <Link
+            className="mt-6 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
+            href="/activacion"
+          >
+            <span>Activación</span>
+            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-900">
+              {activation.done}/4
+            </span>
+          </Link>
+        ) : null}
       </aside>
 
       <header className="sticky top-0 z-20 border-b border-border bg-white px-4 py-3 lg:hidden">

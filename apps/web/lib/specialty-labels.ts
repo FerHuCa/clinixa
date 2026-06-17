@@ -9,6 +9,16 @@ const SPECIALTY_LABELS: Record<string, string> = {
   other: "Salud"
 };
 
+/** Opciones canónicas de especialidad para usar en los <select> del onboarding y del portal.
+ *  Mantenerlas aquí garantiza que los labels sean idénticos en ambas superficies. */
+export const SPECIALTY_OPTIONS: { value: string; label: string }[] = [
+  { label: "Medicina", value: "doctor" },
+  { label: "Psicología", value: "psychologist" },
+  { label: "Fisioterapia", value: "physiotherapist" },
+  { label: "Nutrición", value: "nutritionist" },
+  { label: "Otra especialidad", value: "other" }
+];
+
 export function specialtyLabelFor(specialty: string | null | undefined): string {
   const normalized = (specialty ?? "").trim();
 

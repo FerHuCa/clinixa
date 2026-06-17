@@ -64,6 +64,20 @@ public sealed class EmailSender(IConfiguration configuration, ILogger<EmailSende
         """;
 
     /// <summary>
+    /// Notificacion al profesional cuando su cedula pasa a revision manual (VerificationStatus = "pending").
+    /// </summary>
+    public static string BuildVerificationPendingEmail(string displayName) =>
+        $"""
+        <div style="font-family: Arial, sans-serif; color: #0f172a;">
+          <h2>Tu cédula profesional está en revisión</h2>
+          <p>Hola {displayName}, hemos recibido tu cédula profesional en Clinixa.</p>
+          <p>Nuestro equipo la revisará manualmente en <strong>1 a 2 días hábiles</strong>. Una vez completada la verificación recibirás un aviso por correo electrónico.</p>
+          <p>Mientras tanto puedes seguir completando tu perfil: agrega tu foto, descripción, servicios y disponibilidad para estar listo en cuanto se confirme tu cédula.</p>
+          <p style="color:#64748b;font-size:13px;">Si tienes dudas, escríbenos a soporte@clinixa.mx.</p>
+        </div>
+        """;
+
+    /// <summary>
     /// Traduce el modo de la cita a una etiqueta legible en espanol.
     /// </summary>
     private static string ModeLabel(string mode) =>

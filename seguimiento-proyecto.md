@@ -2452,5 +2452,82 @@ Plan en **Opus**, ejecución en **paralelo por 3 agentes Sonnet** (vía Workflow
 
 ### Pendiente
 
-- Implementar el plan del audit (P0: cédula en portal profesional + checklist en Configuración).
+- ~~Implementar el plan del audit (P0: cédula en portal profesional + checklist en Configuración)~~ ✅ hecho (ver sección siguiente).
 - Verificación visual del toggle de tareas en `/mi-salud` como `sofia-leon`.
+
+---
+
+## P0 onboarding: cédula + checklist en Configuración — 2026-06-17
+
+### Contexto
+
+El audit del 2026-06-15 identificó dos bloqueantes P0 que impedían que un profesional publicara su perfil:
+- **HUE-01**: no había input de cédula (`LicenseNumber`) en el portal profesional → `VerificationStatus` quedaba "pending" indefinidamente.
+- **HUE-02**: el checklist de onboarding solo existía en Inicio, no en Configuración (donde el profesional edita su perfil).
+
+El backend ya aceptaba `LicenseNumber` en `PATCH /api/professional-portal/profile`; la corrección fue puramente de UI.
+
+### Qué se hizo
+
+**Archivo editado:** `apps/web/app/portal-profesional/professional-portal-page-client.tsx`
+
+- **HUE-01 — Campo de cédula**: se agregó `licenseNumber` al tipo `ProfileDraft`, se inicializa desde `source.licenseNumber`, y se renderiza un `<input>` antes del campo de WhatsApp con nota "Requerida para publicar tu perfil".
+- **HUE-02 — Checklist en Configuración**: el banner de "modo borrador" (que antes solo decía "revisa tus pasos en Inicio") ahora muestra un checklist de 4 pasos inline: perfil completo, servicios, disponibilidad y cédula verificada por Clinixa.
+
+### Flujo de publicación post-P0
+
+1. Profesional llena bio, ubicación y **cédula** en Configuración → guarda.
+2. El backend recibe el PATCH, persiste `LicenseNumber` y puede cambiar `VerificationStatus` a `"pending_review"`.
+3. Admin verifica la cédula (flujo de admin, HUE-05 futuro) → `VerificationStatus = "verified"`.
+4. `canPublish` pasa a `true` → botón "Publicar perfil" se habilita.
+
+### Validaciones
+
+- `npm run build:web`: **limpio**.
+- `tsc --noEmit`: **limpio**.
+- `npm run lint:web`: **limpio**.
+
+### Pendiente siguiente (P1)
+
+~~Ver `AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md` para HUE-03..HUE-09.~~ ✅ **P1 y P2 completados** — ver sección siguiente.
+
+---
+
+## P1 + P2 onboarding/activación — 2026-06-17
+
+### Contexto
+
+Tras el P0 (cédula + checklist), se ejecutó el resto del plan priorizado del audit (`AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md` §3). Plan diseñado en **Opus** (`PLAN-P1-P2-ONBOARDING-2026-06-17.md`), ejecutado por **3 agentes Sonnet en paralelo divididos por propiedad de archivo** (frontend UX / backend email / wizard+shell). El agente de frontend se cortó a media tarea; el orquestador (Opus) terminó la integración de `page.tsx`, `onboarding-page-client.tsx` y el cableado del componente compartido en ambas páginas.
+
+### P1 — Experiencia mejorada
+
+- **P1-1** — `onboarding.missing[]` ahora se muestra proactivamente (lista con bullets) en el banner de activación de **Inicio** y **Configuración**, no solo como error post-click de "Publicar".
+- **P1-2** — El paso de cédula del checklist trae sub-texto: *"Ingresa tu número de cédula en Configuración. El equipo de Clinixa la revisará manualmente (1-2 días hábiles)."*
+- **P1-3** — Anclas `id="servicios"` e `id="disponibilidad"` en los paneles del portal (vía nueva prop `id` en `components/panel.tsx`); deep-links desde el checklist.
+- **P1-4** — `PATCH /api/professional-portal/profile`: al cambiar la cédula (→ `VerificationStatus="pending"`) se envía email best-effort al profesional (`EmailSender.BuildVerificationPendingEmail`, vía `actor.Email`, en try/catch). Auditoría `professional_license.verification.pending`.
+- **P1-5 / R6** — Fuente única de especialidades: `lib/specialty-labels.ts` ahora exporta `SPECIALTY_OPTIONS` (value+label canónicos), usado en los selects de onboarding (tarjetas con iconos mapeados localmente) y de Configuración. Unifica labels (antes "Medicina General" vs "Medicina", "other"→"Salud").
+- **DRY (P0-2 del audit)** — Componente compartido `components/onboarding-checklist.tsx` (`OnboardingChecklist` + helper `buildChecklistSteps`) reutilizado en Inicio y Configuración.
+
+### P2 — Wizard guiado
+
+- **P2-1** — Nueva ruta `/activacion`: wizard de 4 pasos (perfil → servicio → disponibilidad → cédula) reusando acciones del store ya existentes. Stepper visual, **saltable** ("Ir al portal" siempre visible), precarga pasos ya cumplidos vía `loadProfessionalOnboarding`. El onboarding ahora redirige al profesional recién registrado a `/activacion` en vez de `/portal-profesional`.
+- **P2-2** — `components/app-shell.tsx`: indicador "Activación: N/4" en la barra lateral para profesionales no publicados, enlazado a `/activacion` (carga el onboarding una vez, degrada silencioso).
+
+### Fuera de alcance (decisiones de producto, R1-R6 del audit)
+
+No abordados a propósito: SLA de verificación (R1), wizard obligatorio vs saltable se decidió **saltable** (R2), specialty "other" sin módulo (R3), DELETE de disponibilidad (R4), invitación sin cédula (R5).
+
+### Validación
+
+- `build:api` **0 errores/0 warnings** · `build:web` **✓** (ruta `/activacion` compilada) · `tsc --noEmit` **limpio** · `lint:web` **limpio** · `smoke:api` **31/31**.
+- Verificación visual del wizard en navegador: **pendiente del usuario** (el preview MCP no sirve con Clerk). Login Laura Vega → `/activacion`.
+
+### Resend
+
+Guía de configuración real creada: `RESEND_SETUP.md` (dominio verificado + `RESEND_API_KEY`/`RESEND_FROM` + `WEB_BASE_URL`). Sin clave, los envíos degradan a `[EMAIL SIMULADO]`.
+
+### Pendiente
+
+- Verificación visual de `/activacion` y del indicador del shell como Laura Vega.
+- Conectar Resend real (requiere dominio de marca definitivo).
+- P-siguientes del producto: páginas públicas SEO, foto/avatar de perfil, panel de verificación de cédula más rico para admin.

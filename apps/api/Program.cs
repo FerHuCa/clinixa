@@ -2113,7 +2113,7 @@ professionalPortalApi.MapGet("/onboarding", async (HttpRequest request, HealthHu
     return Results.Ok(BuildOnboardingStatus(professional));
 });
 
-professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdateProfessionalProfileRequest profileRequest, HealthHubDbContext db) =>
+professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdateProfessionalProfileRequest profileRequest, EmailSender emailSender, HealthHubDbContext db) =>
 {
     var actor = await GetUserFromRequestAsync(request, db);
 
@@ -2153,6 +2153,7 @@ professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdatePro
         professional.WhatsappNumber = profileRequest.WhatsappNumber.Trim();
     }
 
+    var verificationReset = false;
     if (!string.IsNullOrWhiteSpace(profileRequest.LicenseNumber) &&
         profileRequest.LicenseNumber.Trim() != professional.LicenseNumber)
     {
@@ -2162,6 +2163,7 @@ professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdatePro
         professional.VerificationStatus = "pending";
         professional.LicenseVerifiedAt = null;
         professional.LicenseVerifiedBy = null;
+        verificationReset = true;
     }
 
     if (!string.IsNullOrWhiteSpace(profileRequest.Timezone))
@@ -2172,7 +2174,32 @@ professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdatePro
     professional.UpdatedAt = DateTimeOffset.UtcNow;
 
     AddAuditLog(db, request, actor, "professional_profile.update", "professional", professional.Id, null, professional.Id);
+
+    if (verificationReset)
+    {
+        AddAuditLog(db, request, actor, "professional_license.verification.pending", "professional", professional.Id, null, professional.LicenseNumber);
+    }
+
     await db.SaveChangesAsync();
+
+    if (verificationReset)
+    {
+        try
+        {
+            var professionalEmail = actor.Email;
+            if (!string.IsNullOrWhiteSpace(professionalEmail))
+            {
+                await emailSender.SendAsync(
+                    professionalEmail,
+                    "Tu cédula profesional está en revisión",
+                    EmailSender.BuildVerificationPendingEmail(professional.DisplayName));
+            }
+        }
+        catch
+        {
+            // Best-effort: nunca romper la respuesta por un fallo de email
+        }
+    }
 
     return Results.Ok(professional.ToDto());
 });

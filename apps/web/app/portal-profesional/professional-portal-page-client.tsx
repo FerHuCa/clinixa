@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Banknote, CheckCircle2, Home, MapPin, Plus, Rocket, Save, Stethoscope } from "lucide-react";
+import { Banknote, CheckCircle2, Home, MapPin, Plus, Save, Stethoscope } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { MarketplacePanel } from "@/components/marketplace-panel";
+import { OnboardingChecklist, buildChecklistSteps } from "@/components/onboarding-checklist";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
 import { StatusPill } from "@/components/status-pill";
 import { UserMenu } from "@/components/user-menu";
 import { pagoStatusUiFor } from "@/lib/appointment-states";
+import { SPECIALTY_OPTIONS } from "@/lib/specialty-labels";
 import {
   useHealthHubStore,
   type ProfessionalAvailability,
@@ -27,6 +29,7 @@ type ProfileDraft = {
   appointmentMode: string;
   basePrice: number;
   whatsappNumber: string;
+  licenseNumber: string;
 };
 
 type ServiceDraft = {
@@ -162,6 +165,7 @@ export function ProfessionalPortalPageClient() {
             basePrice: source.basePrice,
             bio: source.bio.startsWith("Perfil creado desde una invitacion") ? "" : source.bio,
             displayName: source.displayName,
+            licenseNumber: source.licenseNumber ?? "",
             location: source.location,
             specialty: source.specialty,
             whatsappNumber: source.whatsappNumber ?? ""
@@ -207,6 +211,14 @@ export function ProfessionalPortalPageClient() {
 
   const currentProfessionalId = dashboard?.professional.id ?? currentUser.professionalId;
   const professional = dashboard?.professional ?? professionals.find((item) => item.id === currentProfessionalId);
+
+  // Checklist de activación compartido con Inicio. La conexión de Mercado Pago vive
+  // en su propio panel (MarketplacePanel) y no es requisito para publicar, así que aquí
+  // el paso de cobros se muestra como pendiente; el gate real de publicación es canPublish.
+  const checklistSteps = onboarding
+    ? buildChecklistSteps(onboarding, professional?.verificationStatus, false)
+    : [];
+  const completedSteps = checklistSteps.filter((step) => step.done).length;
 
   function syncService(service: ProfessionalService) {
     setDashboard((current) =>
@@ -383,27 +395,14 @@ export function ProfessionalPortalPageClient() {
         ) : null}
 
         {onboarding && !onboarding.isPublished ? (
-          <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3">
-              <Rocket size={18} className="mt-0.5 shrink-0 text-amber-600" />
-              <p className="text-sm text-amber-800">
-                Tu perfil está en modo borrador y aún no aparece en la búsqueda de pacientes.{" "}
-                <Link className="font-medium underline underline-offset-2" href="/">
-                  Revisa tus pasos pendientes en Inicio
-                </Link>
-                .
-              </p>
-            </div>
-            <button
-              className="flex shrink-0 items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              disabled={publishing || !onboarding.canPublish}
-              onClick={publish}
-              type="button"
-            >
-              <Rocket size={16} />
-              {publishing ? "Publicando..." : "Publicar perfil"}
-            </button>
-          </div>
+          <OnboardingChecklist
+            canPublish={onboarding.canPublish}
+            completedSteps={completedSteps}
+            missing={onboarding.missing}
+            onPublish={publish}
+            publishing={publishing}
+            steps={checklistSteps}
+          />
         ) : null}
 
         {onboarding?.isPublished ? (
@@ -482,11 +481,11 @@ export function ProfessionalPortalPageClient() {
                         onChange={(event) => setProfileDraft((current) => (current ? { ...current, specialty: event.target.value } : current))}
                         value={profileDraft.specialty}
                       >
-                        <option value="doctor">Medicina</option>
-                        <option value="psychologist">Psicología</option>
-                        <option value="physiotherapist">Fisioterapia</option>
-                        <option value="nutritionist">Nutrición</option>
-                        <option value="other">Salud</option>
+                        {SPECIALTY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </label>
                     <label className="block">
@@ -512,6 +511,19 @@ export function ProfessionalPortalPageClient() {
                       type="number"
                       value={profileDraft.basePrice}
                     />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs font-medium uppercase text-slate-400">Cédula profesional</span>
+                    <input
+                      className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      onChange={(event) => setProfileDraft((current) => (current ? { ...current, licenseNumber: event.target.value } : current))}
+                      placeholder="Ej. 12345678"
+                      value={profileDraft.licenseNumber}
+                    />
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                      Requerida para publicar tu perfil. Se mostrará en tu página pública para que los pacientes puedan verificarla.
+                    </span>
                   </label>
 
                   <label className="block">
@@ -573,7 +585,7 @@ export function ProfessionalPortalPageClient() {
           </div>
 
           <div className="space-y-5">
-            <Panel title="Servicios">
+            <Panel id="servicios" title="Servicios">
               <div className="divide-y divide-border">
                 {professional?.services.length ? (
                   professional.services.map((service) => {
@@ -706,7 +718,7 @@ export function ProfessionalPortalPageClient() {
               </div>
             </Panel>
 
-            <Panel title="Disponibilidad">
+            <Panel id="disponibilidad" title="Disponibilidad">
               <div className="divide-y divide-border">
                 {professional?.availability.length ? (
                   professional.availability.map((slot) => {

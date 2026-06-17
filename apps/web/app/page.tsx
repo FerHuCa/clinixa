@@ -7,16 +7,14 @@ import {
   Banknote,
   CalendarDays,
   CheckCircle2,
-  Circle,
   ClipboardList,
   Clock,
   MessageSquare,
-  Rocket,
-  Settings,
   UserRound,
   Wallet
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { OnboardingChecklist, buildChecklistSteps } from "@/components/onboarding-checklist";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
 import { StatCard } from "@/components/stat-card";
@@ -261,16 +259,11 @@ export default function Home() {
     dashboard?.patientCount ?? new Set(professionalAppointments.map((appointment) => appointment.patientId).filter(Boolean)).size;
 
   const checklistSteps = onboarding
-    ? [
-        { done: onboarding.profileComplete, label: "Completa tu perfil (biografía y ubicación)" },
-        { done: onboarding.hasServices, label: "Agrega al menos un servicio con precio" },
-        { done: onboarding.hasAvailability, label: "Define tu disponibilidad semanal" },
-        { done: dashboard?.professional?.verificationStatus === "verified", label: "Cédula profesional verificada por HealthHub" },
-        {
-          done: marketplace !== null && marketplace.status !== "not_connected",
-          label: "Conecta Mercado Pago para cobrar en línea (no es requisito para publicar)"
-        }
-      ]
+    ? buildChecklistSteps(
+        onboarding,
+        dashboard?.professional?.verificationStatus,
+        marketplace !== null && marketplace.status !== "not_connected"
+      )
     : [];
   const completedSteps = checklistSteps.filter((step) => step.done).length;
 
@@ -439,48 +432,14 @@ export default function Home() {
         ) : null}
 
         {onboarding && !onboarding.isPublished ? (
-          <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <Rocket size={20} className="mt-0.5 text-amber-600" />
-                <div>
-                  <p className="font-semibold text-amber-900">Publica tu perfil para recibir pacientes</p>
-                  <p className="mt-1 text-sm text-amber-800">
-                    Tu perfil está en modo borrador. Completa estos pasos para aparecer en la búsqueda de pacientes.
-                  </p>
-                </div>
-              </div>
-              <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-                {completedSteps} de {checklistSteps.length} completados
-              </span>
-            </div>
-            <ul className="space-y-2 text-sm">
-              {checklistSteps.map((step) => (
-                <li className="flex items-center gap-2" key={step.label}>
-                  {step.done ? <CheckCircle2 size={16} className="text-emerald-600" /> : <Circle size={16} className="text-slate-400" />}
-                  <span className={step.done ? "text-slate-700" : "text-slate-500"}>{step.label}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                disabled={publishing || !onboarding.canPublish}
-                onClick={publish}
-                type="button"
-              >
-                <Rocket size={16} />
-                {publishing ? "Publicando..." : "Publicar perfil"}
-              </button>
-              <Link
-                className="flex items-center gap-2 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-800"
-                href="/portal-profesional"
-              >
-                <Settings size={16} />
-                Completar pasos en Configuración
-              </Link>
-            </div>
-          </div>
+          <OnboardingChecklist
+            canPublish={onboarding.canPublish}
+            completedSteps={completedSteps}
+            missing={onboarding.missing}
+            onPublish={publish}
+            publishing={publishing}
+            steps={checklistSteps}
+          />
         ) : null}
 
         <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
