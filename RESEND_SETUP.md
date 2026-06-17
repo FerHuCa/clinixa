@@ -1,6 +1,6 @@
 # Configuración de Resend (email transaccional)
 
-**Estado:** infraestructura lista en código (`apps/api/Infrastructure/EmailSender.cs`). Sin `RESEND_API_KEY`, los envíos degradan a `[EMAIL SIMULADO]` en el log y nada se rompe. Esta guía conecta envíos reales.
+**Estado:** ✅ **ACTIVO** — dominio `clinixa.mx` verificado en Resend, `RESEND_API_KEY` configurada en `.env` local (gitignoreado), envío real probado end-to-end el 2026-06-17. Sin `RESEND_API_KEY`, los envíos degradan a `[EMAIL SIMULADO]` en el log y nada se rompe.
 
 ## Qué envía hoy el sistema (best-effort, todos vía `EmailSender.SendAsync`)
 

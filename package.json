@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "build:api": "$HOME/.dotnet/dotnet build apps/api/HealthHub.Api.csproj",
-    "dev:api": "ASPNETCORE_ENVIRONMENT=Development $HOME/.dotnet/dotnet run --project apps/api/HealthHub.Api.csproj --urls http://127.0.0.1:5050",
+    "dev:api": "sh -c 'set -a; [ -f .env ] && . .env; set +a; ASPNETCORE_ENVIRONMENT=Development $HOME/.dotnet/dotnet run --project apps/api/HealthHub.Api.csproj --urls http://127.0.0.1:5050'",
     "dev:web": "npm run dev -w apps/web",
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",

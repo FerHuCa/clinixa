@@ -2528,6 +2528,40 @@ Guía de configuración real creada: `RESEND_SETUP.md` (dominio verificado + `RE
 
 ### Pendiente
 
-- Verificación visual de `/activacion` y del indicador del shell como Laura Vega.
-- Conectar Resend real (requiere dominio de marca definitivo).
+- Verificación visual de `/activacion` y del indicador del shell como Fernando Huerta.
+- ~~Conectar Resend real~~ ✅ hecho (ver sección siguiente).
 - P-siguientes del producto: páginas públicas SEO, foto/avatar de perfil, panel de verificación de cédula más rico para admin.
+
+## Resend productivo + prueba end-to-end — 2026-06-17
+
+### Configuración
+
+- **Dominio verificado**: `clinixa.mx` verificado en Resend (DNS TXT/DKIM/DMARC).
+- **`.env` local** (gitignoreado): creado desde `.env.example` con `RESEND_API_KEY` y `RESEND_FROM=Clinixa <no-reply@clinixa.mx>`.
+- **`package.json` `dev:api`** actualizado: `sh -c 'set -a; [ -f .env ] && . .env; set +a; ...'` — carga el `.env` raíz automáticamente antes de arrancar dotnet. Sin este cambio, .NET no leía el archivo.
+- **`.env.example`** actualizado: remitente ahora es `Clinixa <no-reply@clinixa.mx>` (antes `HealthHub MX <invitaciones@healthhub.mx>`).
+
+### Prueba end-to-end
+
+Agente Sonnet ejecutó la prueba contra `:5050` (API con RESEND_API_KEY cargada):
+
+| Check | Resultado |
+|---|---|
+| API en :5050 | ✅ |
+| `PATCH /api/professional-portal/profile` con nueva cédula | ✅ 200 |
+| `VerificationStatus` → `pending` | ✅ |
+| Audit log `professional_license.verification.pending` | ✅ |
+| Email enviado vía Resend real (no `[EMAIL SIMULADO]`) | ✅ |
+| Destinatario: `fernandohuertac@hotmail.com` | ✅ |
+
+**Usuario de prueba**: `usr-murcielagolambo-gmail-com` (profesional Fernando Huerta). Se actualizó el email en DB a `fernandohuertac@hotmail.com` para recibir emails reales durante desarrollo.
+
+### Pendiente de seguridad
+
+- Rotar la RESEND_API_KEY (quedó expuesta en el chat de desarrollo). Pasos: Resend → API Keys → Revoke → Create nueva → actualizar `.env`.
+
+### Siguiente natural
+
+- Verificación visual de `/activacion` como Fernando Huerta (login real en `localhost:3000`).
+- Panel de verificación de cédula para admin (HUE-05).
+- Signup público de profesional sin invitación (HUE-08).
