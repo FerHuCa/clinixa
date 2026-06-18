@@ -12,6 +12,7 @@
     "build:web": "npm run build -w apps/web",
     "lint:web": "npm run lint -w apps/web",
     "test:api": "node scripts/test-api.mjs",
+    "test:public": "node scripts/test-public-features.mjs",
     "smoke:api": "node scripts/smoke-api.mjs"
   }
 }
