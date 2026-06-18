@@ -2563,5 +2563,24 @@ Agente Sonnet ejecutó la prueba contra `:5050` (API con RESEND_API_KEY cargada)
 ### Siguiente natural
 
 - Verificación visual de `/activacion` como Fernando Huerta (login real en `localhost:3000`).
-- Panel de verificación de cédula para admin (HUE-05).
+- ~~Panel de verificación de cédula para admin (HUE-05)~~ ✅ hecho (ver sección siguiente).
 - Signup público de profesional sin invitación (HUE-08).
+
+## HUE-05 — Panel de verificación de cédula enriquecido — 2026-06-17
+
+Plan en `PLAN-HUE05-VERIFICACION-CEDULA-2026-06-17.md` (diseñado en Opus, ejecutado por 1 agente Sonnet). El panel de `/seguridad` ya existía (verificar/rechazar); HUE-05 cerró 4 gaps:
+
+- **Email del desenlace (lo crítico):** `PATCH /api/professionals/{id}/verification` ahora notifica al profesional best-effort — `BuildVerificationApprovedEmail` (con link al portal) al verificar, `BuildVerificationRejectedEmail` (con motivo) al rechazar. Antes solo recibía "cédula en revisión" (P1-4) y nunca el resultado.
+- **Email del profesional en la cola:** `GET /api/admin/professionals` ahora hace `Include(User)` y el `ProfessionalVerificationDto` trae `Email`. El admin coteja correo + fecha de registro en cada tarjeta.
+- **Filtro por estado:** tabs Pendientes/Verificadas/Rechazadas/Todas (default `pending`), recargan la cola vía `loadVerificationQueue(status)`.
+- **Conteo de pendientes** en el título del panel.
+
+**Flujo completo del gate de cédula (ahora cerrado):** profesional captura cédula → email "en revisión" → admin ve cola filtrada en `/seguridad` → verifica/rechaza → profesional recibe email del resultado → si verified, puede publicar.
+
+**Verificado:** build:api 0 err, lint/tsc limpios, smoke:api 31/31. Emails reales vía Resend confirmados (verify + reject) a `fernandohuertac@hotmail.com`. Commit `a3b40df`.
+
+### Siguiente (backlog)
+
+- Signup público de profesional sin invitación (HUE-08) — desbloquea adquisición directa para el piloto.
+- Foto/avatar de perfil (HUE-04) — requiere Azure Blob Storage.
+- Páginas públicas SEO `/profesionales/{slug}` (HUE-09) — cierra el ciclo profesional→paciente.
