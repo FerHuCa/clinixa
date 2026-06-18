@@ -2271,7 +2271,7 @@ Los módulos de especialidad (recetas, tareas, nutrición) ya filtraban el nav y
 
 ### Qué se hizo
 
-Se ejecutó una corrida de QA multi-agente (4 personas simuladas: 2 profesionales Laura/Nora, 2 pacientes Ana/Sofia + adversario de autorización) contra el API real en `:5050` con dev-auth (`X-HealthHub-Dev-User`). 13 agentes, ~45 flujos ejercitados, cada bug candidato **verificado adversarialmente**. Reporte completo en [REPORTE-QA-FLUJOS-2026-06-15.md](REPORTE-QA-FLUJOS-2026-06-15.md) (commit `19debc7`).
+Se ejecutó una corrida de QA multi-agente (4 personas simuladas: 2 profesionales Laura/Nora, 2 pacientes Ana/Sofia + adversario de autorización) contra el API real en `:5050` con dev-auth (`X-HealthHub-Dev-User`). 13 agentes, ~45 flujos ejercitados, cada bug candidato **verificado adversarialmente**. Reporte completo en `REPORTE-QA-FLUJOS-2026-06-15.md` (doc de trabajo eliminado en limpieza 2026-06-17) (commit `19debc7`).
 
 **8 bugs confirmados, 0 falsos positivos:**
 
@@ -2293,7 +2293,7 @@ Se ejecutó una corrida de QA multi-agente (4 personas simuladas: 2 profesionale
 
 ### Plan de fixes (listo para correr)
 
-Plan detallado y autocontenido en [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-2026-06-15.md): por cada fix trae archivo, ancla de búsqueda, snippet antes/después y verificación con `curl`. Orden recomendado:
+Plan detallado y autocontenido en `PLAN-FIXES-QA-2026-06-15.md` (doc de trabajo eliminado en limpieza 2026-06-17): por cada fix trae archivo, ancla de búsqueda, snippet antes/después y verificación con `curl`. Orden recomendado:
 
 1. **FIX 1** (C-3/H-3/M-2) — quitar 9 `.RequireAuthorization()`. Riesgo mínimo, desbloquea recetas/tareas/nutrición en dev local.
 2. **FIX 2 + FIX 3** (H-1 + C-2) — guard de relación al agendar + acceso clínico sólo por relación activa. La cadena de seguridad prod-relevante.
@@ -2307,7 +2307,7 @@ Incluye validación final (build/lint/test:api), re-verificación E2E y limpieza
 
 ### Qué se hizo
 
-Se aplicó [PLAN-FIXES-QA-2026-06-15.md](PLAN-FIXES-QA-2026-06-15.md) de principio a fin en la rama `fix/qa-flow-findings` (commit `effefd2`, **sin push**). Único archivo tocado: `apps/api/Program.cs` (101+/91−). Cada fix se localizó por su ancla de búsqueda, se recompiló y se verificó con `curl` antes de avanzar al siguiente.
+Se aplicó `PLAN-FIXES-QA-2026-06-15.md` (doc de trabajo eliminado en limpieza 2026-06-17) de principio a fin en la rama `fix/qa-flow-findings` (commit `effefd2`, **sin push**). Único archivo tocado: `apps/api/Program.cs` (101+/91−). Cada fix se localizó por su ancla de búsqueda, se recompiló y se verificó con `curl` antes de avanzar al siguiente.
 
 | Fix | Resuelve | Verificación | Resultado |
 |-----|----------|--------------|-----------|
@@ -2438,7 +2438,7 @@ Plan en **Opus**, ejecución en **paralelo por 3 agentes Sonnet** (vía Workflow
 
 ### Step 4 — auditoría del flujo onboarding → activación → publicar (read-only)
 
-- Doc: [AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md](AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md) (229 líneas). **Sin cambios de código de producto**: decisión deliberada — el "wizard de activación" estaba subespecificado para construir a ciegas, así que se entrega auditoría + plan priorizado para que el usuario decida.
+- Doc: `AUDIT-ONBOARDING-ACTIVACION-2026-06-15.md` (doc de trabajo eliminado en limpieza 2026-06-17) (229 líneas). **Sin cambios de código de producto**: decisión deliberada — el "wizard de activación" estaba subespecificado para construir a ciegas, así que se entrega auditoría + plan priorizado para que el usuario decida.
 - **Hallazgo P0 (bloqueante):** el campo de **cédula/`LicenseNumber` falta en la UI del portal profesional** → `VerificationStatus` queda en "pending" para siempre y el profesional **no puede publicar**. El backend ya acepta el campo (`PATCH /api/professional-portal/profile`). Segundo P0: el checklist de onboarding existe en Inicio pero no en Configuración.
 - Plan P0/P1/P2 con punteros a archivo en el doc (9 huecos catalogados HUE-01..HUE-09).
 
@@ -2641,3 +2641,6 @@ Al hacer que `dev:api` sourcee el `.env`, las vars opcionales vacías (`MERCADOP
 
 ### Deuda conocida
 `test-api.mjs` sigue creando invitaciones QA sin teardown (se documenta; el suite nuevo sí es limpio, y la SQL purga lo viejo). Reescribir su teardown completo queda fuera de alcance.
+
+### Limpieza de documentación (.md)
+Auditoría read-only de los 38 `.md` versionados. Se **borraron 8 documentos de trabajo** de tareas ya completadas y registradas en este seguimiento (planes/auditoría/reporte): `PLAN-TOP5-UX`, `REPORTE-QA-FLUJOS-2026-06-15`, `PLAN-FIXES-QA-2026-06-15`, `AUDIT-ONBOARDING-ACTIVACION-2026-06-15`, `PLAN-P1-P2-ONBOARDING-2026-06-17`, `PLAN-HIGIENE-DATOS-2026-06-17`, `PLAN-HUE04-08-09-PUBLICO-2026-06-17`, `PLAN-HUE05-VERIFICACION-CEDULA-2026-06-17`. Los 4 links markdown que apuntaban a ellos se convirtieron a texto. Se **conservaron** los 30 restantes (referencia técnica/operativa/legal viva). Limítrofes conservados a propósito: `PLAN-MARKETPLACE.md` (spec viva del código de marketplace), `comentarios_claude.md` (bitácora histórica de decisiones), `estrategia-mercado.md` (estrategia vigente).
