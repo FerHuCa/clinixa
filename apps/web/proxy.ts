@@ -15,7 +15,9 @@ const isPublicRoute = createRouteMatcher([
   "/aviso-privacidad(.*)",
   "/terminos(.*)",
   "/privacy(.*)",
-  "/terms(.*)"
+  "/terms(.*)",
+  // Directorio y perfiles publicos de profesionales (HUE-08/09): SEO, sin sesion.
+  "/profesionales(.*)"
 ]);
 
 function hasDeveloperSession(request: NextRequest) {

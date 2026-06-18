@@ -10,6 +10,24 @@ public static class MappingExtensions
     // Quita acentos/diacriticos para comparaciones acento-insensibles (busqueda de
     // profesionales). Mantiene la cadena legible intacta donde se muestra; solo se usa
     // para normalizar antes de comparar.
+    public static string Slugify(string displayName, string id)
+    {
+        var baseSlug = RemoveDiacritics((displayName ?? string.Empty).ToLowerInvariant());
+        var sb = new System.Text.StringBuilder();
+        foreach (var ch in baseSlug)
+        {
+            if (char.IsLetterOrDigit(ch)) sb.Append(ch);
+            else if (ch is ' ' or '-' or '_' or '.') sb.Append('-');
+        }
+        var kebab = System.Text.RegularExpressions.Regex.Replace(sb.ToString(), "-+", "-").Trim('-');
+        if (string.IsNullOrEmpty(kebab)) kebab = "profesional";
+        // Sufijo estable de 6 hex derivado del Id (unicidad sin columna ni migración).
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        var hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(id ?? string.Empty));
+        var suffix = Convert.ToHexString(hash)[..6].ToLowerInvariant();
+        return $"{kebab}-{suffix}";
+    }
+
     public static string RemoveDiacritics(string value)
     {
         if (string.IsNullOrEmpty(value))
@@ -108,7 +126,9 @@ public static class MappingExtensions
                 .OrderBy(availability => availability.Weekday)
                 .ThenBy(availability => availability.StartsAt)
                 .Select(availability => availability.ToDto())
-                .ToList());
+                .ToList(),
+            Slugify(professional.DisplayName, professional.Id),
+            professional.ProfilePhotoUrl ?? "");
     }
 
     public static ProfessionalServiceDto ToDto(this ProfessionalService service) =>

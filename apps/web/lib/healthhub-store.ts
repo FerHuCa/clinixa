@@ -606,6 +606,13 @@ async function apiPost<T>(path: string, body: unknown) {
   return response.json() as Promise<T>;
 }
 
+async function apiUpload<T>(path: string, formData: FormData) {
+  const authHeaders = await getAuthHeaders(); // NO fijar Content-Type: el browser pone el boundary
+  const response = await fetch(`${API_BASE_URL}${path}`, { body: formData, headers: authHeaders, method: "POST" });
+  if (!response.ok) throw await createApiError(response, `POST ${path} failed with ${response.status}`);
+  return response.json() as Promise<T>;
+}
+
 async function apiPostEmpty(path: string) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: await getAuthHeaders(),
@@ -1459,6 +1466,13 @@ export function useHealthHubStore() {
         });
         setApiStatus("connected");
         return professional;
+      },
+      async uploadProfessionalAvatar(file: File) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const updated = await apiUpload<Professional>("/api/professional-portal/avatar", formData);
+        setApiStatus("connected");
+        return updated;
       },
       async publishProfessional() {
         const professional = await apiPost<Professional>("/api/professional-portal/publish", {});

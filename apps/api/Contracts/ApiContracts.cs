@@ -78,7 +78,9 @@ public sealed record ProfessionalDto(
     double AverageRating,
     int ReviewCount,
     IReadOnlyList<ProfessionalServiceDto> Services,
-    IReadOnlyList<ProfessionalAvailabilityDto> Availability);
+    IReadOnlyList<ProfessionalAvailabilityDto> Availability,
+    string Slug,
+    string ProfilePhotoUrl);
 
 public sealed record ReviewDto(
     string Id,

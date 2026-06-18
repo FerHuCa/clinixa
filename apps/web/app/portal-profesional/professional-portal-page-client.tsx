@@ -18,7 +18,8 @@ import {
   type ProfessionalDashboard,
   type ProfessionalOnboarding,
   type ProfessionalPayments,
-  type ProfessionalService
+  type ProfessionalService,
+  type Professional
 } from "@/lib/healthhub-store";
 
 type ProfileDraft = {
@@ -97,6 +98,7 @@ function modeLabel(mode: string) {
 
 export function ProfessionalPortalPageClient() {
   const {
+    apiBaseUrl,
     createProfessionalAvailability,
     createProfessionalService,
     currentUser,
@@ -108,7 +110,8 @@ export function ProfessionalPortalPageClient() {
     ready,
     updateProfessionalAvailability,
     updateProfessionalProfile,
-    updateProfessionalService
+    updateProfessionalService,
+    uploadProfessionalAvatar
   } = useHealthHubStore();
   const [dashboard, setDashboard] = useState<ProfessionalDashboard | null>(null);
   const [onboarding, setOnboarding] = useState<ProfessionalOnboarding | null>(null);
@@ -133,6 +136,10 @@ export function ProfessionalPortalPageClient() {
   });
   const [statusMessage, setStatusMessage] = useState("");
   const [profileMessage, setProfileMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [paymentsState, setPaymentsState] = useState<{ month: string; data: ProfessionalPayments | null } | null>(null);
   const [paymentsMonth, setPaymentsMonth] = useState(() => monthKey(new Date()));
 
@@ -334,6 +341,55 @@ export function ProfessionalPortalPageClient() {
     }
   }
 
+  function handleAvatarFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarMessage({ kind: "error", text: "La imagen no debe exceder 2 MB." });
+      return;
+    }
+
+    setAvatarMessage(null);
+
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  }
+
+  async function uploadAvatar() {
+    if (!avatarFile) {
+      return;
+    }
+
+    setAvatarUploading(true);
+    setAvatarMessage(null);
+
+    try {
+      const updated = await uploadProfessionalAvatar(avatarFile);
+      setDashboard((current) => (current ? { ...current, professional: { ...current.professional, ...(updated as Professional) } } : current));
+
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+
+      setAvatarPreview(null);
+      setAvatarFile(null);
+      setAvatarMessage({ kind: "success", text: "Foto de perfil actualizada." });
+    } catch (error) {
+      const text = error instanceof Error && error.message ? error.message : "No se pudo subir la foto.";
+      setAvatarMessage({ kind: "error", text });
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   async function saveProfile() {
     if (!profileDraft) {
       return;
@@ -525,6 +581,66 @@ export function ProfessionalPortalPageClient() {
                       Requerida para publicar tu perfil. Se mostrará en tu página pública para que los pacientes puedan verificarla.
                     </span>
                   </label>
+
+                  <div className="block">
+                    <span className="text-xs font-medium uppercase text-slate-400">Foto de perfil</span>
+                    <div className="mt-2 flex items-start gap-4">
+                      {/* Avatar actual o preview */}
+                      {avatarPreview ?? (professional.profilePhotoUrl ? (professional.profilePhotoUrl.startsWith("/") ? `${apiBaseUrl}${professional.profilePhotoUrl}` : professional.profilePhotoUrl) : null) ? (
+                        <img
+                          alt="Foto de perfil"
+                          className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
+                          src={
+                            avatarPreview ??
+                            (professional.profilePhotoUrl.startsWith("/")
+                              ? `${apiBaseUrl}${professional.profilePhotoUrl}`
+                              : professional.profilePhotoUrl)
+                          }
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-teal-50 text-lg font-semibold text-primary">
+                          {(professional.displayName ?? "")
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((word) => word[0] ?? "")
+                            .join("")
+                            .toUpperCase() || "?"}
+                        </div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <input
+                          accept="image/png,image/jpeg,image/webp"
+                          className="block w-full text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-teal-200 file:bg-teal-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary"
+                          onChange={handleAvatarFileChange}
+                          type="file"
+                        />
+                        <span className="block text-xs leading-5 text-slate-500">
+                          JPG, PNG o WEBP, máx 2 MB. Tu foto aparecerá en tu perfil público.
+                        </span>
+                        {avatarFile ? (
+                          <button
+                            className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+                            disabled={avatarUploading}
+                            onClick={uploadAvatar}
+                            type="button"
+                          >
+                            {avatarUploading ? "Subiendo..." : "Subir foto"}
+                          </button>
+                        ) : null}
+                        {avatarMessage ? (
+                          <p
+                            className={
+                              avatarMessage.kind === "success"
+                                ? "rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-800"
+                                : "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                            }
+                          >
+                            {avatarMessage.text}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
 
                   <label className="block">
                     <span className="text-xs font-medium uppercase text-slate-400">WhatsApp de contacto</span>

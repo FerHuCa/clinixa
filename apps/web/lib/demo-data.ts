@@ -105,7 +105,9 @@ export const professionals = [
     availability: [
       { id: "av-laura-1", weekday: 1, weekdayLabel: "Lunes", startsAt: "09:00", endsAt: "13:00" },
       { id: "av-laura-2", weekday: 3, weekdayLabel: "Miércoles", startsAt: "16:00", endsAt: "20:00" }
-    ]
+    ],
+    slug: "dra-laura-vega-a1b2c3",
+    profilePhotoUrl: ""
   },
   {
     id: "pro-miguel-torres",
@@ -136,7 +138,9 @@ export const professionals = [
     availability: [
       { id: "av-miguel-1", weekday: 2, weekdayLabel: "Martes", startsAt: "08:00", endsAt: "12:00" },
       { id: "av-miguel-2", weekday: 4, weekdayLabel: "Jueves", startsAt: "15:00", endsAt: "19:00" }
-    ]
+    ],
+    slug: "dr-miguel-torres-b2c3d4",
+    profilePhotoUrl: ""
   },
   {
     id: "pro-nora-ibarra",
@@ -167,7 +171,9 @@ export const professionals = [
     availability: [
       { id: "av-nora-1", weekday: 1, weekdayLabel: "Lunes", startsAt: "10:00", endsAt: "14:00" },
       { id: "av-nora-2", weekday: 5, weekdayLabel: "Viernes", startsAt: "15:00", endsAt: "18:00" }
-    ]
+    ],
+    slug: "psic-nora-ibarra-c3d4e5",
+    profilePhotoUrl: ""
   },
   {
     id: "pro-andres-campos",
@@ -198,7 +204,9 @@ export const professionals = [
     availability: [
       { id: "av-andres-1", weekday: 2, weekdayLabel: "Martes", startsAt: "09:30", endsAt: "13:30" },
       { id: "av-andres-2", weekday: 6, weekdayLabel: "Sábado", startsAt: "09:00", endsAt: "12:00" }
-    ]
+    ],
+    slug: "dr-andres-campos-d4e5f6",
+    profilePhotoUrl: ""
   }
 ];
 

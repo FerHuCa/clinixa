@@ -135,6 +135,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("WebApp");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
@@ -1554,6 +1555,23 @@ professionalsApi.MapGet("/", async (string? specialty, string? query, HealthHubD
         .ToList());
 });
 
+professionalsApi.MapGet("/by-slug/{slug}", async (string slug, HealthHubDbContext db) =>
+{
+    var candidates = await db.Professionals
+        .AsNoTracking()
+        .AsSplitQuery()
+        .Include(item => item.Services)
+        .Include(item => item.Availability)
+        .Include(item => item.Reviews)
+        .Where(item => item.Status == "active" && item.VerificationStatus == "verified")
+        .ToListAsync();
+
+    var match = candidates.FirstOrDefault(item =>
+        MappingExtensions.Slugify(item.DisplayName, item.Id) == slug);
+
+    return match is null ? Results.NotFound() : Results.Ok(match.ToDto());
+});
+
 professionalsApi.MapGet("/{id}", async (string id, HealthHubDbContext db) =>
 {
     var professional = await db.Professionals
@@ -2236,6 +2254,45 @@ professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdatePro
     }
 
     return Results.Ok(professional.ToDto());
+});
+
+professionalPortalApi.MapPost("/avatar", async (HttpRequest request, IWebHostEnvironment env, HealthHubDbContext db) =>
+{
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+    if (actor.Professional is null) return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    if (!request.HasFormContentType) return Results.BadRequest(new { errors = new[] { "Se esperaba multipart/form-data." } });
+    var form = await request.ReadFormAsync();
+    var file = form.Files.GetFile("file");
+    if (file is null || file.Length == 0) return Results.BadRequest(new { errors = new[] { "Falta el archivo 'file'." } });
+    if (file.Length > 2 * 1024 * 1024) return Results.BadRequest(new { errors = new[] { "La imagen no debe exceder 2 MB." } });
+
+    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+    var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+    if (!allowed.Contains(ext)) return Results.BadRequest(new { errors = new[] { "Formato no soportado (usa JPG, PNG o WEBP)." } });
+
+    var professional = await db.Professionals.FirstAsync(p => p.Id == actor.Professional.Id);
+    var webRoot = string.IsNullOrEmpty(env.WebRootPath) ? Path.Combine(env.ContentRootPath, "wwwroot") : env.WebRootPath;
+    var dir = Path.Combine(webRoot, "uploads", "avatars");
+    Directory.CreateDirectory(dir);
+    // Nombre estable por profesional; sufijo de versión para cache-busting.
+    var fileName = $"{professional.Id}{ext}";
+    var fullPath = Path.Combine(dir, fileName);
+    using (var stream = File.Create(fullPath))
+    {
+        await file.CopyToAsync(stream);
+    }
+    var now = DateTimeOffset.UtcNow;
+    professional.ProfilePhotoUrl = $"/uploads/avatars/{fileName}?v={now.ToUnixTimeSeconds()}";
+    professional.UpdatedAt = now;
+    AddAuditLog(db, request, actor, "professional.avatar.update", "professional", professional.Id, null, professional.Id);
+    await db.SaveChangesAsync();
+
+    var refreshed = await db.Professionals.AsNoTracking().AsSplitQuery()
+        .Include(p => p.Services).Include(p => p.Availability).Include(p => p.Reviews)
+        .FirstAsync(p => p.Id == professional.Id);
+    return Results.Ok(refreshed.ToDto());
 });
 
 professionalPortalApi.MapPost("/publish", async (HttpRequest request, HealthHubDbContext db) =>

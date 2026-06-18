@@ -2581,6 +2581,41 @@ Plan en `PLAN-HUE05-VERIFICACION-CEDULA-2026-06-17.md` (diseñado en Opus, ejecu
 
 ### Siguiente (backlog)
 
-- Signup público de profesional sin invitación (HUE-08) — desbloquea adquisición directa para el piloto.
-- Foto/avatar de perfil (HUE-04) — requiere Azure Blob Storage.
-- Páginas públicas SEO `/profesionales/{slug}` (HUE-09) — cierra el ciclo profesional→paciente.
+- ~~Signup público de profesional sin invitación (HUE-08)~~ ✅ ya funcionaba (ver sección siguiente).
+- ~~Foto/avatar de perfil (HUE-04)~~ ✅ hecho (ver sección siguiente).
+- ~~Páginas públicas SEO `/profesionales/{slug}` (HUE-09)~~ ✅ hecho (ver sección siguiente).
+
+## HUE-04 + HUE-08 + HUE-09 — Avatar, directorio y perfiles públicos — 2026-06-17
+
+Plan en `PLAN-HUE04-08-09-PUBLICO-2026-06-17.md` (Opus). Ejecución: **1 agente backend (Fase 1) + 3 agentes frontend en paralelo (Fase 2)**, divididos por propiedad de archivo.
+
+### Hallazgo: HUE-08 ya estaba completo
+El signup público de profesional **ya funcionaba** end-to-end: `/bienvenida` → `/sign-up` (selección de rol) → Clerk `<SignUp unsafeMetadata={{role}}>` → backend lee `unsafe_metadata.role` y crea el usuario con `PrimaryRole=professional` → onboarding → `/activacion`. No hay gate de invitación para profesionales. **Por decisión del usuario, el tercer agente se repurposó al directorio público** (la superficie de descubrimiento que sí faltaba).
+
+### Decisiones técnicas clave
+- **Cero migraciones** (no hay `dotnet ef` instalado): el avatar reusa el campo `ProfilePhotoUrl` que ya existía en la entidad; el **slug se computa en el DTO** (`Slugify` = `kebab(nombre)-{6hex SHA256 del Id}`, estable y único, sin columna).
+- **Avatar storage local** (`apps/api/wwwroot/uploads/avatars/`, servido vía `UseStaticFiles`) como puente para el piloto. Migrar a Azure Blob = cambiar solo el endpoint de subida. Imágenes runtime gitignoreadas (solo se versiona `.gitkeep`).
+
+### HUE-04 — Avatar
+- Backend: `POST /api/professional-portal/avatar` (multipart, JPG/PNG/WEBP, ≤2MB, cache-bust `?v=`). `ProfilePhotoUrl` ahora en `ProfessionalDto`.
+- Frontend: sección "Foto de perfil" en el portal (`professional-portal-page-client.tsx`) con preview, validación de tamaño y subida vía store action `uploadProfessionalAvatar`.
+
+### HUE-09 — Perfiles públicos SEO
+- Backend: `GET /api/professionals/by-slug/{slug}` (público, solo active+verified). `Slug` en `ProfessionalDto`.
+- Frontend: `app/profesionales/[slug]/page.tsx` (Server Component, `generateMetadata` con OG, hero con avatar, bio, servicios, disponibilidad, reviews, CTAs WhatsApp + "Crear cuenta para agendar") + `not-found.tsx`.
+
+### HUE-08-dir — Directorio público
+- `app/profesionales/page.tsx` (Server Component con `searchParams`: filtro por especialidad vía URL + búsqueda GET) + `components/professional-card.tsx`.
+- Helper server-side `lib/public-professionals.ts` (`fetchPublicProfessionals`, `fetchProfessionalBySlug`).
+
+### Fix de integración (orquestador)
+`apps/web/proxy.ts` (middleware): se agregó `/profesionales(.*)` a `isPublicRoute` — sin esto el middleware redirigía a `/bienvenida` (las páginas públicas no requieren sesión).
+
+### Verificado
+build:api 0 err · tsc limpio · lint 0 errores (3 warnings `<img>` esperados) · smoke:api 31/31. Vía dev server: directorio `/profesionales` **200** (lista 5 profesionales verificados), perfil válido **200** (renderiza datos), slug inexistente **404**, filtro por especialidad **200**, avatar endpoint **200** sirviendo el archivo. Commit `<pendiente>`.
+
+### Siguiente (backlog)
+- Rotar RESEND_API_KEY (sigue pendiente).
+- Verificación visual: `/profesionales`, perfil individual, y subida de avatar en el portal.
+- Migrar avatar storage a Azure Blob para producción.
+- Hygiene de datos: hay un profesional `profesional-qa-*` verificado residual de QA visible en el directorio — limpiar en DB.
