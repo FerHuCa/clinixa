@@ -1568,7 +1568,7 @@ professionalsApi.MapGet("/{id}", async (string id, HealthHubDbContext db) =>
 });
 
 // Verificacion de cedula profesional. Solo internal_admin puede cambiar el estatus.
-professionalsApi.MapPatch("/{id}/verification", async (HttpRequest request, string id, UpdateProfessionalVerificationRequest verificationRequest, HealthHubDbContext db) =>
+professionalsApi.MapPatch("/{id}/verification", async (HttpRequest request, string id, UpdateProfessionalVerificationRequest verificationRequest, EmailSender emailSender, IConfiguration configuration, HealthHubDbContext db) =>
 {
     var actor = await GetUserFromRequestAsync(request, db);
 
@@ -1584,7 +1584,7 @@ professionalsApi.MapPatch("/{id}/verification", async (HttpRequest request, stri
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    var professional = await db.Professionals.FirstOrDefaultAsync(item => item.Id == id);
+    var professional = await db.Professionals.Include(item => item.User).FirstOrDefaultAsync(item => item.Id == id);
 
     if (professional is null)
     {
@@ -1613,6 +1613,39 @@ professionalsApi.MapPatch("/{id}/verification", async (HttpRequest request, stri
     AddAuditLog(db, request, actor, $"professional.verification.{status}", "professional", professional.Id, null, professional.Id);
     await db.SaveChangesAsync();
 
+    if (status is "verified" or "rejected")
+    {
+        try
+        {
+            var professionalEmail = professional.User?.Email;
+            if (!string.IsNullOrWhiteSpace(professionalEmail))
+            {
+                if (status == "verified")
+                {
+                    var webBaseUrl = (configuration["Web:BaseUrl"] ?? Environment.GetEnvironmentVariable("WEB_BASE_URL") ?? "http://localhost:3000").TrimEnd('/');
+                    await emailSender.SendAsync(
+                        professionalEmail,
+                        "¡Tu cédula fue verificada en Clinixa!",
+                        EmailSender.BuildVerificationApprovedEmail(professional.DisplayName, $"{webBaseUrl}/portal-profesional"));
+                }
+                else
+                {
+                    var reason = string.IsNullOrWhiteSpace(verificationRequest.Reason)
+                        ? "No fue posible validar el número de cédula proporcionado."
+                        : verificationRequest.Reason.Trim();
+                    await emailSender.SendAsync(
+                        professionalEmail,
+                        "Sobre la verificación de tu cédula en Clinixa",
+                        EmailSender.BuildVerificationRejectedEmail(professional.DisplayName, reason));
+                }
+            }
+        }
+        catch
+        {
+            // Best-effort: nunca romper la respuesta por un fallo de email
+        }
+    }
+
     return Results.Ok(professional.ToDto());
 });
 
@@ -1634,7 +1667,7 @@ app.MapGet("/api/admin/professionals", async (HttpRequest request, string? verif
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    var query = db.Professionals.AsNoTracking();
+    IQueryable<Professional> query = db.Professionals.AsNoTracking().Include(professional => professional.User);
 
     if (!string.IsNullOrWhiteSpace(verificationStatus) && verificationStatus != "all")
     {
@@ -1662,7 +1695,8 @@ app.MapGet("/api/admin/professionals", async (HttpRequest request, string? verif
             professional.VerificationStatus,
             professional.LicenseVerifiedAt,
             professional.LicenseVerifiedBy,
-            professional.CreatedAt))
+            professional.CreatedAt,
+            professional.User?.Email ?? ""))
         .ToList());
 });
 

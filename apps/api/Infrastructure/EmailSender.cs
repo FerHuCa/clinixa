@@ -78,6 +78,34 @@ public sealed class EmailSender(IConfiguration configuration, ILogger<EmailSende
         """;
 
     /// <summary>
+    /// Notificacion al profesional cuando su cedula es verificada (VerificationStatus = "verified").
+    /// </summary>
+    public static string BuildVerificationApprovedEmail(string displayName, string portalUrl) =>
+        $"""
+        <div style="font-family: Arial, sans-serif; color: #0f172a;">
+          <h2>¡Tu cédula fue verificada!</h2>
+          <p>Hola {displayName}, tu cédula profesional fue validada por el equipo de Clinixa.</p>
+          <p>Ya puedes <strong>publicar tu perfil</strong> y empezar a recibir pacientes. Solo asegúrate de tener tu descripción, al menos un servicio y tu disponibilidad configurados.</p>
+          <p><a href="{portalUrl}" style="background:#0d9488;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none;">Ir a mi portal</a></p>
+          <p style="color:#64748b;font-size:13px;">Si tienes dudas, escríbenos a soporte@clinixa.mx.</p>
+        </div>
+        """;
+
+    /// <summary>
+    /// Notificacion al profesional cuando su cedula es rechazada (VerificationStatus = "rejected").
+    /// </summary>
+    public static string BuildVerificationRejectedEmail(string displayName, string reason) =>
+        $"""
+        <div style="font-family: Arial, sans-serif; color: #0f172a;">
+          <h2>No pudimos verificar tu cédula</h2>
+          <p>Hola {displayName}, revisamos tu cédula profesional pero no pudimos completar la verificación.</p>
+          <p style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px;color:#991b1b;"><strong>Motivo:</strong> {reason}</p>
+          <p>Puedes corregir el dato en tu portal (sección Configuración) y volver a enviarlo para una nueva revisión.</p>
+          <p style="color:#64748b;font-size:13px;">Si crees que es un error, escríbenos a soporte@clinixa.mx.</p>
+        </div>
+        """;
+
+    /// <summary>
     /// Traduce el modo de la cita a una etiqueta legible en espanol.
     /// </summary>
     private static string ModeLabel(string mode) =>

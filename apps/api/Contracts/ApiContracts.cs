@@ -413,7 +413,8 @@ public sealed record ProfessionalVerificationDto(
     string VerificationStatus,
     DateTimeOffset? LicenseVerifiedAt,
     string? LicenseVerifiedBy,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string Email);
 
 // Top-5 UX: cobro en efectivo registrado por el profesional.
 public sealed record CashPaymentResponseDto(

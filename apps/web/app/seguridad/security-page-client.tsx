@@ -106,6 +106,7 @@ export function SecurityPageClient() {
   const [loading, setLoading] = useState(true);
   const [now] = useState(() => Date.now());
   const [verificationQueue, setVerificationQueue] = useState<ProfessionalVerificationItem[]>([]);
+  const [verificationFilter, setVerificationFilter] = useState<"pending" | "verified" | "rejected" | "all">("pending");
   const [rejectingId, setRejectingId] = useState("");
   const [rejectReason, setRejectReason] = useState("");
 
@@ -125,7 +126,7 @@ export function SecurityPageClient() {
       loadClinics(),
       loadNotifications(),
       loadNotificationPreferences(),
-      isInternalAdmin ? loadVerificationQueue() : Promise.resolve([])
+      isInternalAdmin ? loadVerificationQueue("pending") : Promise.resolve([])
     ])
       .then(async ([nextAuditLogs, nextClinics, nextNotifications, nextPreferences, nextQueue]) => {
         if (cancelled) {
@@ -236,18 +237,19 @@ export function SecurityPageClient() {
     }
   }
 
+  async function changeVerificationFilter(next: "pending" | "verified" | "rejected" | "all") {
+    setVerificationFilter(next);
+    const queue = await loadVerificationQueue(next === "all" ? undefined : next);
+    setVerificationQueue(queue);
+  }
+
   async function applyVerification(item: ProfessionalVerificationItem, status: "verified" | "rejected", reason: string) {
     setSecurityAction(`verify-${item.id}`);
 
     try {
-      const updated = await updateProfessionalVerification(item.id, status, reason);
-      setVerificationQueue((current) =>
-        current.map((entry) =>
-          entry.id === item.id
-            ? { ...entry, status: updated.status, verificationStatus: updated.verificationStatus }
-            : entry
-        )
-      );
+      await updateProfessionalVerification(item.id, status, reason);
+      const queue = await loadVerificationQueue(verificationFilter === "all" ? undefined : verificationFilter);
+      setVerificationQueue(queue);
       setRejectingId("");
       setRejectReason("");
     } finally {
@@ -532,84 +534,104 @@ export function SecurityPageClient() {
           <div className="space-y-5">
             <MarketplaceAdminPanel />
 
-            {isInternalAdmin ? (
-              <Panel title="Verificación de cédulas">
-                <div className="divide-y divide-border">
-                  {verificationQueue.length > 0 ? (
-                    verificationQueue.map((item) => (
-                      <div className="space-y-3 p-4" key={item.id}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="font-medium">{item.displayName}</p>
-                            <p className="mt-1 text-sm text-slate-500">
-                              {specialtyLabelFor(item.specialty)} · {item.location || "Sin ubicación"}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Cédula: <span className="font-medium text-slate-700">{item.licenseNumber || "No capturada"}</span>
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-end gap-1">
-                            <StatusPill
-                              label={verificationStatusLabel(item.verificationStatus)}
-                              status={item.verificationStatus === "verified" ? "active" : item.verificationStatus === "rejected" ? "cancelled" : "pending"}
-                            />
-                            {item.verificationStatus === "verified" && item.licenseVerifiedAt ? (
-                              <span className="text-xs text-slate-400">{formatDate(item.licenseVerifiedAt)}</span>
-                            ) : null}
-                          </div>
-                        </div>
-                        {item.verificationStatus !== "verified" ? (
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <button
-                                className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
-                                disabled={securityAction === `verify-${item.id}`}
-                                onClick={() => applyVerification(item, "verified", "Cédula validada manualmente por el administrador.")}
-                                type="button"
-                              >
-                                <BadgeCheck size={13} />
-                                {securityAction === `verify-${item.id}` ? "Guardando..." : "Verificar"}
-                              </button>
-                              {item.verificationStatus !== "rejected" ? (
-                                <button
-                                  className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-50"
-                                  disabled={securityAction === `verify-${item.id}`}
-                                  onClick={() => setRejectingId((current) => (current === item.id ? "" : item.id))}
-                                  type="button"
-                                >
-                                  <X size={13} />
-                                  Rechazar
-                                </button>
+            {isInternalAdmin ? (() => {
+              const pendingCount = verificationQueue.filter((item) => item.verificationStatus === "pending").length;
+              return (
+                <Panel title={pendingCount > 0 ? `Verificación de cédulas · ${pendingCount} pendiente${pendingCount === 1 ? "" : "s"}` : "Verificación de cédulas"}>
+                  <div className="flex flex-wrap gap-1.5 border-b border-border px-4 py-3">
+                    {([["pending", "Pendientes"], ["verified", "Verificadas"], ["rejected", "Rechazadas"], ["all", "Todas"]] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${verificationFilter === value ? "bg-primary text-white" : "border border-border bg-slate-50 text-slate-600 hover:border-slate-300"}`}
+                        onClick={() => changeVerificationFilter(value)}
+                        type="button"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="divide-y divide-border">
+                    {verificationQueue.length > 0 ? (
+                      verificationQueue.map((item) => (
+                        <div className="space-y-3 p-4" key={item.id}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-medium">{item.displayName}</p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {specialtyLabelFor(item.specialty)} · {item.location || "Sin ubicación"}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Cédula: <span className="font-medium text-slate-700">{item.licenseNumber || "No capturada"}</span>
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {item.email || "Sin correo"} · Registrado {formatDate(item.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-1">
+                              <StatusPill
+                                label={verificationStatusLabel(item.verificationStatus)}
+                                status={item.verificationStatus === "verified" ? "active" : item.verificationStatus === "rejected" ? "cancelled" : "pending"}
+                              />
+                              {item.verificationStatus === "verified" && item.licenseVerifiedAt ? (
+                                <span className="text-xs text-slate-400">{formatDate(item.licenseVerifiedAt)}</span>
                               ) : null}
                             </div>
-                            {rejectingId === item.id ? (
+                          </div>
+                          {item.verificationStatus !== "verified" ? (
+                            <div className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2">
-                                <input
-                                  className="min-w-0 flex-1 rounded-md border border-border px-3 py-1.5 text-xs outline-none focus:border-rose-300"
-                                  onChange={(event) => setRejectReason(event.target.value)}
-                                  placeholder="Motivo del rechazo (obligatorio)"
-                                  value={rejectReason}
-                                />
                                 <button
-                                  className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                                  disabled={!rejectReason.trim() || securityAction === `verify-${item.id}`}
-                                  onClick={() => applyVerification(item, "rejected", rejectReason.trim())}
+                                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+                                  disabled={securityAction === `verify-${item.id}`}
+                                  onClick={() => applyVerification(item, "verified", "Cédula validada manualmente por el administrador.")}
                                   type="button"
                                 >
-                                  Confirmar rechazo
+                                  <BadgeCheck size={13} />
+                                  {securityAction === `verify-${item.id}` ? "Guardando..." : "Verificar"}
                                 </button>
+                                {item.verificationStatus !== "rejected" ? (
+                                  <button
+                                    className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                                    disabled={securityAction === `verify-${item.id}`}
+                                    onClick={() => setRejectingId((current) => (current === item.id ? "" : item.id))}
+                                    type="button"
+                                  >
+                                    <X size={13} />
+                                    Rechazar
+                                  </button>
+                                ) : null}
                               </div>
-                            ) : null}
-                          </div>
-                        ) : null}
+                              {rejectingId === item.id ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <input
+                                    className="min-w-0 flex-1 rounded-md border border-border px-3 py-1.5 text-xs outline-none focus:border-rose-300"
+                                    onChange={(event) => setRejectReason(event.target.value)}
+                                    placeholder="Motivo del rechazo (obligatorio)"
+                                    value={rejectReason}
+                                  />
+                                  <button
+                                    className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                                    disabled={!rejectReason.trim() || securityAction === `verify-${item.id}`}
+                                    onClick={() => applyVerification(item, "rejected", rejectReason.trim())}
+                                    type="button"
+                                  >
+                                    Confirmar rechazo
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-sm text-slate-500">
+                        {verificationFilter === "pending" ? "No hay cédulas pendientes de revisión." : "Sin profesionales en este estado."}
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-sm text-slate-500">Sin profesionales registrados.</div>
-                  )}
-                </div>
-              </Panel>
-            ) : null}
+                    )}
+                  </div>
+                </Panel>
+              );
+            })() : null}
 
             <Panel title="Bitácora de auditoría">
             <div className="divide-y divide-border">

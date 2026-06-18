@@ -160,6 +160,7 @@ export type ProfessionalVerificationItem = {
   licenseVerifiedAt: string | null;
   licenseVerifiedBy: string | null;
   createdAt: string;
+  email: string;
 };
 export type ClinicInvitationDetail = {
   id: string;
