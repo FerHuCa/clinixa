@@ -813,7 +813,7 @@ appointmentsApi.MapPost("/", async (HttpRequest httpRequest, CreateAppointmentRe
     return Results.Created($"/api/appointments/{appointment.Id}", appointment.ToDto());
 });
 
-appointmentsApi.MapPatch("/{id}/cancel", async (HttpRequest httpRequest, string id, CancelAppointmentRequest request, EmailSender emailSender, ILoggerFactory loggerFactory, HealthHubDbContext db) =>
+appointmentsApi.MapPatch("/{id}/cancel", async (HttpRequest httpRequest, string id, CancelAppointmentRequest request, EmailSender emailSender, ILoggerFactory loggerFactory, MercadoPagoService mercadoPago, HealthHubDbContext db) =>
 {
     var actor = await GetUserFromRequestAsync(httpRequest, db);
 
@@ -861,6 +861,71 @@ appointmentsApi.MapPatch("/{id}/cancel", async (HttpRequest httpRequest, string 
         $"{appointment.PatientName} tenía cita con {appointment.ProfessionalName} el {appointment.Date} a las {appointment.Time}.",
         "high");
     await db.SaveChangesAsync();
+
+    // Reembolso best-effort: si la cita tiene un pago aprobado, emite el reembolso.
+    // Un fallo en el reembolso NO rompe la cancelacion ya confirmada.
+    try
+    {
+        var payment = await db.Payments
+            .Where(p => p.AppointmentId == appointment.Id)
+            .OrderByDescending(p => p.CreatedAt)
+            .ThenByDescending(p => p.Id)
+            .FirstOrDefaultAsync();
+
+        if (payment is not null && payment.Status == "approved" && payment.Provider != "cash")
+        {
+            // Idempotencia: evitar doble reembolso.
+            if (payment.Status != "refunded")
+            {
+                // Solo marcamos "refunded" si Mercado Pago confirmo el reembolso (en simulado siempre true).
+                // Si MP rechaza, el pago queda "approved" para reintento/seguimiento y se audita el fallo.
+                var refunded = await mercadoPago.RefundPaymentAsync(payment.ProviderPaymentId);
+
+                if (refunded)
+                {
+                    payment.Status = "refunded";
+                    if (payment.TransferStatus == "completed")
+                    {
+                        payment.TransferStatus = "reversed";
+                    }
+                    payment.UpdatedAt = DateTimeOffset.UtcNow;
+
+                    var fechaCita = $"{appointment.Date} a las {appointment.Time}";
+                    AddAppointmentNotifications(
+                        db,
+                        appointment,
+                        appointment.Patient?.UserId,
+                        appointment.Professional?.UserId,
+                        "appointment_refund",
+                        "Pago reembolsado",
+                        $"Se reembolsó el pago de tu cita del {fechaCita}.",
+                        "high");
+
+                    AddAuditLog(db, httpRequest, actor, "payment.refunded", "payment", payment.Id, appointment.PatientId, appointment.ProfessionalId);
+                    await db.SaveChangesAsync();
+                }
+                else
+                {
+                    AddAuditLog(db, httpRequest, actor, "payment.refund.failed", "payment", payment.Id, appointment.PatientId, appointment.ProfessionalId, "failed");
+                    await db.SaveChangesAsync();
+                }
+            }
+        }
+    }
+    catch (Exception refundEx)
+    {
+        var refundLogger = loggerFactory.CreateLogger("AppointmentRefund");
+        refundLogger.LogWarning(refundEx, "El reembolso del pago de la cita {AppointmentId} fallo; la cancelacion continua.", appointment.Id);
+        try
+        {
+            AddAuditLog(db, httpRequest, actor, "payment.refund.failed", "appointment", appointment.Id, appointment.PatientId, appointment.ProfessionalId, "failed");
+            await db.SaveChangesAsync();
+        }
+        catch
+        {
+            // Ignoramos errores secundarios del audit log de fallo.
+        }
+    }
 
     // Correo best-effort de cancelacion al paciente (no bloquea ni rompe la respuesta).
     await SendAppointmentEmailAsync(db, emailSender, appointment, "cancelled", loggerFactory.CreateLogger("AppointmentEmail"));

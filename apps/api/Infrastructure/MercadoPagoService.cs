@@ -154,6 +154,49 @@ public sealed class MercadoPagoService(
     }
 
     /// <summary>
+    /// Emite un reembolso en Mercado Pago. Si amount es null hace un reembolso total.
+    /// En modo simulado (sin credenciales) registra el evento y retorna true.
+    /// Best-effort: NUNCA lanza hacia el caller.
+    /// </summary>
+    public async Task<bool> RefundPaymentAsync(string providerPaymentId, decimal? amount = null)
+    {
+        if (!IsConfigured)
+        {
+            logger.LogInformation("[REFUND SIMULADO] payment={ProviderPaymentId}", providerPaymentId);
+            return true;
+        }
+
+        try
+        {
+            var url = $"https://api.mercadopago.com/v1/payments/{providerPaymentId}/refunds";
+            object? payload = amount.HasValue ? new { amount } : null;
+
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = payload is not null ? JsonContent.Create(payload) : new StringContent("{}", Encoding.UTF8, "application/json")
+            };
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+
+            var response = await httpClient.SendAsync(requestMessage);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                logger.LogWarning("Mercado Pago respondio {Status} al emitir reembolso del pago {ProviderPaymentId}: {Body}", (int)response.StatusCode, providerPaymentId, body);
+                return false;
+            }
+
+            logger.LogInformation("Reembolso emitido en Mercado Pago para pago {ProviderPaymentId}", providerPaymentId);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "No se pudo emitir el reembolso en Mercado Pago para el pago {ProviderPaymentId}", providerPaymentId);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Valida la firma x-signature de Mercado Pago: "ts=...,v1=..." donde v1 es
     /// HMAC-SHA256(secreto, "id:{dataId};request-id:{xRequestId};ts:{ts};").
     /// Las partes sin valor se omiten del manifiesto, igual que en la especificacion oficial.

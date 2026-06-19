@@ -308,10 +308,13 @@ export function PatientPortalPageClient() {
   async function cancelPatientAppointment(appointment: Appointment) {
     setAppointmentActionId(appointment.id);
 
+    const hadApprovedPayment = paymentStatusOf(appointment) === "approved";
+
     try {
       await cancelAppointment(appointment.id, "Cancelada desde el portal del paciente.");
       setBookingNoticeTone("success");
-      setBookingNotice(`Cita cancelada: ${appointment.date} ${appointment.time}.`);
+      const baseMsg = `Cita cancelada: ${appointment.date} ${appointment.time}.`;
+      setBookingNotice(hadApprovedPayment ? `${baseMsg} El pago será reembolsado en breve.` : baseMsg);
     } catch (error) {
       setBookingNoticeTone("error");
       setBookingNotice(error instanceof Error ? error.message : "No pudimos cancelar la cita.");

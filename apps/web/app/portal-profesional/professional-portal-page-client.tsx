@@ -730,38 +730,47 @@ export function ProfessionalPortalPageClient() {
                           value={draft.description}
                         />
                         <div className="grid gap-2 sm:grid-cols-3">
-                          <input
-                            className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                            min={15}
-                            onChange={(event) =>
-                              setServiceDrafts((current) => ({
-                                ...current,
-                                [service.id]: { ...draft, durationMinutes: Number(event.target.value) }
-                              }))
-                            }
-                            type="number"
-                            value={draft.durationMinutes}
-                          />
-                          <input
-                            className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                            min={0}
-                            onChange={(event) =>
-                              setServiceDrafts((current) => ({ ...current, [service.id]: { ...draft, price: Number(event.target.value) } }))
-                            }
-                            type="number"
-                            value={draft.price}
-                          />
-                          <select
-                            className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                            onChange={(event) =>
-                              setServiceDrafts((current) => ({ ...current, [service.id]: { ...draft, mode: event.target.value } }))
-                            }
-                            value={draft.mode}
-                          >
-                            <option value="hybrid">Híbrido</option>
-                            <option value="online">En línea</option>
-                            <option value="in_person">Presencial</option>
-                          </select>
+                          <label className="block">
+                            <span className="text-xs font-medium uppercase text-slate-400">Duración (min)</span>
+                            <input
+                              className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                              min={15}
+                              onChange={(event) =>
+                                setServiceDrafts((current) => ({
+                                  ...current,
+                                  [service.id]: { ...draft, durationMinutes: Number(event.target.value) }
+                                }))
+                              }
+                              type="number"
+                              value={draft.durationMinutes}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-xs font-medium uppercase text-slate-400">Precio (MXN)</span>
+                            <input
+                              className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                              min={0}
+                              onChange={(event) =>
+                                setServiceDrafts((current) => ({ ...current, [service.id]: { ...draft, price: Number(event.target.value) } }))
+                              }
+                              type="number"
+                              value={draft.price}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+                            <select
+                              className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                              onChange={(event) =>
+                                setServiceDrafts((current) => ({ ...current, [service.id]: { ...draft, mode: event.target.value } }))
+                              }
+                              value={draft.mode}
+                            >
+                              <option value="hybrid">Híbrido</option>
+                              <option value="online">En línea</option>
+                              <option value="in_person">Presencial</option>
+                            </select>
+                          </label>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-xs text-slate-500">
@@ -797,29 +806,38 @@ export function ProfessionalPortalPageClient() {
                     value={newService.description}
                   />
                   <div className="grid gap-2 sm:grid-cols-3">
-                    <input
-                      className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      min={15}
-                      onChange={(event) => setNewService((current) => ({ ...current, durationMinutes: Number(event.target.value) }))}
-                      type="number"
-                      value={newService.durationMinutes}
-                    />
-                    <input
-                      className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      min={0}
-                      onChange={(event) => setNewService((current) => ({ ...current, price: Number(event.target.value) }))}
-                      type="number"
-                      value={newService.price}
-                    />
-                    <select
-                      className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      onChange={(event) => setNewService((current) => ({ ...current, mode: event.target.value }))}
-                      value={newService.mode}
-                    >
-                      <option value="hybrid">Híbrido</option>
-                      <option value="online">En línea</option>
-                      <option value="in_person">Presencial</option>
-                    </select>
+                    <label className="block">
+                      <span className="text-xs font-medium uppercase text-slate-400">Duración (min)</span>
+                      <input
+                        className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                        min={15}
+                        onChange={(event) => setNewService((current) => ({ ...current, durationMinutes: Number(event.target.value) }))}
+                        type="number"
+                        value={newService.durationMinutes}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium uppercase text-slate-400">Precio (MXN)</span>
+                      <input
+                        className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                        min={0}
+                        onChange={(event) => setNewService((current) => ({ ...current, price: Number(event.target.value) }))}
+                        type="number"
+                        value={newService.price}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+                      <select
+                        className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                        onChange={(event) => setNewService((current) => ({ ...current, mode: event.target.value }))}
+                        value={newService.mode}
+                      >
+                        <option value="hybrid">Híbrido</option>
+                        <option value="online">En línea</option>
+                        <option value="in_person">Presencial</option>
+                      </select>
+                    </label>
                   </div>
                   <button
                     className="flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"

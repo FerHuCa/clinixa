@@ -732,6 +732,19 @@ async function main() {
     method: "PATCH"
   });
   assert(paymentCleanup.status === 200, `limpieza de cita de pago esperaba 200 y devolvio ${paymentCleanup.status}`);
+  assert(paymentCleanup.body?.status === "cancelled", "cita cancelada con pago aprobado esperaba status cancelled");
+  assert(paymentCleanup.body?.paymentStatus === "refunded", `cancelacion de cita pagada esperaba paymentStatus refunded y devolvio ${paymentCleanup.body?.paymentStatus}`);
+
+  // Idempotencia de reembolso: cancelar de nuevo debe fallar con 400 (ya esta cancelada), no doble refund.
+  const paymentCleanupRepeat = await request(`/api/appointments/${paymentAppointment.body.id}/cancel`, {
+    body: JSON.stringify({ reason: "Intento de doble cancelacion" }),
+    headers: {
+      Authorization: `Bearer ${refreshed.body.token}`,
+      "Content-Type": "application/json"
+    },
+    method: "PATCH"
+  });
+  assert(paymentCleanupRepeat.status === 400, `doble cancelacion esperaba 400 y devolvio ${paymentCleanupRepeat.status}`);
 
   const adminAuditLogs = await request("/api/audit-logs", {
     headers: { Authorization: `Bearer ${clinicAdminAuth.token}` }
@@ -938,6 +951,7 @@ async function main() {
     method: "PATCH"
   });
   assert(marketplaceCleanup.status === 200, `limpieza de cita marketplace esperaba 200 y devolvio ${marketplaceCleanup.status}`);
+  assert(marketplaceCleanup.body?.paymentStatus === "refunded", `cancelacion marketplace esperaba paymentStatus refunded y devolvio ${marketplaceCleanup.body?.paymentStatus}`);
 
   // --- Cobro en efectivo, estado de cuenta y suscripcion (Top-5 UX) ---
 

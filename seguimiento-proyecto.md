@@ -2644,3 +2644,20 @@ Al hacer que `dev:api` sourcee el `.env`, las vars opcionales vacías (`MERCADOP
 
 ### Limpieza de documentación (.md)
 Auditoría read-only de los 38 `.md` versionados. Se **borraron 8 documentos de trabajo** de tareas ya completadas y registradas en este seguimiento (planes/auditoría/reporte): `PLAN-TOP5-UX`, `REPORTE-QA-FLUJOS-2026-06-15`, `PLAN-FIXES-QA-2026-06-15`, `AUDIT-ONBOARDING-ACTIVACION-2026-06-15`, `PLAN-P1-P2-ONBOARDING-2026-06-17`, `PLAN-HIGIENE-DATOS-2026-06-17`, `PLAN-HUE04-08-09-PUBLICO-2026-06-17`, `PLAN-HUE05-VERIFICACION-CEDULA-2026-06-17`. Los 4 links markdown que apuntaban a ellos se convirtieron a texto. Se **conservaron** los 30 restantes (referencia técnica/operativa/legal viva). Limítrofes conservados a propósito: `PLAN-MARKETPLACE.md` (spec viva del código de marketplace), `comentarios_claude.md` (bitácora histórica de decisiones), `estrategia-mercado.md` (estrategia vigente).
+
+## Reembolso al cancelar + etiquetas en form de servicios — 2026-06-19
+
+### Hallazgo: el "cobro de citas con MP" ya estaba completo
+Al planear el "paso 3" (integrar Mercado Pago para cobro de citas) se descubrió que **ya estaba construido de extremo a extremo en modo simulado**: checkout del paciente (`POST /api/appointments/{id}/checkout`), redirección a MP, webhook (`POST /api/webhooks/mercadopago`) con confirmación automática de la cita, página de resultado `/portal-paciente/pago`, OAuth marketplace del profesional + split de comisión por tier. El único hueco real del flujo de dinero era el **reembolso al cancelar**.
+
+### Reembolso automático al cancelar cita pagada (1 agente Sonnet + hardening del orquestador Opus)
+- **`MercadoPagoService.RefundPaymentAsync(providerPaymentId, amount?)`** ([MercadoPagoService.cs:161](apps/api/Infrastructure/MercadoPagoService.cs:161)): modo real → `POST /v1/payments/{id}/refunds` con Bearer de plataforma; sin credenciales → `[REFUND SIMULADO]`. Best-effort, retorna `bool`, nunca lanza.
+- **`PATCH /api/appointments/{id}/cancel`** ([Program.cs:816](apps/api/Program.cs:816)): tras cancelar (guardado independiente), si el último `Payment` está `approved` y no es `cash` → emite reembolso. **Hardening (Opus):** el cambio de estado se condiciona al `bool` de retorno — solo marca `Payment.Status=refunded` (+ `TransferStatus`→`reversed`) si MP confirmó; si rechaza, deja el pago `approved` para reintento y audita `payment.refund.failed`. Notificación `appointment_refund` a paciente/profesional, audit `payment.refunded`. Idempotencia real vía el guard de estado de la cita (cancelada → 400).
+- `ProviderPaymentId` ya existía en `Payment` y ya se persistía en el webhook al aprobar — sin columna nueva ni migración.
+- **Frontend** (portal paciente): el diálogo de cancelación avisa "El pago será reembolsado en breve." si la cita estaba pagada. `refunded → "Reembolsada"` ya estaba mapeado en `appointment-states.ts`.
+
+### Etiquetas en el formulario de servicios (1 agente Sonnet)
+Los inputs de duración/precio/modalidad en `/portal-profesional` mostraban solo números sin contexto (se entendían hasta guardar el perfil). Se envolvieron en `<label>` con leyendas "Duración (min)", "Precio (MXN)", "Modalidad" en ambos bloques (editar servicio + nuevo servicio), reusando el idiom de label ya presente en el archivo. Se conserva la línea de resumen en vivo.
+
+### Verificado
+`build:api` 0 err · `smoke:api` 31/31 · `test:api` passed (asserts nuevos: cita pagada → cancelar → `refunded`; doble cancel → 400; efectivo se mantiene `approved`) · `lint:web` 0 err · `tsc --noEmit` limpio. Commit directo a `main` (autorizado por el usuario, 2026-06-19).
