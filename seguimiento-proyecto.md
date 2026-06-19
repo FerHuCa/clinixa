@@ -2661,3 +2661,7 @@ Los inputs de duración/precio/modalidad en `/portal-profesional` mostraban solo
 
 ### Verificado
 `build:api` 0 err · `smoke:api` 31/31 · `test:api` passed (asserts nuevos: cita pagada → cancelar → `refunded`; doble cancel → 400; efectivo se mantiene `approved`) · `lint:web` 0 err · `tsc --noEmit` limpio. Commit directo a `main` (autorizado por el usuario, 2026-06-19).
+
+### Cierre de sesión (2026-06-19)
+- Commit `074e83e` **pusheado a `origin/main`** (fast-forward sobre `c9ccdf3`).
+- **Higiene de credenciales git:** se detectó y removió un token OAuth (`gho_`) que estaba embebido en `branch.main.remote`; se **revocó en GitHub** (confirmado muerto vía API → 401). El remote se migró a **SSH** (`git@github.com:FerHuCa/clinixa.git`) con `~/.ssh/config` (`AddKeysToAgent`/`UseKeychain`). Detalle en la memoria `entorno-dev-healthhub`. Pendiente operativo del usuario para push por SSH permanente: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`.
