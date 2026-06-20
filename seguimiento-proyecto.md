@@ -2665,3 +2665,56 @@ Los inputs de duración/precio/modalidad en `/portal-profesional` mostraban solo
 ### Cierre de sesión (2026-06-19)
 - Commit `074e83e` **pusheado a `origin/main`** (fast-forward sobre `c9ccdf3`).
 - **Higiene de credenciales git:** se detectó y removió un token OAuth (`gho_`) que estaba embebido en `branch.main.remote`; se **revocó en GitHub** (confirmado muerto vía API → 401). El remote se migró a **SSH** (`git@github.com:FerHuCa/clinixa.git`) con `~/.ssh/config` (`AddKeysToAgent`/`UseKeychain`). Detalle en la memoria `entorno-dev-healthhub`. Pendiente operativo del usuario para push por SSH permanente: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`.
+
+## Siguientes 5 pasos recomendados — Hacia el piloto controlado
+
+### 1. Verificación visual end-to-end (pre-piloto) — *derisqueo UI*
+Login como Fernando (`usr-murcielagolambo-gmail-com`) en el navegador:
+- `/activacion` (wizard 4 pasos, indicador "Activación: N/4" en shell).
+- Cancelar una cita pagada → ver estado "Reembolsada" + aviso "El pago será reembolsado en breve."
+- `/profesionales` (directorio público, filtro por especialidad).
+- Perfil público individual (`/profesionales/{slug}`).
+- Subir avatar en `/portal-profesional` → ver en perfil público.
+
+**Valor:** desriesga toda la UI de reembolsos, onboarding y directorio antes de usuarios reales. **Esfuerzo:** 2-3h manual del usuario.
+
+### 2. Mercado Pago a producción — *desbloquea cobro real*
+- Trámite app marketplace en MP (credenciales `client_id`/`client_secret` — tuyo).
+- Configurar secretos productivos en deployment: `ENCRYPTION_KEY` (base64 32 bytes), `MERCADOPAGO_WEBHOOK_SECRET`.
+- Test end-to-end: profesional verifica cédula → paciente agenda cita con precio → paga en MP real → webhook confirma cita → paciente cancela → reembolso real confirmado en la cuenta MP.
+
+**Valor:** cierra el flujo de dinero. Sin esto el piloto solo valida operación, no monetización. **Esfuerzo:** 4-6h (1h trámite MP, 2-3h config, 1-2h pruebas).
+
+### 3. WhatsApp Business API: recordatorios automáticos 24h pre-cita — *Fase C, ROI más alto*
+- Integración de WhatsApp Business API (registro de app en Meta, webhook setup).
+- Job background que, 24h antes de cada cita `confirmed`, envía recordatorio al paciente vía WhatsApp (`+5216x... recuerda tu cita...`).
+- Monitoreo de opt-out / número inválido.
+
+**Valor:** reduce no-shows ~40% según literatura de salud. Highest ROI retención para el piloto. **Esfuerzo:** 6-8h (3h setup Meta, 2h endpoint + job, 2h testing + error handling).
+
+### 4. Dashboard de analytics del profesional — *retención profesional en piloto*
+Agregar a `/portal-profesional` (nuevo panel o tab):
+- Ingresos totales / este mes (sum `Payment.ProfessionalAmount` aprobados).
+- Ocupación semanal (% de slots ocupados).
+- Pacientes activos (distinct con cita en últimos 30 días).
+- Tasa de no-show / cancelación.
+
+**Valor:** el profesional ve ROI en tiempo real → higher engagement en el piloto. **Esfuerzo:** 3-4h (1h backend query, 1h frontend charts, 1-2h testing).
+
+### 5. Piloto controlado con usuarios reales — *validación de producto*
+- Invitar 5–10 profesionales (preferiblemente de red existente o LinkedIn).
+- Cada profesional invita 2–3 pacientes reales de su práctica.
+- Monitoreo intenso: daily check-ins, Slack/email feedback, tracking de funnel (signup → verificación cédula → publish → primera cita → pago).
+- Ciclo de feedback semanal: ajustes rápidos basados en fricción.
+- SLA: piloto de 4 semanas mínimo (suficiente para validar ~20–30 citas pagadas).
+
+**Valor:** validación de hipótesis de mercado. Real feedback sobre UX, pricing, proceso de onboarding. **Esfuerzo:** 10–20h gestión + soporte reactivo durante las 4 semanas.
+
+---
+
+**Notas:**
+- Los pasos 1–2 **bloquean** el 3–5 (sin UI verificada y sin cobro real, no puedes hacer piloto).
+- El paso 3 (WhatsApp) es **opcional** para el piloto MVP pero **recomendado** (ROI alto de retención).
+- El paso 4 (analytics) **acelera** el piloto (el profesional ve valor) pero no es bloqueador.
+- El paso 5 (piloto) **depende** de los pasos 1–2 y se **beneficia** de 3–4.
+- Estimado total: **25–35 horas** (2–3 sprints de 2 semanas a ritmo de 10h/semana).
