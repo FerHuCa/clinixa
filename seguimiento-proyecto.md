@@ -2826,3 +2826,53 @@ Se corrió una auditoría de sobre-ingeniería (`ponytail-audit`) sobre el árbo
 ---
 
 **Bloqueador único del piloto:** MP PRODUCCIÓN (1-2h). Todo lo demás es opcional o post-piloto.
+
+---
+
+## Verificación de credenciales MP producción + higiene de tests — 2026-06-22 (tarde)
+
+### Resumen
+Se obtuvieron las **credenciales de producción** de Mercado Pago (app Marketplace `client_id 3289243344402903`) y se verificaron **en vivo** contra la API real. Detalle completo en `PLAN-MP-PRODUCCION-2026-06-22.md`.
+
+- ✅ **Token de producción autentica con MP:** checkout creó preferencia real con `initPoint`.
+- ✅ **Reembolso real llega a MP:** respondió `404 resource not found` sobre pago **sintético** de prueba (no `401`) → token válido y autoriza.
+- ✅ **Conclusión:** el cobro contra producción **funciona**. Falta solo webhook prod + 1 transacción real (no testeable headless).
+
+### Decisión de credenciales
+- `.env` **local** quedó en **modo simulado** (vars `MERCADOPAGO_*` vacías). Secretos reales `APP_USR-*` **solo en el host de producción**, nunca en el repo.
+- ⚠️ Las credenciales se compartieron por chat → **rotar `client_secret`** desde MP Dashboard antes/durante el piloto.
+
+### Cambio de código aplicado
+- **`scripts/test-api.mjs`** (commit `dae9bf3`): la aserción de reembolso (`refunded`) se guarda detrás de `checkout.body.simulated`. Con credenciales reales el refund va a MP y rechaza el pago sintético — esa rama se omite con aviso, no es bug. `test:api` queda **verde** en simulado.
+
+### Commits de la sesión
+- `12c3d57` refactor store (−250 líneas) · `dae9bf3` guard de test refund · `9609a8a` runbook MP actualizado.
+
+---
+
+## Siguientes pasos (actualizado 2026-06-22 tarde)
+
+### 1. Cerrar MP PRODUCCIÓN — *único bloqueador del piloto* **CRÍTICO** *(solo en deployment)*
+1. **Rotar `client_secret`** (se compartió por chat).
+2. Cargar `MERCADOPAGO_*` reales + `MERCADOPAGO_WEBHOOK_SECRET` + `ENCRYPTION_KEY` en el env del host.
+3. Registrar webhook prod → `/api/webhooks/mercadopago` (eventos `payment.created`, `payment.updated`).
+4. 1 transacción real de bajo monto end-to-end (valida el reembolso real que el test no cubre).
+- **Esfuerzo:** 1-2h. **Nota:** el OAuth de marketplace (conectar cuenta MP del profesional) no se puede testear headless — validar en producción con un profesional real.
+
+### 2. Piloto controlado *(sin cambios — ver secciones previas)*
+
+---
+
+## Modificaciones sugeridas en código (deuda técnica, no bloquea piloto)
+
+Del audit ponytail (2026-06-22). Hacer **oportunistamente** entre features, no antes del piloto:
+
+1. **Higiene técnica de page-clients grandes** — aplicar el mismo lente del refactor de `healthhub-store.ts` a:
+   - `apps/web/app/portal-profesional/professional-portal-page-client.tsx` (1082 líneas)
+   - `apps/web/app/portal-paciente/portal-patient-page-client.tsx` (948 líneas)
+   - Buscar: bloques `try/catch` repetidos, `setState` sin helper, lógica duplicable. **Esfuerzo:** 2-3h.
+2. **NO re-proponer consolidar `slugify`/`initialsFromName`** — se evaluó y descartó: las 3 variantes tienen distinta aridad/dedup/fallback; las copias C#/TS no se pueden DRY cruzando la frontera de red. Son intencionales.
+
+---
+
+**Estado:** Cobro MP producción **verificado y funcional**. Bloqueador del piloto reducido a 4 pasos de deployment (1-2h). Deuda técnica del front documentada y acotada.
