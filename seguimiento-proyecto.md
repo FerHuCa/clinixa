@@ -2778,3 +2778,51 @@ Se levantaron servicios (API :5050 + Web :3000) y se verificó el flujo de activ
 - ⏳ Piloto: Depende de MP producción
 
 **Estimado total restante para piloto:** 2-4h (MP prod) + 10-20h (piloto execution)
+
+---
+
+## Higiene técnica — auditoría ponytail + refactor del store — 2026-06-22
+
+### Resumen
+Se corrió una auditoría de sobre-ingeniería (`ponytail-audit`) sobre el árbol completo y se aplicó el refactor resultante en `apps/web/lib/healthhub-store.ts` (el archivo más grande del front, 1745 líneas). Commit `12c3d57` en `main` (pusheado a origin). Lint limpio, **misma lógica, sin cambios de comportamiento.**
+
+### Cambios aplicados (−250 líneas netas: +165 / −415)
+- ✅ **`applyState` helper:** colapsó 21 bloques `setState`+`persistState` en uno; elimina el footgun de olvidar persistir tras mutar.
+- ✅ **`loadWithFallback` helper:** 12 bloques `try/catch` de carga con fallback → llamadas de una línea.
+- ✅ **`queryParam` helper:** 8 query strings construidos a mano (`?x=${encodeURIComponent(...)}`).
+- ✅ **`delete:` `apiPostEmpty`:** función muerta sin callers, eliminada.
+
+### Descartado tras verificar (falsos positivos del primer pase)
+- ❌ Consolidar las 3 funciones `slugify` — distinta aridad/dedup/fallback; `TextHelpers.Slugify` siembra IDs internos (dedup vía `CreateUniqueId`), `MappingExtensions.Slugify` genera slugs de URL pública (dedup vía hash). Fusionarlas rompía URLs o IDs.
+- ❌ DRY de `initialsFromName` entre C#/TS — la copia TS es código de fallback offline; no se puede compartir cruzando la frontera de red.
+
+### Intacto por diseño (comportamiento distinto)
+`addPatient`/`addAppointment`/`addSoapNote` (rethrow en <500), `loadSubscription` (catch silencioso), `loadMarketplaceStatus`/`connectMarketplace`/`registerSubscriptionInterest` (sin try/catch).
+
+**Estado:** Deuda técnica del store reducida; base más sostenible (~1500 líneas) sin tocar la superficie de API ni los componentes.
+
+---
+
+## Siguientes pasos (actualizado 2026-06-22)
+
+### 1. Mercado Pago a PRODUCCIÓN — *desbloquea cobro real* **CRÍTICO** *(sin cambios)*
+- Credenciales PROD desde MP Dashboard, actualizar `.env`/deployment, registrar webhook PROD, test 1-2 transacciones reales.
+- **Valor:** cierra flujo de dinero real. **Esfuerzo:** 1-2h. *Único bloqueador real del piloto.*
+
+### 2. Quitar `.env.save` del árbol — *higiene de credenciales*
+- Archivo sin trackear visible en `git status`. Confirmar que no tenga secretos vivos y borrarlo o moverlo fuera del repo.
+- **Valor:** evita fuga accidental de credenciales. **Esfuerzo:** 5 min.
+
+### 3. Verificación visual adicional (Opcional, UI) *(sin cambios)*
+- Cancelar cita pagada → "Reembolsada", directorio `/profesionales` + filtro, perfil público `/profesionales/{slug}`, avatar.
+- **Valor:** desriesga UI + directorio. **Esfuerzo:** 1-2h.
+
+### 4. Continuar higiene técnica (Opcional, oportunista) — *del audit ponytail*
+- El refactor cubrió `healthhub-store.ts`. Pendiente de revisar bajo el mismo lente: `professional-portal-page-client.tsx` (1082 líneas) y `portal-patient-page-client.tsx` (948 líneas).
+- **Valor:** sostenibilidad del front. **Esfuerzo:** 2-3h. *No bloquea piloto — hacer entre features.*
+
+### 5. WhatsApp recordatorios 24h / Dashboard analytics / Piloto controlado *(sin cambios — ver secciones previas)*
+
+---
+
+**Bloqueador único del piloto:** MP PRODUCCIÓN (1-2h). Todo lo demás es opcional o post-piloto.
