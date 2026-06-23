@@ -166,6 +166,12 @@ public sealed class MercadoPagoService(
             return true;
         }
 
+        if (string.IsNullOrWhiteSpace(providerPaymentId))
+        {
+            logger.LogWarning("Reembolso omitido: ProviderPaymentId vacio — el pago no fue confirmado por Mercado Pago.");
+            return false;
+        }
+
         try
         {
             var url = $"https://api.mercadopago.com/v1/payments/{providerPaymentId}/refunds";
@@ -234,6 +240,20 @@ public sealed class MercadoPagoService(
         }
 
         if (string.IsNullOrWhiteSpace(ts) || string.IsNullOrWhiteSpace(v1))
+        {
+            return false;
+        }
+
+        if (!long.TryParse(ts, out var tsSeconds))
+        {
+            return false;
+        }
+
+        // ponytail: ventana de 5 min contra replay de webhooks; ampliar si MP ajusta su tolerancia de reloj
+        const long maxSignatureAgeSeconds = 300;
+        var nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        if (Math.Abs(nowSeconds - tsSeconds) > maxSignatureAgeSeconds)
         {
             return false;
         }

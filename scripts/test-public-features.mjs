@@ -4,7 +4,7 @@
  * Cubre: directorio público, perfil por slug, avatar upload, loop de verificación,
  * y gate público (pending → no aparece en directorio).
  *
- * Idempotente: teardown restaura el estado de Fernando a "pending".
+ * Idempotente: usa email único por ejecución para no colisionar entre runs.
  *
  * Uso:
  *   node scripts/test-public-features.mjs
@@ -80,6 +80,7 @@ async function main() {
   console.log("[setup] Autenticando usuarios de prueba...");
   const lauraAuth = await login("laura.vega@healthhub.demo");
   const masterAuth = await login("master@healthhub.demo");
+  const clinicAdminAuth = await login("admin.clinica@healthhub.demo");
   console.log("[setup] Logins OK");
   console.log("");
 
@@ -263,13 +264,120 @@ async function main() {
   console.log("");
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CASO 4 — Loop de verificación (como master)
+  // CASO 4 — Loop de verificación (como master) — profesional sintético
   // ═══════════════════════════════════════════════════════════════════════════
-  console.log("[4] Verificación de cédula — queue + verify + reject + teardown...");
+  console.log("[4] Verificación de cédula — mint pro sintético + queue + verify + reject...");
 
-  const FERNANDO_ID = "pro-murcielagolambo-gmail-com";
+  // ── 4-setup: crear profesional sintético vía invitation→accept→onboarding ──
+  // Igual que test-api.mjs líneas 88-231: la minimal subset para llegar a pending.
+  const syntheticEmail = `qa.pubfeat.${Date.now()}@healthhub.demo`;
+  const syntheticDisplayName = "Profesional Sintético PubFeat";
 
-  // ── 4a. Queue de pendientes ──
+  // (i) Invitar desde clínica demo (test-api.mjs L89-103)
+  const syntheticInvitation = await request(
+    "/api/clinics/clinic-bienestar-integral/invitations",
+    {
+      body: JSON.stringify({
+        email: syntheticEmail,
+        fullName: syntheticDisplayName,
+        licenseNumber: `QA-PF-${Date.now()}`,
+        role: "professional",
+        specialty: "doctor",
+      }),
+      headers: {
+        Authorization: `Bearer ${clinicAdminAuth.token}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    }
+  );
+  assert(
+    syntheticInvitation.status === 201,
+    `invitacion sintetica esperaba 201 y devolvio ${syntheticInvitation.status}: ${JSON.stringify(syntheticInvitation.body)}`
+  );
+  const syntheticInviteToken = syntheticInvitation.body.token;
+  assert(syntheticInviteToken, "invitacion sintetica no devolvio token de un solo uso");
+
+  // (ii) Aceptar invitación → crea usuario+profesional (test-api.mjs L133-143)
+  const syntheticAccepted = await request(
+    `/api/clinic-invitations/${syntheticInviteToken}/accept`,
+    {
+      body: JSON.stringify({ password: "healthhub123" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }
+  );
+  assert(
+    syntheticAccepted.status === 200,
+    `aceptar invitacion sintetica esperaba 200 y devolvio ${syntheticAccepted.status}: ${JSON.stringify(syntheticAccepted.body)}`
+  );
+  assert(
+    syntheticAccepted.body?.user?.professionalId,
+    "aceptar invitacion sintetica no creo perfil profesional"
+  );
+  const syntheticProfToken = syntheticAccepted.body.token;
+  const syntheticProfId = syntheticAccepted.body.user.professionalId;
+
+  // (iii) Completar perfil (test-api.mjs L190-205)
+  const syntheticProfile = await request("/api/professional-portal/profile", {
+    body: JSON.stringify({
+      appointmentMode: "online",
+      basePrice: 800,
+      bio: "Profesional sintético creado por test-public-features para probar el ciclo de verificación de cédula.",
+      displayName: syntheticDisplayName,
+      location: "CDMX",
+      specialty: "doctor",
+    }),
+    headers: {
+      Authorization: `Bearer ${syntheticProfToken}`,
+      "Content-Type": "application/json",
+    },
+    method: "PATCH",
+  });
+  assert(
+    syntheticProfile.status === 200,
+    `perfil sintetico esperaba 200 y devolvio ${syntheticProfile.status}: ${JSON.stringify(syntheticProfile.body)}`
+  );
+
+  // (iv) Agregar servicio (test-api.mjs L207-221)
+  const syntheticService = await request("/api/professional-portal/services", {
+    body: JSON.stringify({
+      description: "Servicio de prueba para validar el ciclo de verificación.",
+      durationMinutes: 45,
+      mode: "online",
+      name: "Consulta QA PubFeat",
+      price: 800,
+    }),
+    headers: {
+      Authorization: `Bearer ${syntheticProfToken}`,
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+  assert(
+    syntheticService.status === 201,
+    `servicio sintetico esperaba 201 y devolvio ${syntheticService.status}: ${JSON.stringify(syntheticService.body)}`
+  );
+
+  // (v) Agregar disponibilidad (test-api.mjs L223-231)
+  const syntheticAvailability = await request("/api/professional-portal/availability", {
+    body: JSON.stringify({ endsAt: "13:00", startsAt: "09:00", weekday: 2 }),
+    headers: {
+      Authorization: `Bearer ${syntheticProfToken}`,
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+  assert(
+    syntheticAvailability.status === 201,
+    `disponibilidad sintetica esperaba 201 y devolvio ${syntheticAvailability.status}: ${JSON.stringify(syntheticAvailability.body)}`
+  );
+
+  console.log(
+    `[4-setup] OK — profesional sintético creado: id="${syntheticProfId}", email="${syntheticEmail}"`
+  );
+
+  // ── 4a. Queue de pendientes — el sintético debe estar presente ──
   const queueResult = await request("/api/admin/professionals?verificationStatus=pending", {
     headers: { Authorization: `Bearer ${masterAuth.token}` },
   });
@@ -282,14 +390,17 @@ async function main() {
   for (const item of queueResult.body) {
     assert("email" in item, `item de queue pending sin campo "email": ${JSON.stringify(item)}`);
   }
-  const fernandoInQueue = queueResult.body.some((p) => p.id === FERNANDO_ID);
-  assert(fernandoInQueue, `Fernando (${FERNANDO_ID}) no aparece en la queue de pending`);
+  const syntheticInQueue = queueResult.body.some((p) => p.id === syntheticProfId);
+  assert(
+    syntheticInQueue,
+    `profesional sintetico (${syntheticProfId}) no aparece en la queue de pending`
+  );
   console.log(
-    `[4a] OK — queue pending: ${queueResult.body.length} profesional(es); Fernando presente`
+    `[4a] OK — queue pending: ${queueResult.body.length} profesional(es); sintético presente`
   );
 
-  // ── 4b. Verificar Fernando ──
-  const verifyResult = await request(`/api/professionals/${FERNANDO_ID}/verification`, {
+  // ── 4b. Verificar el sintético ──
+  const verifyResult = await request(`/api/professionals/${syntheticProfId}/verification`, {
     body: JSON.stringify({ status: "verified" }),
     headers: {
       Authorization: `Bearer ${masterAuth.token}`,
@@ -305,10 +416,10 @@ async function main() {
     verifyResult.body?.verificationStatus === "verified",
     `tras verify, verificationStatus="${verifyResult.body?.verificationStatus}", esperaba "verified"`
   );
-  console.log(`[4b] OK — Fernando verificado → verificationStatus="verified"`);
+  console.log(`[4b] OK — profesional sintético verificado → verificationStatus="verified"`);
 
-  // ── 4c. Rechazar Fernando ──
-  const rejectResult = await request(`/api/professionals/${FERNANDO_ID}/verification`, {
+  // ── 4c. Rechazar el sintético ──
+  const rejectResult = await request(`/api/professionals/${syntheticProfId}/verification`, {
     body: JSON.stringify({ status: "rejected", reason: "prueba automatizada" }),
     headers: {
       Authorization: `Bearer ${masterAuth.token}`,
@@ -324,11 +435,11 @@ async function main() {
     rejectResult.body?.verificationStatus === "rejected",
     `tras reject, verificationStatus="${rejectResult.body?.verificationStatus}", esperaba "rejected"`
   );
-  console.log(`[4c] OK — Fernando rechazado → verificationStatus="rejected"`);
+  console.log(`[4c] OK — profesional sintético rechazado → verificationStatus="rejected"`);
 
-  // ── 4d. TEARDOWN — volver a pending ─────────────────────────────────────────
-  const teardownResult = await request(`/api/professionals/${FERNANDO_ID}/verification`, {
-    body: JSON.stringify({ status: "pending", reason: "reset prueba automatizada" }),
+  // ── 4d. Volver a pending (para que el gate público pueda ser validado en [5]) ──
+  const setPendingResult = await request(`/api/professionals/${syntheticProfId}/verification`, {
+    body: JSON.stringify({ status: "pending", reason: "reset para gate público" }),
     headers: {
       Authorization: `Bearer ${masterAuth.token}`,
       "Content-Type": "application/json",
@@ -336,47 +447,49 @@ async function main() {
     method: "PATCH",
   });
   assert(
-    teardownResult.status === 200,
-    `PATCH teardown (pending) esperaba 200 y devolvio ${teardownResult.status}: ${JSON.stringify(teardownResult.body)}`
+    setPendingResult.status === 200,
+    `PATCH set-pending esperaba 200 y devolvio ${setPendingResult.status}: ${JSON.stringify(setPendingResult.body)}`
   );
   assert(
-    teardownResult.body?.verificationStatus === "pending",
-    `tras teardown, verificationStatus="${teardownResult.body?.verificationStatus}", esperaba "pending"`
+    setPendingResult.body?.verificationStatus === "pending",
+    `tras set-pending, verificationStatus="${setPendingResult.body?.verificationStatus}", esperaba "pending"`
   );
-  console.log(`[4d] TEARDOWN OK — Fernando restaurado → verificationStatus="pending"`);
+  console.log(
+    `[4d] OK — profesional sintético restaurado a pending → verificationStatus="pending"`
+  );
   console.log("");
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CASO 5 — Gate público: Fernando (pending) no aparece en directorio ni by-slug
+  // CASO 5 — Gate público: pro sintético (pending) ausente del directorio y by-slug
   // ═══════════════════════════════════════════════════════════════════════════
   console.log(
-    "[5] Gate público — Fernando (pending) NO debe aparecer en directorio ni por slug..."
+    "[5] Gate público — pro sintético (pending) NO debe aparecer en directorio ni por slug..."
   );
 
-  // Directorio post-teardown
+  // Directorio: el sintético nunca fue publicado, debe estar ausente
   const dirPost = await request("/api/professionals");
   assert(
     dirPost.status === 200,
-    `directorio post-teardown esperaba 200 y devolvio ${dirPost.status}`
+    `directorio esperaba 200 y devolvio ${dirPost.status}`
   );
-  const fernandoInDir = dirPost.body.some(
-    (p) => p.displayName === "Fernando Huerta" || p.id === FERNANDO_ID
+  const syntheticInDir = dirPost.body.some(
+    (p) => p.id === syntheticProfId || p.displayName === syntheticDisplayName
   );
   assert(
-    !fernandoInDir,
-    `Fernando Huerta (pending) aparece en el directorio público — gate no funciona`
+    !syntheticInDir,
+    `profesional sintético (pending) aparece en el directorio público — gate no funciona`
   );
 
-  // by-slug de Fernando → 404
-  const fernandoSlug = computeSlug("Fernando Huerta", FERNANDO_ID);
-  const fernandoSlugResult = await request(`/api/professionals/by-slug/${fernandoSlug}`);
+  // by-slug del sintético → 404
+  const syntheticSlug = computeSlug(syntheticDisplayName, syntheticProfId);
+  const syntheticSlugResult = await request(`/api/professionals/by-slug/${syntheticSlug}`);
   assert(
-    fernandoSlugResult.status === 404,
-    `by-slug Fernando (pending) esperaba 404 y devolvio ${fernandoSlugResult.status}`
+    syntheticSlugResult.status === 404,
+    `by-slug sintético (pending) esperaba 404 y devolvio ${syntheticSlugResult.status}`
   );
 
   console.log(
-    `[5] OK — Fernando (pending) ausente del directorio; by-slug "${fernandoSlug}" → 404`
+    `[5] OK — pro sintético (pending) ausente del directorio; by-slug "${syntheticSlug}" → 404`
   );
   console.log("");
   console.log("=== Public features tests passed ===");

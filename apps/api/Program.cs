@@ -687,6 +687,11 @@ appointmentsApi.MapPost("/", async (HttpRequest httpRequest, CreateAppointmentRe
         }
     }
 
+    if (professional is not null && professional.Status != "active")
+    {
+        return Results.Conflict(new { errors = new[] { "El profesional no esta disponible para recibir citas." } });
+    }
+
     var duration = service is null ? request.Duration?.Trim() ?? string.Empty : $"{service.DurationMinutes} min";
     var appointmentType = service is null ? request.Type?.Trim() ?? string.Empty : service.Name;
     var appointmentMode = NormalizeAppointmentMode(request.Mode, service?.Mode, professional?.AppointmentMode);

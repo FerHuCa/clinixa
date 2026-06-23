@@ -2909,3 +2909,25 @@ Del audit ponytail (2026-06-22). Hacer **oportunistamente** entre features, no a
 ---
 
 **Estado:** Cobro MP producción **verificado y funcional**; deployment a Railway **andamiado** (Dockerfiles + builds verificados). Bloqueador del piloto = ejecutar pasos en Railway + DNS + post-deploy MP (~1-2h). Mañana retomamos en `PLAN-DEPLOYMENT-RAILWAY.md`.
+
+---
+
+## Sesión 2026-06-22 (noche) — QA orquestado (Opus+Sonnet) + 5 fixes de endurecimiento
+
+**Orquestación:** Opus como orquestador/evaluador; agentes Sonnet como ejecutores. Artefactos: `TEST_PLAN.md` y `TEST_REPORT.md`. API probado en **modo simulado** (sin `.env` real → MP/Resend/Clerk vacíos, cero efectos externos) contra Postgres local.
+
+**Verificación de 8 flujos → 8/8 PASS ✅** (auth, directorio+gate, booking, pagos, onboarding+verificación, invitaciones, RBAC especialidad, cross-cutting). Backbone: `smoke:api` 31/31, `test:api` write-path PASS, `test:public` PASS.
+- **Falso positivo del audit refutado** por verificación adversarial Opus: el supuesto doble `ReadAsStringAsync` en `MercadoPagoService` son ramas mutuamente excluyentes — no es bug.
+
+**Audit ponytail repo-wide (8 subsistemas):** ~2,047 líneas recortables (mayoría docs históricos), −1 dep, −1 contenedor.
+
+**5 fixes aplicados y verificados (builds API+web verdes, 3 scripts verdes, 2 corridas idempotentes de `test:public`):**
+1. **[seguridad] Anti-replay webhook MP** — `ValidateWebhookSignature` rechaza firmas con `|now−ts| > 300s` (`MercadoPagoService.cs`).
+2. **[correctness] Refund guard** — `RefundPaymentAsync` corta si `ProviderPaymentId` vacío (evita URL `…/payments//refunds` con token MP real).
+3. **[correctness] Guard de booking** — crear cita rechaza (409) si `professional.Status != "active"` (race de desactivación entre slot-fetch y POST).
+4. **[test infra] `test:public` hermético** — acuña un profesional `pending` sintético vía invitación→accept; **ya no muta la cuenta real de Fernando** (causa del fallo previo por drift).
+5. **[limpieza] Código muerto verificado** — borrados: dep `tailwind-merge`, servicio `redis` en docker-compose, ~68 ln de exports muertos en `demo-data.ts`.
+
+**Decisión de alcance (ponytail):** **NO** se borró el canal de notificación `whatsapp` que el audit marcó "muerto" — es feature **viva**: toggle en UI (`security-page-client.tsx`), assert en `test-api.mjs`, y marketeada en el plan Pro. Solo le falta el emisor (WhatsApp Business API, pendiente por diseño).
+
+**Gaps menores registrados (no accionados, no bloquean piloto):** `/{id}/reviews` sin gate de status (info-disclosure por ID conocido) · cross-patient read devuelve `200+[]` en vez de 403 (semántica) · Clerk JWT sin revocación server-side en logout (arquitectura estándar Clerk) · `audit-logs` sin paginación más allá de `Take(100)`. Ver `TEST_REPORT.md` §Gaps menores.
