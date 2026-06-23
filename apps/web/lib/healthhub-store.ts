@@ -613,16 +613,6 @@ async function apiUpload<T>(path: string, formData: FormData) {
   return response.json() as Promise<T>;
 }
 
-async function apiPostEmpty(path: string) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: await getAuthHeaders(),
-    method: "POST"
-  });
-
-  if (!response.ok) {
-    throw await createApiError(response, `POST ${path} failed with ${response.status}`);
-  }
-}
 
 async function apiPatch<T>(path: string, body: unknown) {
   const authHeaders = await getAuthHeaders();
@@ -867,7 +857,35 @@ export function useHealthHubStore() {
   }, []);
 
   const actions = useMemo(
-    () => ({
+    () => {
+      // applyState: aplica un updater y persiste en una sola operacion (evita el
+      // footgun de olvidar persistState despues de setState).
+      function applyState(updater: (current: HealthHubState) => HealthHubState) {
+        setState((current) => {
+          const nextState = updater(current);
+          persistState(nextState);
+          return nextState;
+        });
+      }
+
+      // loadWithFallback: setApiStatus("connected") en exito o error <500 (validacion);
+      // "fallback" solo en error de servidor/red. Devuelve `fallback` cuando algo falla.
+      async function loadWithFallback<T>(fetcher: () => Promise<T>, fallback: T): Promise<T> {
+        try {
+          const value = await fetcher();
+          setApiStatus("connected");
+          return value;
+        } catch (error) {
+          setApiStatus(error instanceof ApiError && error.status < 500 ? "connected" : "fallback");
+          return fallback;
+        }
+      }
+
+      // queryParam: "?name=valor" url-encoded, o "" si el valor es vacio/undefined.
+      const queryParam = (name: string, value?: string) =>
+        value ? `?${name}=${encodeURIComponent(value)}` : "";
+
+      return {
       async addPatient(input: NewPatientInput) {
         let newPatient: Patient;
 
@@ -884,16 +902,10 @@ export function useHealthHubStore() {
           setApiStatus("fallback");
         }
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            patients: [newPatient, ...current.patients.filter((patient) => patient.id !== newPatient.id)]
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          patients: [newPatient, ...current.patients.filter((patient) => patient.id !== newPatient.id)]
+        }));
 
         return newPatient;
       },
@@ -919,19 +931,13 @@ export function useHealthHubStore() {
           setApiStatus("fallback");
         }
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: [newAppointment, ...current.appointments.filter((appointment) => appointment.id !== newAppointment.id)],
-            patients: current.patients.map((item) =>
-              item.id === patient.id ? { ...item, nextAppointment: `${input.date} ${input.time}` } : item
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: [newAppointment, ...current.appointments.filter((appointment) => appointment.id !== newAppointment.id)],
+          patients: current.patients.map((item) =>
+            item.id === patient.id ? { ...item, nextAppointment: `${input.date} ${input.time}` } : item
+          )
+        }));
 
         return newAppointment;
       },
@@ -943,48 +949,30 @@ export function useHealthHubStore() {
       async cancelAppointment(appointmentId: string, reason: string) {
         const updatedAppointment = await apiPatch<Appointment>(`/api/appointments/${appointmentId}/cancel`, { reason });
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
+        }));
         setApiStatus("connected");
         return updatedAppointment;
       },
       async rescheduleAppointment(appointmentId: string, date: string, time: string, reason: string) {
         const updatedAppointment = await apiPatch<Appointment>(`/api/appointments/${appointmentId}/reschedule`, { date, reason, time });
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
+        }));
         setApiStatus("connected");
         return updatedAppointment;
       },
       async updateAppointmentStatus(appointmentId: string, status: "confirmed" | "completed" | "no_show", reason: string) {
         const updatedAppointment = await apiPatch<Appointment>(`/api/appointments/${appointmentId}/status`, { reason, status });
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: current.appointments.map((appointment) => (appointment.id === updatedAppointment.id ? updatedAppointment : appointment))
+        }));
         setApiStatus("connected");
         return updatedAppointment;
       },
@@ -1000,18 +988,12 @@ export function useHealthHubStore() {
           apiGet<PatientRecord[]>("/api/patient-portal/records")
         ]);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: mergePortalAppointments(current.appointments, patientPortalAppointments),
-            currentUser: auth.user,
-            patientRecords
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: mergePortalAppointments(current.appointments, patientPortalAppointments),
+          currentUser: auth.user,
+          patientRecords
+        }));
         setApiStatus("connected");
         broadcastCurrentUser(auth.user);
         return auth.user;
@@ -1025,16 +1007,10 @@ export function useHealthHubStore() {
         persistSelectedUserId(user.id);
         persistUserRole(user.primaryRole);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            currentUser: user
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          currentUser: user
+        }));
         setApiStatus("connected");
         broadcastCurrentUser(user);
         return user;
@@ -1044,16 +1020,10 @@ export function useHealthHubStore() {
         sessionPromise = Promise.resolve(user);
         persistUserRole(user.primaryRole);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            currentUser: user
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          currentUser: user
+        }));
         setApiStatus("connected");
         broadcastCurrentUser(user);
         return user;
@@ -1065,16 +1035,10 @@ export function useHealthHubStore() {
         persistSelectedUserId(seedCurrentUser.id);
 
         const fallbackUser = state.demoSessions.find((session) => session.id === seedCurrentUser.id) ?? seedCurrentUser;
-        setState((current) => {
-          const nextState = {
-            ...current,
-            currentUser: fallbackUser
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          currentUser: fallbackUser
+        }));
 
         broadcastCurrentUser(fallbackUser);
         return fallbackUser;
@@ -1097,85 +1061,41 @@ export function useHealthHubStore() {
           ]);
           sessionPromise = Promise.resolve(currentUser);
 
-          setState((current) => {
-            const nextState = {
-              ...current,
-              appointments: mergePortalAppointments(current.appointments, patientPortalAppointments),
-              currentUser,
-              patientRecords
-            };
-
-            persistState(nextState);
-
-            return nextState;
-          });
+          applyState((current) => ({
+            ...current,
+            appointments: mergePortalAppointments(current.appointments, patientPortalAppointments),
+            currentUser,
+            patientRecords
+          }));
           setApiStatus("connected");
           broadcastCurrentUser(currentUser);
           return currentUser;
         } catch {
           const fallbackUser = state.demoSessions.find((session) => session.id === userId) ?? seedCurrentUser;
-          setState((current) => {
-            const nextState = {
-              ...current,
-              currentUser: fallbackUser
-            };
-
-            persistState(nextState);
-
-            return nextState;
-          });
+          applyState((current) => ({
+            ...current,
+            currentUser: fallbackUser
+          }));
           setApiStatus("fallback");
           broadcastCurrentUser(fallbackUser);
           return fallbackUser;
         }
       },
       async loadProfessionalDashboard() {
-        try {
-          const dashboard = await apiGet<ProfessionalDashboard>("/api/professional-portal/dashboard");
-          setApiStatus("connected");
-          return dashboard;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return null;
-        }
+        return loadWithFallback(() => apiGet<ProfessionalDashboard>("/api/professional-portal/dashboard"), null);
       },
       async loadProfessionalPayments(month?: string) {
-        const query = month ? `?month=${encodeURIComponent(month)}` : "";
-
-        try {
-          const payments = await apiGet<ProfessionalPayments>(`/api/professional-portal/payments${query}`);
-          setApiStatus("connected");
-          return payments;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return null;
-        }
+        return loadWithFallback(() => apiGet<ProfessionalPayments>(`/api/professional-portal/payments${queryParam("month", month)}`), null);
       },
       async registerCashPayment(appointmentId: string) {
         const result = await apiPost<CashPaymentResult>(`/api/appointments/${appointmentId}/cash-payment`, {});
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            appointments: current.appointments.map((appointment) =>
-              appointment.id === result.appointment.id ? result.appointment : appointment
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          appointments: current.appointments.map((appointment) =>
+            appointment.id === result.appointment.id ? result.appointment : appointment
+          )
+        }));
         setApiStatus("connected");
         return result;
       },
@@ -1206,20 +1126,8 @@ export function useHealthHubStore() {
         return connect;
       },
       async loadMarketplacePending() {
-        try {
-          const pending = await apiGet<MarketplacePendingItem[]>("/api/admin/marketplace/pending");
-          setApiStatus("connected");
-          return pending;
-        } catch (error) {
-          // 403 (clinic_admin sin clinica, etc.) se maneja en silencio sin romper la pagina.
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        // 403 (clinic_admin sin clinica, etc.) se maneja en silencio sin romper la pagina.
+        return loadWithFallback(() => apiGet<MarketplacePendingItem[]>("/api/admin/marketplace/pending"), [] as MarketplacePendingItem[]);
       },
       async verifyMarketplaceProfessional(professionalId: string, status: "verified" | "rejected") {
         await apiPatch<{ status: string; message: string }>(
@@ -1229,21 +1137,10 @@ export function useHealthHubStore() {
         setApiStatus("connected");
       },
       async loadAvailableSlots(professionalId: string, serviceId: string) {
-        try {
-          const slots = await apiGet<AvailableSlot[]>(
-            `/api/professionals/${professionalId}/available-slots?serviceId=${encodeURIComponent(serviceId)}`
-          );
-          setApiStatus("connected");
-          return slots;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-            return [];
-          }
-
-          setApiStatus("fallback");
-          return [];
-        }
+        return loadWithFallback(
+          () => apiGet<AvailableSlot[]>(`/api/professionals/${professionalId}/available-slots?serviceId=${encodeURIComponent(serviceId)}`),
+          [] as AvailableSlot[]
+        );
       },
       async createProfessionalService(input: {
         name: string;
@@ -1254,20 +1151,14 @@ export function useHealthHubStore() {
       }) {
         const service = await apiPost<ProfessionalService>("/api/professional-portal/services", input);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((professional) =>
-              professional.id === current.currentUser.professionalId
-                ? { ...professional, services: [...professional.services.filter((item) => item.id !== service.id), service] }
-                : professional
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((professional) =>
+            professional.id === current.currentUser.professionalId
+              ? { ...professional, services: [...professional.services.filter((item) => item.id !== service.id), service] }
+              : professional
+          )
+        }));
         setApiStatus("connected");
         return service;
       },
@@ -1283,96 +1174,53 @@ export function useHealthHubStore() {
       ) {
         const service = await apiPatch<ProfessionalService>(`/api/professional-portal/services/${serviceId}`, input);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((professional) =>
-              professional.id === current.currentUser.professionalId
-                ? { ...professional, services: professional.services.map((item) => (item.id === service.id ? service : item)) }
-                : professional
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((professional) =>
+            professional.id === current.currentUser.professionalId
+              ? { ...professional, services: professional.services.map((item) => (item.id === service.id ? service : item)) }
+              : professional
+          )
+        }));
         setApiStatus("connected");
         return service;
       },
       async createProfessionalAvailability(input: { weekday: number; startsAt: string; endsAt: string }) {
         const availability = await apiPost<ProfessionalAvailability>("/api/professional-portal/availability", input);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((professional) =>
-              professional.id === current.currentUser.professionalId
-                ? { ...professional, availability: [...professional.availability.filter((item) => item.id !== availability.id), availability] }
-                : professional
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((professional) =>
+            professional.id === current.currentUser.professionalId
+              ? { ...professional, availability: [...professional.availability.filter((item) => item.id !== availability.id), availability] }
+              : professional
+          )
+        }));
         setApiStatus("connected");
         return availability;
       },
       async updateProfessionalAvailability(availabilityId: string, input: { weekday: number; startsAt: string; endsAt: string }) {
         const availability = await apiPatch<ProfessionalAvailability>(`/api/professional-portal/availability/${availabilityId}`, input);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((professional) =>
-              professional.id === current.currentUser.professionalId
-                ? {
-                    ...professional,
-                    availability: professional.availability.map((item) => (item.id === availability.id ? availability : item))
-                  }
-                : professional
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((professional) =>
+            professional.id === current.currentUser.professionalId
+              ? {
+                  ...professional,
+                  availability: professional.availability.map((item) => (item.id === availability.id ? availability : item))
+                }
+              : professional
+          )
+        }));
         setApiStatus("connected");
         return availability;
       },
       async loadAuditLogs(patientId?: string) {
-        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
-        try {
-          const logs = await apiGet<AuditLog[]>(`/api/audit-logs${query}`);
-          setApiStatus("connected");
-          return logs;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(() => apiGet<AuditLog[]>(`/api/audit-logs${queryParam("patientId", patientId)}`), [] as AuditLog[]);
       },
       async loadClinicInvitations(clinicId: string) {
-        try {
-          const invitations = await apiGet<ClinicInvitation[]>(`/api/clinics/${clinicId}/invitations`);
-          setApiStatus("connected");
-          return invitations;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(() => apiGet<ClinicInvitation[]>(`/api/clinics/${clinicId}/invitations`), [] as ClinicInvitation[]);
       },
       async createClinicInvitation(
         clinicId: string,
@@ -1402,16 +1250,10 @@ export function useHealthHubStore() {
         persistSelectedUserId(auth.user.id);
         persistUserRole(auth.user.primaryRole);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            currentUser: auth.user
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          currentUser: auth.user
+        }));
         setApiStatus("connected");
         broadcastCurrentUser(auth.user);
         return auth.user;
@@ -1427,19 +1269,7 @@ export function useHealthHubStore() {
         return invitation;
       },
       async loadProfessionalOnboarding() {
-        try {
-          const onboarding = await apiGet<ProfessionalOnboarding>("/api/professional-portal/onboarding");
-          setApiStatus("connected");
-          return onboarding;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return null;
-        }
+        return loadWithFallback(() => apiGet<ProfessionalOnboarding>("/api/professional-portal/onboarding"), null);
       },
       async updateProfessionalProfile(input: {
         displayName: string;
@@ -1454,16 +1284,10 @@ export function useHealthHubStore() {
       }) {
         const professional = await apiPatch<Professional>("/api/professional-portal/profile", input);
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((item) => (item.id === professional.id ? professional : item))
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((item) => (item.id === professional.id ? professional : item))
+        }));
         setApiStatus("connected");
         return professional;
       },
@@ -1477,33 +1301,15 @@ export function useHealthHubStore() {
       async publishProfessional() {
         const professional = await apiPost<Professional>("/api/professional-portal/publish", {});
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            professionals: current.professionals.map((item) => (item.id === professional.id ? professional : item))
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          professionals: current.professionals.map((item) => (item.id === professional.id ? professional : item))
+        }));
         setApiStatus("connected");
         return professional;
       },
       async loadConsent() {
-        try {
-          const status = await apiGet<ConsentStatus>("/api/me/consent");
-          setApiStatus("connected");
-          return status;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return null;
-        }
+        return loadWithFallback(() => apiGet<ConsentStatus>("/api/me/consent"), null);
       },
       async recordConsent(accepted: string[]) {
         const status = await apiPost<ConsentStatus>("/api/me/consent", { accepted });
@@ -1511,20 +1317,10 @@ export function useHealthHubStore() {
         return status;
       },
       async loadVerificationQueue(verificationStatus?: string) {
-        const query = verificationStatus ? `?verificationStatus=${encodeURIComponent(verificationStatus)}` : "";
-        try {
-          const queue = await apiGet<ProfessionalVerificationItem[]>(`/api/admin/professionals${query}`);
-          setApiStatus("connected");
-          return queue;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(
+          () => apiGet<ProfessionalVerificationItem[]>(`/api/admin/professionals${queryParam("verificationStatus", verificationStatus)}`),
+          [] as ProfessionalVerificationItem[]
+        );
       },
       async updateProfessionalVerification(professionalId: string, status: "verified" | "rejected" | "pending", reason: string) {
         const updated = await apiPatch<Professional>(`/api/professionals/${professionalId}/verification`, { reason, status });
@@ -1532,35 +1328,10 @@ export function useHealthHubStore() {
         return updated;
       },
       async loadClinics() {
-        try {
-          const clinics = await apiGet<Clinic[]>("/api/clinics");
-          setApiStatus("connected");
-          return clinics;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(() => apiGet<Clinic[]>("/api/clinics"), [] as Clinic[]);
       },
       async loadNotifications(status?: string) {
-        const query = status ? `?status=${encodeURIComponent(status)}` : "";
-        try {
-          const notifications = await apiGet<Notification[]>(`/api/notifications${query}`);
-          setApiStatus("connected");
-          return notifications;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(() => apiGet<Notification[]>(`/api/notifications${queryParam("status", status)}`), [] as Notification[]);
       },
       async markNotificationRead(notificationId: string) {
         const notification = await apiPatch<Notification>(`/api/notifications/${notificationId}/read`, {});
@@ -1568,19 +1339,7 @@ export function useHealthHubStore() {
         return notification;
       },
       async loadNotificationPreferences() {
-        try {
-          const preferences = await apiGet<NotificationPreference[]>("/api/notification-preferences");
-          setApiStatus("connected");
-          return preferences;
-        } catch (error) {
-          if (error instanceof ApiError && error.status < 500) {
-            setApiStatus("connected");
-          } else {
-            setApiStatus("fallback");
-          }
-
-          return [];
-        }
+        return loadWithFallback(() => apiGet<NotificationPreference[]>("/api/notification-preferences"), [] as NotificationPreference[]);
       },
       async updateNotificationPreference(
         channel: string,
@@ -1620,25 +1379,18 @@ export function useHealthHubStore() {
           setApiStatus("fallback");
         }
 
-        setState((current) => {
-          const nextState = {
-            ...current,
-            soapNotes: [newNote, ...current.soapNotes.filter((note) => note.id !== newNote.id)],
-            patients: current.patients.map((item) =>
-              item.id === patient.id ? { ...item, progress: input.assessment || item.progress, lastSession: input.date } : item
-            )
-          };
-
-          persistState(nextState);
-
-          return nextState;
-        });
+        applyState((current) => ({
+          ...current,
+          soapNotes: [newNote, ...current.soapNotes.filter((note) => note.id !== newNote.id)],
+          patients: current.patients.map((item) =>
+            item.id === patient.id ? { ...item, progress: input.assessment || item.progress, lastSession: input.date } : item
+          )
+        }));
 
         return newNote;
       },
       async loadPrescriptions(patientId?: string) {
-        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
-        const prescriptions = await apiGet<Prescription[]>(`/api/prescriptions${query}`);
+        const prescriptions = await apiGet<Prescription[]>(`/api/prescriptions${queryParam("patientId", patientId)}`);
         setApiStatus("connected");
         return prescriptions;
       },
@@ -1657,8 +1409,7 @@ export function useHealthHubStore() {
         return prescription;
       },
       async loadPatientTasks(patientId?: string): Promise<PatientTask[]> {
-        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
-        const tasks = await apiGet<PatientTask[]>(`/api/patient-tasks${query}`);
+        const tasks = await apiGet<PatientTask[]>(`/api/patient-tasks${queryParam("patientId", patientId)}`);
         setApiStatus("connected");
         return tasks;
       },
@@ -1684,8 +1435,7 @@ export function useHealthHubStore() {
         return task;
       },
       async loadPatientDiets(patientId?: string): Promise<PatientDiet[]> {
-        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
-        const diets = await apiGet<PatientDiet[]>(`/api/patient-diets${query}`);
+        const diets = await apiGet<PatientDiet[]>(`/api/patient-diets${queryParam("patientId", patientId)}`);
         setApiStatus("connected");
         return diets;
       },
@@ -1701,8 +1451,7 @@ export function useHealthHubStore() {
         return diet;
       },
       async loadBodyMeasurements(patientId?: string): Promise<BodyMeasurement[]> {
-        const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
-        const measurements = await apiGet<BodyMeasurement[]>(`/api/body-measurements${query}`);
+        const measurements = await apiGet<BodyMeasurement[]>(`/api/body-measurements${queryParam("patientId", patientId)}`);
         setApiStatus("connected");
         return measurements;
       },
@@ -1728,7 +1477,8 @@ export function useHealthHubStore() {
         clearAuthToken();
         window.localStorage.removeItem(STORAGE_KEY);
       }
-    }),
+      };
+    },
     [state.demoSessions, state.patients]
   );
 
