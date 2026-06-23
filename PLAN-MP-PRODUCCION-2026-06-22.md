@@ -17,6 +17,26 @@
 
 ---
 
+## ✅ Actualización — verificación 2026-06-22 (tarde)
+
+**Credenciales de PRODUCCIÓN obtenidas y verificadas en vivo.** App Marketplace creada en MP (`client_id 3289243344402903`); se probaron las 4 credenciales (`APP_USR-*`) contra la API real:
+
+- ✅ **Token de producción autentica con MP** — el checkout creó una preferencia real y devolvió `initPoint`.
+- ✅ **Llamada de reembolso real llega a MP** — MP respondió `404 resource not found` sobre un pago **sintético** de prueba (no `401`), lo que confirma que el token es válido y autoriza correctamente.
+- ✅ **Conclusión:** la integración de cobro contra producción **funciona**. Solo falta el webhook de producción y una transacción real end-to-end (lo único que no se puede testear headless).
+
+**Decisión de credenciales (importante):**
+- El `.env` **local** quedó en **modo simulado** (variables `MERCADOPAGO_*` vacías). Los secretos reales `APP_USR-*` viven **solo en el host de producción**, nunca en el repo.
+- `scripts/test-api.mjs` ahora **guarda** la aserción de reembolso (`refunded`) detrás de `checkout.body.simulated`: con credenciales reales el refund va a MP y rechaza el pago sintético, así que esa aserción se omite (no es un bug). `test:api` queda verde en simulado.
+- ⚠️ Las credenciales se compartieron por chat — **rotar el `client_secret`** desde el MP Dashboard antes/durante el piloto.
+
+**Pendiente para cerrar (en el deployment de producción, no local):**
+1. Cargar los 4 `MERCADOPAGO_*` reales + `MERCADOPAGO_WEBHOOK_SECRET` + `ENCRYPTION_KEY` en el env del host.
+2. Registrar webhook de producción → `/api/webhooks/mercadopago` (eventos `payment.created`, `payment.updated`).
+3. Una transacción real de bajo monto end-to-end (incluye el reembolso real que el test no cubre).
+
+---
+
 ## Paso 1: Crear aplicación Marketplace en MP (1h)
 
 ### 1.1 Accede a Mercado Pago
@@ -202,22 +222,17 @@ En el dashboard de MP (Producción):
 
 ## Checklist de implementación
 
-- [ ] Aplicación Marketplace creada en MP
-- [ ] Credenciales SANDBOX obtenidas (Client ID, Secret, Access Token, Public Key)
-- [ ] ENCRYPTION_KEY generada (`openssl rand -base64 32`)
-- [ ] Webhook Secret obtenido
-- [ ] Variables `.env` locales actualizadas
-- [ ] API reiniciada y `GET /health` responde bien
-- [ ] Test OAuth: profesional conecta a MP SANDBOX
-- [ ] Test cita: paciente agenda cita con precio
-- [ ] Test pago: paciente paga en checkout de MP SANDBOX
-- [ ] Test webhook: cita se confirma automáticamente tras pago
-- [ ] Test reembolso: cancelación marca pago como `refunded`
-- [ ] Credenciales PRODUCCIÓN obtenidas
-- [ ] Variables en Azure Key Vault actualizadas
-- [ ] Webhook PRODUCCIÓN registrado en MP
-- [ ] Deploay a producción ejecutado
-- [ ] Test de humo en producción completado
+- [x] Aplicación Marketplace creada en MP (`client_id 3289243344402903`)
+- [x] Credenciales PRODUCCIÓN obtenidas (Client ID, Secret, Access Token, Public Key)
+- [x] Token de producción verificado en vivo contra la API de MP (checkout OK, refund→404 sobre pago sintético)
+- [x] `test:api` verde en modo simulado (guard de refund detrás de `checkout.body.simulated`)
+- [x] ENCRYPTION_KEY generada (ya presente en `.env`)
+- [ ] **Rotar `client_secret`** (se compartió por chat) — antes/durante el piloto
+- [ ] Variables `MERCADOPAGO_*` reales cargadas en el env del **host de producción**
+- [ ] `MERCADOPAGO_WEBHOOK_SECRET` obtenido del dashboard de MP producción
+- [ ] Webhook PRODUCCIÓN registrado en MP → `/api/webhooks/mercadopago`
+- [ ] Deploy a producción ejecutado y `GET /health` OK
+- [ ] Test de humo en producción: 1 transacción real de bajo monto end-to-end (incluye reembolso real)
 
 ---
 
