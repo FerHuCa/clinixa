@@ -2850,16 +2850,49 @@ Se obtuvieron las **credenciales de producción** de Mercado Pago (app Marketpla
 
 ---
 
-## Siguientes pasos (actualizado 2026-06-22 tarde)
+## Andamiaje de deployment a Railway — 2026-06-22 (noche)
 
-### 1. Cerrar MP PRODUCCIÓN — *único bloqueador del piloto* **CRÍTICO** *(solo en deployment)*
+### Resumen
+Preparado todo lo necesario para montar Clinixa en `clinixa.mx`. Hosting elegido: **Railway** (PaaS) por ser lo más rápido para el piloto (build desde GitHub, Postgres de un clic, TLS y deploy automáticos, cero administración de Linux). Guía operativa completa en **`PLAN-DEPLOYMENT-RAILWAY.md`**.
+
+### Archivos creados (containerizar el monorepo)
+- **`apps/api/Dockerfile`** — build .NET 8 multi-stage; mapea `$PORT`→Kestrel en `0.0.0.0`.
+- **`apps/web/Dockerfile`** — build Next 16; hornea `NEXT_PUBLIC_*` en build-time y fuerza `NEXT_PUBLIC_ENABLE_DEV_AUTH=false` (apaga el bypass dev-auth en prod).
+- **`.dockerignore`** + **`apps/web/package.json`** (`start` script).
+- Contexto de build = **raíz del repo** (monorepo npm workspaces); en Railway: Dockerfile Path por servicio, Root Directory vacío.
+
+### Builds verificados (sin Docker en la máquina → comandos reales en el host)
+- ✅ **API:** `dotnet publish -c Release` compila y publica (1 warning `CS8625` preexistente, inofensivo).
+- ✅ **Web:** `next build` con `NEXT_PUBLIC_*` de prod → 26 rutas + middleware, sin errores.
+- Host node `20.18.0` / dotnet `8.0.421` ≈ imágenes `node:20` / `sdk:8.0`.
+
+### Corrección importante
+- Redirect OAuth del marketplace MP = `…/portal-profesional/**marketplace-callback**` (el backend lo deriva de `Web__BaseUrl`, `Program.cs:2580/2639`; MP valida coincidencia exacta). El PLAN-MP decía `mercadopago-callback` → **corregido**.
+
+---
+
+## Siguientes pasos (actualizado 2026-06-22 noche) — continuamos mañana
+
+### 1. Montar en Railway — *deployment del piloto* **← AQUÍ MAÑANA**
+Guía completa con tablas de variables y DNS en **`PLAN-DEPLOYMENT-RAILWAY.md`**. Resumen:
+1. Crear proyecto Railway desde GitHub (`FerHuCa/clinixa`) + plugin **PostgreSQL**.
+2. Servicio **API**: Dockerfile Path `apps/api/Dockerfile`; variables (connection string a Postgres, Clerk live, Resend, MP prod, `ENCRYPTION_KEY` nueva); dominio `api.clinixa.mx`.
+3. Servicio **Web**: Dockerfile Path `apps/web/Dockerfile`; build-args `NEXT_PUBLIC_API_BASE_URL=https://api.clinixa.mx` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (pk_live); `CLERK_SECRET_KEY`; dominio `clinixa.mx`.
+4. **DNS** en clinixa.mx: CNAME `api`→target Railway; apex con CNAME-flattening (Cloudflare) o `www` + redirect.
+
+### 2. Cerrar MP PRODUCCIÓN — *parte del mismo deployment* **CRÍTICO**
 1. **Rotar `client_secret`** (se compartió por chat).
-2. Cargar `MERCADOPAGO_*` reales + `MERCADOPAGO_WEBHOOK_SECRET` + `ENCRYPTION_KEY` en el env del host.
-3. Registrar webhook prod → `/api/webhooks/mercadopago` (eventos `payment.created`, `payment.updated`).
-4. 1 transacción real de bajo monto end-to-end (valida el reembolso real que el test no cubre).
-- **Esfuerzo:** 1-2h. **Nota:** el OAuth de marketplace (conectar cuenta MP del profesional) no se puede testear headless — validar en producción con un profesional real.
+2. Cargar `MERCADOPAGO_*` reales + `MERCADOPAGO_WEBHOOK_SECRET` en el env del host (Railway).
+3. Webhook prod → `https://api.clinixa.mx/api/webhooks/mercadopago` (`payment.created`, `payment.updated`).
+4. OAuth marketplace redirect → `https://clinixa.mx/portal-profesional/marketplace-callback`.
+5. Clerk dashboard (Production): añadir `https://clinixa.mx` a dominios/redirect permitidos.
+6. 1 transacción real de bajo monto end-to-end (valida reembolso real + OAuth marketplace, no testeable headless).
 
-### 2. Piloto controlado *(sin cambios — ver secciones previas)*
+### 3. Post-deploy — verificación
+- Logs del primer deploy de la API deben mostrar *Applying migration…* (crea el schema).
+- `GET https://api.clinixa.mx/health` responde OK.
+
+### 4. Piloto controlado *(sin cambios — ver secciones previas)*
 
 ---
 
@@ -2875,4 +2908,4 @@ Del audit ponytail (2026-06-22). Hacer **oportunistamente** entre features, no a
 
 ---
 
-**Estado:** Cobro MP producción **verificado y funcional**. Bloqueador del piloto reducido a 4 pasos de deployment (1-2h). Deuda técnica del front documentada y acotada.
+**Estado:** Cobro MP producción **verificado y funcional**; deployment a Railway **andamiado** (Dockerfiles + builds verificados). Bloqueador del piloto = ejecutar pasos en Railway + DNS + post-deploy MP (~1-2h). Mañana retomamos en `PLAN-DEPLOYMENT-RAILWAY.md`.

@@ -53,8 +53,8 @@
 ### 1.3 Registrar URLs de callback OAuth
 En la sección **Configuración de OAuth**:
 - **URL de redirección:** 
-  - Desarrollo: `http://localhost:3000/portal-profesional/mercadopago-callback`
-  - Producción: `https://tu-dominio.mx/portal-profesional/mercadopago-callback`
+  - Desarrollo: `http://localhost:3000/portal-profesional/marketplace-callback`
+  - Producción: `https://clinixa.mx/portal-profesional/marketplace-callback`
 
 ### 1.4 Obtener credenciales
 La app te dará:

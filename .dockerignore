@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/bin
+**/obj
+.git
+.env
+.env.*
+.DS_Store
+screenshots
