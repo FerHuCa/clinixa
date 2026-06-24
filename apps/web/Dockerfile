@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 RUN npm ci
 COPY apps/web/ apps/web/
+COPY docs/ docs/
 # Las NEXT_PUBLIC_* se hornean en el bundle en BUILD-time → deben existir aquí.
 # Railway/Render inyectan estas service-vars como build-args si el ARG está declarado.
 ARG NEXT_PUBLIC_API_BASE_URL
