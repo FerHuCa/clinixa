@@ -2931,3 +2931,59 @@ Del audit ponytail (2026-06-22). Hacer **oportunistamente** entre features, no a
 **Decisión de alcance (ponytail):** **NO** se borró el canal de notificación `whatsapp` que el audit marcó "muerto" — es feature **viva**: toggle en UI (`security-page-client.tsx`), assert en `test-api.mjs`, y marketeada en el plan Pro. Solo le falta el emisor (WhatsApp Business API, pendiente por diseño).
 
 **Gaps menores registrados (no accionados, no bloquean piloto):** `/{id}/reviews` sin gate de status (info-disclosure por ID conocido) · cross-patient read devuelve `200+[]` en vez de 403 (semántica) · Clerk JWT sin revocación server-side en logout (arquitectura estándar Clerk) · `audit-logs` sin paginación más allá de `Take(100)`. Ver `TEST_REPORT.md` §Gaps menores.
+
+---
+
+## Sesión 2026-06-24 — Deployment Railway completo (Pasos 3 y 4)
+
+**Objetivo:** subir Clinixa a producción en Railway.
+
+### Paso 3: Setup Railway ✅
+
+- Proyecto Railway creado desde GitHub `FerHuCa/clinixa`
+- PostgreSQL provisionado (Railway managed)
+- Servicio `api` (.NET 8): Dockerfile `apps/api/Dockerfile`, 24 variables cargadas (Clerk, MP, Resend, ENCRYPTION_KEY, ConnectionString con referencias internas de Railway)
+- Servicio `web` (Next.js): Dockerfile `apps/web/Dockerfile`, 3 variables (NEXT_PUBLIC_API_BASE_URL, Clerk keys)
+- **Fix durante deploy:** Dockerfile web no copiaba `docs/legal/` → build fallaba en `/privacy/page` (genera HTML estático). Corregido con `COPY docs/ docs/` (commit `2108380`)
+- **Fix puerto:** dominio web generado en puerto 3000 pero Next.js escucha en `$PORT=8080` → corregido en Railway Networking
+
+**URLs producción:**
+- API: `https://api-production-e76e.up.railway.app` (alias `https://api.clinixa.mx`)
+- Web: `https://web-production-4624b.up.railway.app` (alias `https://clinixa.mx`)
+- Health check: `GET https://api.clinixa.mx/health` → `{"status":"ok","database":"connected"}` ✅
+
+### Paso 4: DNS ✅
+
+Registrador: **Namecheap**. Registros configurados en `clinixa.mx`:
+
+| Type | Host | Value |
+|---|---|---|
+| CNAME | `api` | `42ha0dfe.up.railway.app` |
+| CNAME | `@` | `5ygmvtcq.up.railway.app` |
+| TXT | `_railway-verify.api` | railway-verify=… |
+| TXT | `_railway-verify` | railway-verify=… |
+| CNAME | `clerk` | `frontend-api.clerk.services` |
+| CNAME | `accounts` | `accounts.clerk.services` |
+| CNAME | `clkmail` | `mail.rf15ynyv5oa3.clerk.services` |
+| CNAME | `clk._domainkey` | `dkim1.rf15ynyv5oa3.clerk.services` |
+
+- Railway: ambos dominios verificados ✅, TLS provisionado ✅
+- Clerk: DNS 5/5 Verified ✅, SSL Issued ✅
+
+### Paso 5: Post-deploy (parcial)
+
+- ✅ MP webhook prod registrado: `https://api.clinixa.mx/api/webhooks/mercadopago` (evento: Pagos)
+- ✅ `MERCADOPAGO_WEBHOOK_SECRET` cargado en Railway
+- ✅ `MERCADOPAGO_CLIENT_SECRET` rotado (el anterior se había compartido en chat)
+- ⏳ **Pendiente mañana:** 1 transacción real de bajo monto end-to-end (valida refund real + OAuth marketplace)
+
+### Estado al cerrar
+
+Clinixa está en producción. `https://clinixa.mx` carga y `https://api.clinixa.mx/health` responde OK.
+El único bloqueador restante antes del piloto es la transacción real de validación.
+
+**Para retomar:**
+```bash
+# No hay servidores locales que levantar — todo está en Railway.
+# Pendiente: login en https://clinixa.mx con cuenta profesional, conectar MP OAuth, pagar cita real.
+```
