@@ -522,6 +522,12 @@ patientsApi.MapPost("/", async (HttpRequest httpRequest, CreatePatientRequest re
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
+    // Gate de suscripcion: profesional con trial vencido y sin plan no da de alta pacientes.
+    {
+        var gateResult = CheckSubscriptionGateForActor(actor);
+        if (gateResult is not null) return gateResult;
+    }
+
     var errors = RequestValidation.ValidatePatient(request);
 
     if (errors.Count > 0)
@@ -2169,7 +2175,7 @@ professionalPortalApi.MapPost("/services", async (HttpRequest request, CreatePro
 
         if (proForGate is not null)
         {
-            var gateResult = CheckSubscriptionGate(proForGate, actor);
+            var gateResult = CheckSubscriptionGate(proForGate);
             if (gateResult is not null) return gateResult;
         }
     }
@@ -2250,6 +2256,12 @@ professionalPortalApi.MapPost("/availability", async (HttpRequest request, Creat
     if (actor?.Professional is null)
     {
         return Results.Unauthorized();
+    }
+
+    // Gate de suscripcion: trial vencido sin plan no abre nuevas franjas de disponibilidad.
+    {
+        var gateResult = CheckSubscriptionGateForActor(actor);
+        if (gateResult is not null) return gateResult;
     }
 
     var errors = ValidateProfessionalAvailability(availabilityRequest.Weekday, availabilityRequest.StartsAt, availabilityRequest.EndsAt);
@@ -2547,7 +2559,7 @@ professionalPortalApi.MapPost("/publish", async (HttpRequest request, HealthHubD
 
     // Gate: bloquea si el trial expiro y no hay suscripcion activa.
     {
-        var gateResult = CheckSubscriptionGate(professional, actor);
+        var gateResult = CheckSubscriptionGate(professional);
         if (gateResult is not null) return gateResult;
     }
 
@@ -3955,6 +3967,12 @@ soapNotesApi.MapPost("/", async (HttpRequest httpRequest, CreateSoapNoteRequest 
             statusCode: StatusCodes.Status403Forbidden);
     }
 
+    // Gate de suscripcion: trial vencido sin plan bloquea crear notas (internal_admin pasa).
+    {
+        var gateResult = CheckSubscriptionGateForActor(actor);
+        if (gateResult is not null) return gateResult;
+    }
+
     var errors = RequestValidation.ValidateSoapNote(request);
 
     if (errors.Count > 0)
@@ -4105,6 +4123,9 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
     var (pro, error) = await GetAuthorizedProfessional(request, db, "doctor");
     if (error is not null) return error;
 
+    var gate = CheckSubscriptionGate(pro!);
+    if (gate is not null) return gate;
+
     if (string.IsNullOrWhiteSpace(req.Route))
         return Results.BadRequest(new { errors = new[] { "La vía de administración (route) es obligatoria." } });
 
@@ -4226,6 +4247,9 @@ app.MapPost("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext
     var (pro, err) = await GetAuthorizedProfessional(request, db, "psychologist");
     if (err is not null) return err;
 
+    var gate = CheckSubscriptionGate(pro!);
+    if (gate is not null) return gate;
+
     var owned = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
     if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
@@ -4341,6 +4365,9 @@ app.MapPost("/api/patient-diets", async (HttpRequest request, HealthHubDbContext
     var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
     if (err is not null) return err;
 
+    var gate = CheckSubscriptionGate(pro!);
+    if (gate is not null) return gate;
+
     var owned = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
     if (!owned) return Results.StatusCode(StatusCodes.Status403Forbidden);
@@ -4400,6 +4427,9 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
 {
     var (pro, err) = await GetAuthorizedProfessional(request, db, "nutritionist");
     if (err is not null) return err;
+
+    var gate = CheckSubscriptionGate(pro!);
+    if (gate is not null) return gate;
 
     var owned = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
@@ -5396,11 +5426,11 @@ static SubscriptionStatusDto BuildSubscriptionStatus(
 /// <summary>
 /// Gate de suscripcion: bloquea acciones de profesional cuando el trial expiro Y no hay
 /// suscripcion activa. Devuelve un IResult 402 si debe bloquearse, null si puede continuar.
-/// Debe llamarse DESPUES de validar que actor.Professional no es null.
+/// El trial se cuenta desde el alta del profesional (Professional.CreatedAt), no del usuario:
+/// si un paciente se vuelve profesional despues, el trial arranca al volverse profesional.
 /// </summary>
-/// <param name="professional">Entidad Professional ya cargada (necesita SubscriptionStatus).</param>
-/// <param name="user">Usuario autenticado (para calcular si el trial aun corre).</param>
-static IResult? CheckSubscriptionGate(Professional professional, User user)
+/// <param name="professional">Entidad Professional ya cargada (necesita SubscriptionStatus + CreatedAt).</param>
+static IResult? CheckSubscriptionGate(Professional professional)
 {
     // Suscripcion activa: siempre dejar pasar.
     if (professional.SubscriptionStatus == "active")
@@ -5409,7 +5439,7 @@ static IResult? CheckSubscriptionGate(Professional professional, User user)
     }
 
     // Trial activo: dejar pasar.
-    var trialEndsAt = user.CreatedAt.AddDays(SubscriptionPlans.TrialDays);
+    var trialEndsAt = professional.CreatedAt.AddDays(SubscriptionPlans.TrialDays);
 
     if (DateTimeOffset.UtcNow < trialEndsAt)
     {
@@ -5423,6 +5453,15 @@ static IResult? CheckSubscriptionGate(Professional professional, User user)
         statusCode: StatusCodes.Status402PaymentRequired,
         extensions: new Dictionary<string, object?> { ["code"] = "trial_expired" });
 }
+
+/// <summary>
+/// Variante por actor: solo gatea si el actor trae su entidad Professional cargada.
+/// Roles sin suscripcion (internal_admin, clinic_admin) pasan sin gate.
+/// Solo bloquea creacion/acciones (POST); las lecturas no se gatean (continuidad de atencion).
+/// (Las funciones locales de C# no permiten sobrecarga, por eso el nombre distinto.)
+/// </summary>
+static IResult? CheckSubscriptionGateForActor(User actor)
+    => actor.Professional is not null ? CheckSubscriptionGate(actor.Professional) : null;
 
 static void AddAuditLog(
     HealthHubDbContext db,
