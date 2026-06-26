@@ -3083,3 +3083,32 @@ El único bloqueador restante antes del piloto es la transacción real de valida
 5. **Piloto:** 1 tx real para cerrar.
 
 Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-AUDITORIA-2026-06-25.md`.
+
+---
+
+## Sesión 2026-06-26 — Pasos manuales 1 y 2 + hallazgo crítico de deploy
+
+**Objetivo:** ejecutar los pendientes manuales de la auditoría (purga BD prod, verificar headers).
+
+### Paso 1 — Purga de datos demo en prod ✅
+- Corrido `apps/api/Data/PURGE-DEMO-PROD.sql` contra la BD pública de Railway (sin backup `pg_dump`: mismatch v16 local vs v18 server; el script va en transacción con verificación + rollback, riesgo bajo).
+- **Bug del script corregido:** usaba columnas en snake_case (`id`, `user_id`) pero EF Core las creó en PascalCase (`"Id"`, `"UserId"`). Reescrito a PascalCase (commit `35cc56d`). Primera corrida hizo ROLLBACK limpio por el error; segunda corrida OK, 4 conteos en 0, COMMIT.
+- **Verificado en vivo:** `GET /api/professionals` ya solo devuelve el perfil real (`Fernando H Prof`); los demo (Laura Vega, Miguel Torres, etc.) desaparecieron.
+
+### Paso 2 — Headers de seguridad ✅ (destapó un problema mayor)
+- Síntoma: `clinixa.mx` no devolvía **ningún** header de seguridad, ni en páginas ni redirects.
+- **Causa raíz (no era cache ni el webhook):** el **build de producción de web estaba roto**. `/suscripcion` usa `useSearchParams()` sin `<Suspense>` → `next build` falla en prerender. Railway mantenía activo el último build exitoso = `6d03a29`, un commit **25 por detrás** y **anterior a TODOS los fixes de la auditoría**. O sea: ninguno de los 10 fixes de la auditoría estaba en producción web — estaban en `origin/main` pero nunca se desplegaron.
+- **Diagnóstico:** el deploy activo (UUID `79b54609`) mostraba commit `6d03a29` en Details. Auto-deploy SÍ estaba bien configurado (repo `FerHuCa/clinixa`, branch `main`, Wait-for-CI off). El webhook funciona; los builds de `bb92697`/`03907b5` se dispararon pero **fallaron**, por eso no avanzaba.
+- **Fix:** envolver `<SubscriptionPageClient/>` en `<Suspense>` (`apps/web/app/suscripcion/page.tsx`, commit `9e3828b`). `npm run build:web` ahora pasa (27/27 rutas). Deploy automático OK → headers en vivo.
+- **Capa extra:** moví los headers de seguridad al middleware (`apps/web/proxy.ts`, commit `bb92697`) además de `next.config.mjs`, porque `headers()` no aplica a redirects del middleware. El redirect raíz `/` (307) ahora también lleva HSTS+X-Frame+etc. Sin duplicados (5 headers de seguridad + CSP, una vez cada uno).
+- **Verificado en vivo:** los 6 headers (HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP completo) presentes en `/profesionales` (dinámica) y los 5 sin-CSP en el 307 raíz. API: sin fuga de versión en `Server` (edge de Railway), 404 sin stack trace.
+
+### Estado de servicios tras la sesión
+- **web:** ahora en `9e3828b` (HEAD de main) — **por primera vez con los fixes de la auditoría en vivo**.
+- **api:** ya estaba en código actual (build .NET nunca falló). Confirmado: paginación opt-in fix/10 responde envelope `{items:[...]}` solo con `?page=&pageSize=`.
+
+### Pendientes (sin cambios respecto a la lista de la auditoría)
+- #8 credenciales MP suscripción prod + gatear endpoints pro.
+- #10 `dotnet test` con Docker.
+- Piloto: 1 tx real.
+- **Nuevo aprendizaje operativo:** tras cada push a `main`, confirmar que el deploy de **web** quede verde (su build puede fallar y dejar prod en código viejo en silencio). `npm run build:web` antes de pushear cambios de web.
