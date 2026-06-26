@@ -1130,6 +1130,110 @@ async function main() {
   assert(cashCleanup.status === 200, `limpieza de cita de efectivo esperaba 200 y devolvio ${cashCleanup.status}`);
   assert(cashCleanup.body?.paymentStatus === "approved", "la cita cancelada deberia conservar paymentStatus approved");
 
+  // ── AUDIT #5: Recetas legales (cédula + ruta + PDF) ───────────────────────────────────
+  // (a) Guard: profesional verificado NO médico (nutritionist = laura.vega) → 403 al emitir receta.
+  const rxForbiddenNutritionist = await request("/api/prescriptions", {
+    body: JSON.stringify({
+      patientId: "ana-martinez",
+      medicationName: "Amoxicilina 500 mg",
+      dosage: "1 cápsula",
+      frequency: "Cada 8 horas",
+      duration: "7 días",
+      route: "Oral",
+      instructions: "Tomar con alimentos",
+      refills: 0
+    }),
+    headers: {
+      Authorization: `Bearer ${professionalAuth.token}`,
+      "Content-Type": "application/json"
+    },
+    method: "POST"
+  });
+  assert(
+    rxForbiddenNutritionist.status === 403,
+    `emitir receta como nutriologo esperaba 403 y devolvio ${rxForbiddenNutritionist.status}`
+  );
+
+  // (b) Crear paciente QA para el médico recién creado (newProfessionalToken es doctor verificado).
+  const rxPatientEmail = `qa.rxpat.${Date.now()}@example.com`;
+  const rxPatient = await request("/api/patients", {
+    body: JSON.stringify({
+      fullName: "Paciente Receta QA",
+      age: 35,
+      email: rxPatientEmail,
+      phone: "+521234567890",
+      focus: "Medicina general",
+      mainReason: "Prueba receta automatizada"
+    }),
+    headers: {
+      Authorization: `Bearer ${newProfessionalToken}`,
+      "Content-Type": "application/json"
+    },
+    method: "POST"
+  });
+  assert(rxPatient.status === 201, `crear paciente QA esperaba 201 y devolvio ${rxPatient.status}`);
+  const rxPatientId = rxPatient.body?.id;
+  assert(rxPatientId, "crear paciente QA no devolvio id");
+
+  // (c) Médico verificado crea receta con cédula + vía de administración.
+  const rxCreate = await request("/api/prescriptions", {
+    body: JSON.stringify({
+      patientId: rxPatientId,
+      medicationName: "Amoxicilina 500 mg",
+      dosage: "1 cápsula",
+      frequency: "Cada 8 horas",
+      duration: "7 días",
+      route: "Oral",
+      instructions: "Tomar con alimentos",
+      refills: 0,
+      patientIdentifier: "01/01/1989"
+    }),
+    headers: {
+      Authorization: `Bearer ${newProfessionalToken}`,
+      "Content-Type": "application/json"
+    },
+    method: "POST"
+  });
+  assert(rxCreate.status === 201, `crear receta como doctor esperaba 201 y devolvio ${rxCreate.status}`);
+  const rxId = rxCreate.body?.id;
+  assert(rxId, "crear receta no devolvio id");
+  assert(rxCreate.body?.prescriberLicense && rxCreate.body.prescriberLicense !== "",
+    "crear receta no estampo cedula profesional (prescriberLicense vacio)");
+  assert(rxCreate.body?.prescriberName && rxCreate.body.prescriberName !== "",
+    "crear receta no estampo nombre del prescriptor");
+  assert(rxCreate.body?.route === "Oral", `crear receta esperaba route=Oral y devolvio ${rxCreate.body?.route}`);
+  assert(rxCreate.body?.patientFullName && rxCreate.body.patientFullName !== "",
+    "crear receta no estampo nombre del paciente");
+
+  // (d) Endpoint PDF devuelve bytes no vacíos con Content-Type application/pdf.
+  const rxPdfResponse = await fetch(`${API_BASE_URL}/api/prescriptions/${rxId}/pdf`, {
+    headers: { Authorization: `Bearer ${newProfessionalToken}` }
+  });
+  assert(rxPdfResponse.status === 200, `GET pdf esperaba 200 y devolvio ${rxPdfResponse.status}`);
+  const rxPdfContentType = rxPdfResponse.headers.get("content-type") ?? "";
+  assert(
+    rxPdfContentType.startsWith("application/pdf"),
+    `GET pdf esperaba content-type application/pdf y devolvio ${rxPdfContentType}`
+  );
+  const rxPdfBytes = await rxPdfResponse.arrayBuffer();
+  assert(rxPdfBytes.byteLength > 1024, `GET pdf esperaba PDF no vacio (>1024 bytes) y devolvio ${rxPdfBytes.byteLength} bytes`);
+  // El PDF debe contener la cédula profesional en texto plano (QuestPDF embebe texto)
+  const rxPdfText = new TextDecoder("latin1").decode(rxPdfBytes);
+  assert(
+    rxPdfText.includes(rxCreate.body.prescriberLicense),
+    "GET pdf no contiene la cedula profesional en el contenido del archivo"
+  );
+
+  // (e) Otro profesional (no propietario) intenta descargar el PDF → 403.
+  const rxPdfForbidden = await request(`/api/prescriptions/${rxId}/pdf`, {
+    headers: { Authorization: `Bearer ${professionalAuth.token}` }
+  });
+  assert(
+    rxPdfForbidden.status === 403,
+    `GET pdf de otro profesional esperaba 403 y devolvio ${rxPdfForbidden.status}`
+  );
+  // ── FIN AUDIT #5 ───────────────────────────────────────────────────────────────────────
+
   console.log("API tests passed");
 }
 

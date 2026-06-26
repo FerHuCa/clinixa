@@ -4237,10 +4237,17 @@ app.MapGet("/api/prescriptions", async (HttpRequest request, HealthHubDbContext 
 });
 
 // POST /api/prescriptions
+// AUDIT #5: Solo médicos (specialty=="doctor") pueden emitir recetas.
+// Psicólogos y nutriólogos verificados tienen acceso a GetAuthorizedProfessional pero NO a este endpoint.
+// Medicamentos controlados (grupos I-IV COFEPRIS) están FUERA DE ALCANCE; requieren Receta Especial con folio oficial.
 app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext db, CreatePrescriptionRequest req) =>
 {
+    // GetAuthorizedProfessional con requiredSpecialty="doctor" ya verifica verified+doctor; 403 para otros roles.
     var (pro, error) = await GetAuthorizedProfessional(request, db, "doctor");
     if (error is not null) return error;
+
+    if (string.IsNullOrWhiteSpace(req.Route))
+        return Results.BadRequest(new { errors = new[] { "La vía de administración (route) es obligatoria." } });
 
     var patientRelation = await db.ProfessionalPatients
         .AnyAsync(pp => pp.ProfessionalId == pro!.Id && pp.PatientId == req.PatientId);
@@ -4255,12 +4262,22 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
         expiresAt = parsed.ToUniversalTime();
     }
 
+    // Cargar datos del paciente para estamparlos en la receta
+    var patient = await db.Patients.FindAsync(req.PatientId);
+
     var prescription = new Prescription
     {
         Id = Guid.NewGuid().ToString(),
         PatientId = req.PatientId,
         ProfessionalId = pro!.Id,
         AppointmentId = req.AppointmentId,
+        // Estampar datos del prescriptor (cédula profesional + nombre completo) en el momento de emisión
+        PrescriberName = pro.DisplayName,
+        PrescriberLicense = pro.LicenseNumber,
+        // Estampar datos del paciente para que el PDF sea autocontenido
+        PatientFullName = patient?.FullName ?? string.Empty,
+        PatientIdentifier = req.PatientIdentifier?.Trim(),
+        Route = req.Route.Trim(),
         MedicationName = req.MedicationName.Trim(),
         Dosage = req.Dosage.Trim(),
         Frequency = req.Frequency.Trim(),
@@ -4273,10 +4290,39 @@ app.MapPost("/api/prescriptions", async (HttpRequest request, HealthHubDbContext
     db.Prescriptions.Add(prescription);
     await db.SaveChangesAsync();
 
-    var patient = await db.Patients.FindAsync(req.PatientId);
     return Results.Created(
         $"/api/prescriptions/{prescription.Id}",
         ToPrescriptionDto(prescription, patient?.FullName));
+});
+
+// GET /api/prescriptions/{id}/pdf
+// Genera un PDF imprimible con todos los elementos legales de una receta médica.
+// Accesible por el médico que la emitió o por el propio paciente.
+// NOTA: Medicamentos controlados (grupos I-IV COFEPRIS) están FUERA DE ALCANCE;
+//       requieren Receta Especial con folio oficial SSA/COFEPRIS (sistema SIFAR).
+app.MapGet("/api/prescriptions/{id}/pdf", async (HttpRequest request, HealthHubDbContext db, string id) =>
+{
+    var actor = await GetUserFromRequestAsync(request, db);
+    if (actor is null) return Results.Unauthorized();
+
+    var prescription = await db.Prescriptions
+        .AsNoTracking()
+        .Include(p => p.Patient)
+        .Include(p => p.Professional)
+        .FirstOrDefaultAsync(p => p.Id == id);
+
+    if (prescription is null) return Results.NotFound();
+
+    // El médico que emitió la receta o el paciente dueño pueden descargarla
+    var isOwnerDoctor = actor.Professional?.Id == prescription.ProfessionalId;
+    var isOwnerPatient = actor.Patient?.Id == prescription.PatientId;
+    if (!isOwnerDoctor && !isOwnerPatient)
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    var pdfBytes = PrescriptionPdfGenerator.Generate(prescription);
+    return Results.Bytes(pdfBytes, "application/pdf",
+        $"receta-{prescription.Id[..8]}.pdf",
+        enableRangeProcessing: false);
 });
 
 app.MapGet("/api/patient-tasks", async (HttpRequest request, HealthHubDbContext db, string? patientId) =>
@@ -4556,7 +4602,9 @@ static PrescriptionDto ToPrescriptionDto(Prescription p, string? patientName = n
     p.MedicationName, p.Dosage, p.Frequency, p.Duration,
     p.Instructions, p.Refills, p.Status,
     p.IssuedAt.ToString("yyyy-MM-dd"),
-    p.ExpiresAt?.ToString("yyyy-MM-dd"));
+    p.ExpiresAt?.ToString("yyyy-MM-dd"),
+    p.PrescriberName, p.PrescriberLicense,
+    p.PatientFullName, p.PatientIdentifier, p.Route);
 
 static PatientTaskDto ToPatientTaskDto(PatientTask t, string? patientName = null) => new(
     t.Id, t.PatientId, patientName ?? t.Patient?.FullName ?? "",

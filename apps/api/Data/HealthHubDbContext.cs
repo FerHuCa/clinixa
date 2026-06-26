@@ -576,6 +576,11 @@ public sealed class HealthHubDbContext : DbContext
             entity.Property(prescription => prescription.PatientId).HasMaxLength(120).IsRequired();
             entity.Property(prescription => prescription.ProfessionalId).HasMaxLength(120).IsRequired();
             entity.Property(prescription => prescription.AppointmentId).HasMaxLength(120);
+            entity.Property(prescription => prescription.PrescriberName).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.PrescriberLicense).HasMaxLength(80).IsRequired();
+            entity.Property(prescription => prescription.PatientFullName).HasMaxLength(200).IsRequired();
+            entity.Property(prescription => prescription.PatientIdentifier).HasMaxLength(120);
+            entity.Property(prescription => prescription.Route).HasMaxLength(100).IsRequired();
             entity.Property(prescription => prescription.MedicationName).HasMaxLength(200).IsRequired();
             entity.Property(prescription => prescription.Dosage).HasMaxLength(200).IsRequired();
             entity.Property(prescription => prescription.Frequency).HasMaxLength(200).IsRequired();

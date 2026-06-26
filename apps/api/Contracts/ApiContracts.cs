@@ -519,7 +519,13 @@ public sealed record PrescriptionDto(
     int Refills,
     string Status,
     string IssuedAt,
-    string? ExpiresAt);
+    string? ExpiresAt,
+    // Campos legales — estampados al emitir
+    string PrescriberName,
+    string PrescriberLicense,
+    string PatientFullName,
+    string? PatientIdentifier,
+    string Route);
 
 public sealed record CreatePrescriptionRequest(
     string PatientId,
@@ -530,7 +536,11 @@ public sealed record CreatePrescriptionRequest(
     string Duration,
     string Instructions,
     int Refills,
-    string? ExpiresAt);
+    string? ExpiresAt,
+    // Vía de administración (obligatoria en una receta legal)
+    string Route,
+    // Identificador adicional del paciente (CURP, fecha de nacimiento, etc.) — opcional
+    string? PatientIdentifier);
 
 public sealed record PatientTaskDto(
     string Id,
