@@ -5,6 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Excluir el proyecto de tests que vive en un subdirectorio -->
+    <Compile Remove="HealthHub.Api.Tests\**" />
+    <None Remove="HealthHub.Api.Tests\**" />
+    <Content Remove="HealthHub.Api.Tests\**" />
+    <EmbeddedResource Remove="HealthHub.Api.Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>

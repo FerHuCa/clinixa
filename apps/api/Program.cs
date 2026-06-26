@@ -1,5 +1,6 @@
 using HealthHub.Api.Contracts;
 using HealthHub.Api.Data;
+using HealthHub.Api.Endpoints;
 using HealthHub.Api.Entities;
 using HealthHub.Api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -418,6 +419,8 @@ patientsApi.MapGet("/", async (HttpRequest request, HealthHubDbContext db) =>
         return Results.Unauthorized();
     }
 
+    var (page, pageSize, paginated) = GetPaginationParams(request);
+
     var accessiblePatientIds = await GetAccessiblePatientIdsAsync(actor, db);
     var query = db.Patients.AsNoTracking().AsQueryable();
 
@@ -431,7 +434,7 @@ patientsApi.MapGet("/", async (HttpRequest request, HealthHubDbContext db) =>
         .Select(patient => patient.ToDto())
         .ToListAsync();
 
-    return Results.Ok(patients);
+    return ApplyPagination(patients, page, pageSize, paginated);
 });
 
 patientsApi.MapGet("/{id}", async (HttpRequest request, string id, HealthHubDbContext db) =>
@@ -593,6 +596,8 @@ appointmentsApi.MapGet("/", async (HttpRequest request, HealthHubDbContext db) =
         return Results.Unauthorized();
     }
 
+    var (page, pageSize, paginated) = GetPaginationParams(request);
+
     var query = db.Appointments
         .AsNoTracking()
         .Include(item => item.Professional)
@@ -634,10 +639,11 @@ appointmentsApi.MapGet("/", async (HttpRequest request, HealthHubDbContext db) =
         .ToListAsync();
 
     var lastPayments = await GetLatestPaymentsByAppointmentAsync(db, appointments.Select(item => item.Id).ToList());
-
-    return Results.Ok(appointments
+    var dtoList = appointments
         .Select(item => item.ToDto(lastPayments.GetValueOrDefault(item.Id)))
-        .ToList());
+        .ToList();
+
+    return ApplyPagination(dtoList, page, pageSize, paginated);
 });
 
 appointmentsApi.MapPost("/", async (HttpRequest httpRequest, CreateAppointmentRequest request, HealthHubDbContext db) =>
@@ -1586,8 +1592,10 @@ app.MapPost("/api/webhooks/mercadopago", async (HttpRequest httpRequest, Mercado
 
 var professionalsApi = app.MapGroup("/api/professionals");
 
-professionalsApi.MapGet("/", async (string? specialty, string? query, HealthHubDbContext db) =>
+professionalsApi.MapGet("/", async (HttpRequest httpRequest, string? specialty, string? query, HealthHubDbContext db) =>
 {
+    var (page, pageSize, paginated) = GetPaginationParams(httpRequest);
+
     var professionals = await db.Professionals
         .AsNoTracking()
         .AsSplitQuery()
@@ -1620,11 +1628,13 @@ professionalsApi.MapGet("/", async (string? specialty, string? query, HealthHubD
             .ToList();
     }
 
-    return Results.Ok(professionals
+    var dtoList = professionals
         .Select(professional => professional.ToDto())
         .OrderByDescending(professional => professional.AverageRating)
         .ThenBy(professional => professional.BasePrice)
-        .ToList());
+        .ToList();
+
+    return ApplyPagination(dtoList, page, pageSize, paginated);
 });
 
 professionalsApi.MapGet("/by-slug/{slug}", async (string slug, HealthHubDbContext db) =>
@@ -1790,110 +1800,7 @@ app.MapGet("/api/admin/professionals", async (HttpRequest request, string? verif
         .ToList());
 });
 
-professionalsApi.MapGet("/{id}/reviews", async (string id, HealthHubDbContext db) =>
-{
-    var professionalExists = await db.Professionals.AnyAsync(item => item.Id == id);
-
-    if (!professionalExists)
-    {
-        return Results.NotFound();
-    }
-
-    var reviews = await db.Reviews
-        .AsNoTracking()
-        .Where(review => review.ProfessionalId == id && review.Status == "published")
-        .OrderByDescending(review => review.CreatedAt)
-        .Select(review => review.ToDto())
-        .ToListAsync();
-
-    return Results.Ok(reviews);
-});
-
-// Reglas de resenas: solo pacientes reales (cita completada con el profesional),
-// una resena por cita, sin edicion posterior. La moderacion es exclusiva del admin.
-professionalsApi.MapPost("/{id}/reviews", async (HttpRequest request, string id, CreateReviewRequest reviewRequest, HealthHubDbContext db) =>
-{
-    var actor = await GetUserFromRequestAsync(request, db);
-
-    if (actor is null)
-    {
-        return Results.Unauthorized();
-    }
-
-    if (actor.PrimaryRole != "patient" || actor.Patient is null)
-    {
-        AddAuditLog(db, request, actor, "review.create.denied", "review", "new", actor.Patient?.Id, id, "denied");
-        await db.SaveChangesAsync();
-        return Results.StatusCode(StatusCodes.Status403Forbidden);
-    }
-
-    var errors = new List<string>();
-
-    if (reviewRequest.Rating is < 1 or > 5)
-    {
-        errors.Add("La calificacion debe estar entre 1 y 5.");
-    }
-
-    var comment = reviewRequest.Comment?.Trim() ?? string.Empty;
-
-    if (comment.Length is < 3 or > 1000)
-    {
-        errors.Add("El comentario debe tener entre 3 y 1000 caracteres.");
-    }
-
-    if (string.IsNullOrWhiteSpace(reviewRequest.AppointmentId))
-    {
-        errors.Add("appointmentId es obligatorio.");
-    }
-
-    if (errors.Count > 0)
-    {
-        return Results.BadRequest(new { errors });
-    }
-
-    var appointment = await db.Appointments.FirstOrDefaultAsync(item =>
-        item.Id == reviewRequest.AppointmentId &&
-        item.PatientId == actor.Patient.Id &&
-        item.ProfessionalId == id);
-
-    if (appointment is null)
-    {
-        return Results.BadRequest(new { errors = new[] { "Solo puedes resenar profesionales con los que tuviste una cita." } });
-    }
-
-    if (appointment.Status != "completed")
-    {
-        return Results.BadRequest(new { errors = new[] { "Solo puedes resenar citas completadas." } });
-    }
-
-    var alreadyReviewed = await db.Reviews.AnyAsync(item => item.AppointmentId == appointment.Id);
-
-    if (alreadyReviewed)
-    {
-        return Results.Conflict(new { errors = new[] { "Esta cita ya tiene una resena. Las resenas no se pueden editar." } });
-    }
-
-    var now = DateTimeOffset.UtcNow;
-    var review = new Review
-    {
-        Id = $"rev-{now.ToUnixTimeMilliseconds()}-{Guid.NewGuid():N}",
-        AppointmentId = appointment.Id,
-        PatientId = actor.Patient.Id,
-        PatientName = actor.Patient.FullName,
-        ProfessionalId = id,
-        Rating = reviewRequest.Rating,
-        Comment = comment,
-        Status = "published",
-        CreatedAt = now,
-        UpdatedAt = now
-    };
-
-    db.Reviews.Add(review);
-    AddAuditLog(db, request, actor, "review.create", "review", review.Id, actor.Patient.Id, id);
-    await db.SaveChangesAsync();
-
-    return Results.Created($"/api/professionals/{id}/reviews", review.ToDto());
-});
+// Resenas de profesionales extraidas a ReviewsEndpoints.cs (ver wire-up al final del archivo).
 
 professionalsApi.MapGet("/{id}/available-slots", async (string id, string serviceId, int? days, HealthHubDbContext db) =>
 {
@@ -3349,22 +3256,25 @@ notificationsApi.MapGet("/", async (HttpRequest request, string? status, HealthH
         return Results.Unauthorized();
     }
 
-    var notifications = db.Notifications
+    var (page, pageSize, paginated) = GetPaginationParams(request);
+
+    var query = db.Notifications
         .AsNoTracking()
         .Where(notification => notification.UserId == actor.Id);
 
     if (!string.IsNullOrWhiteSpace(status))
     {
-        notifications = notifications.Where(notification => notification.Status == status.Trim());
+        query = query.Where(notification => notification.Status == status.Trim());
     }
 
-    var notificationList = await notifications
+    // Limite historico de 50 cuando no se pide paginacion explicita.
+    var notificationList = await query
         .OrderByDescending(notification => notification.CreatedAt)
-        .Take(50)
+        .Take(paginated ? 500 : 50)
         .ToListAsync();
-    var result = notificationList.Select(notification => notification.ToDto()).ToList();
+    var dtoList = notificationList.Select(notification => notification.ToDto()).ToList();
 
-    return Results.Ok(result);
+    return ApplyPagination(dtoList, page, pageSize, paginated);
 });
 
 notificationsApi.MapPatch("/{id}/read", async (HttpRequest request, string id, HealthHubDbContext db) =>
@@ -3610,57 +3520,7 @@ auditApi.MapGet("/", async (HttpRequest request, string? patientId, string? reso
     return Results.Ok(result);
 });
 
-var reviewsApi = app.MapGroup("/api/reviews");
-
-// Moderacion administrativa: las resenas nunca se eliminan fisicamente ni se editan;
-// solo se ocultan (hidden) o restauran (published) dejando rastro de auditoria.
-reviewsApi.MapPatch("/{id}/moderate", async (HttpRequest request, string id, ModerateReviewRequest moderateRequest, HealthHubDbContext db) =>
-{
-    var actor = await GetUserFromRequestAsync(request, db);
-
-    if (actor is null)
-    {
-        return Results.Unauthorized();
-    }
-
-    if (actor.PrimaryRole != "internal_admin")
-    {
-        AddAuditLog(db, request, actor, "review.moderate.denied", "review", id, null, null, "denied");
-        await db.SaveChangesAsync();
-        return Results.StatusCode(StatusCodes.Status403Forbidden);
-    }
-
-    var review = await db.Reviews.FirstOrDefaultAsync(item => item.Id == id);
-
-    if (review is null)
-    {
-        return Results.NotFound();
-    }
-
-    var status = moderateRequest.Status.Trim().ToLowerInvariant();
-
-    if (status is not ("hidden" or "published"))
-    {
-        return Results.BadRequest(new { errors = new[] { "Estatus invalido. Usa hidden o published." } });
-    }
-
-    if (status == "hidden" && string.IsNullOrWhiteSpace(moderateRequest.Reason))
-    {
-        return Results.BadRequest(new { errors = new[] { "Indica el motivo para ocultar la resena." } });
-    }
-
-    var now = DateTimeOffset.UtcNow;
-    review.Status = status;
-    review.ModeratedByUserId = actor.Id;
-    review.ModeratedAt = now;
-    review.ModerationReason = moderateRequest.Reason?.Trim() ?? string.Empty;
-    review.UpdatedAt = now;
-
-    AddAuditLog(db, request, actor, $"review.moderate.{status}", "review", review.Id, review.PatientId, review.ProfessionalId);
-    await db.SaveChangesAsync();
-
-    return Results.Ok(review.ToDto());
-});
+// Moderacion de resenas extraida a ReviewsEndpoints.cs (ver wire-up al final del archivo).
 
 var soapNotesApi = app.MapGroup("/api/soap-notes");
 
@@ -4145,6 +4005,18 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
 
     return Results.Created($"/api/body-measurements/{measurement.Id}", ToBodyMeasurementDto(measurement, patient.FullName));
 });
+
+// ── Modulos extraidos ─────────────────────────────────────────────────────────
+// ReviewsEndpoints: GET/POST /api/professionals/{id}/reviews + PATCH /api/reviews/{id}/moderate
+// Los helpers compartidos se pasan como delegados. Cuando todos los modulos esten
+// extraidos se movera a una clase ApiHelpers compartida y se eliminaran los delegados.
+app.MapReviewsEndpoints(
+    getUser: GetUserFromRequestAsync,
+    addAudit: (db, req, actor, action, resType, resId, patId, proId, outcome) =>
+        AddAuditLog(db, req, actor, action, resType, resId, patId, proId, outcome),
+    getPagination: GetPaginationParams,
+    applyPagination: (items, page, pageSize, paginated) =>
+        ApplyPagination(items, page, pageSize, paginated));
 
 app.Run();
 
@@ -5434,6 +5306,36 @@ static string WeekdayLabel(int weekday) =>
         _ => "Por definir"
     };
 
+// ── Helpers de paginacion ──────────────────────────────────────────────────────
+// GetPaginationParams: lee ?page y ?pageSize del query string.
+//   - Cuando ninguno esta presente devuelve (page=1, pageSize=20, requested=false).
+//   - page minimo 1, pageSize entre 1 y 100; default pageSize = 20.
+// ApplyPagination: si paginationRequested, devuelve PagedResult; si no, devuelve la lista entera.
+static (int page, int pageSize, bool requested) GetPaginationParams(HttpRequest request)
+{
+    var pageStr = request.Query["page"].FirstOrDefault();
+    var pageSizeStr = request.Query["pageSize"].FirstOrDefault();
+
+    if (string.IsNullOrWhiteSpace(pageStr) && string.IsNullOrWhiteSpace(pageSizeStr))
+    {
+        return (1, 20, false);
+    }
+
+    var page = int.TryParse(pageStr, out var p) ? Math.Max(p, 1) : 1;
+    var pageSize = int.TryParse(pageSizeStr, out var ps) ? Math.Clamp(ps, 1, 100) : 20;
+    return (page, pageSize, true);
+}
+
+static IResult ApplyPagination<T>(IReadOnlyList<T> items, int page, int pageSize, bool paginated)
+{
+    if (!paginated)
+    {
+        return Results.Ok(items);
+    }
+
+    return Results.Ok(HealthHub.Api.Contracts.PagedResult<T>.From(items, page, pageSize));
+}
+
 internal sealed record ClerkProfile(string? Email, string? Role, string? FullName);
 
 // Planes de suscripcion del piloto, alineados a modelo_de_negocio.md (Basico $399 / Pro $699).
@@ -5508,3 +5410,8 @@ internal static class ConsentDocuments
     public static string VersionFor(string consentType) =>
         All.FirstOrDefault(doc => doc.Type == consentType).Version ?? PrivacyVersion;
 }
+
+// Marca parcial requerida por WebApplicationFactory en los tests de integracion.
+// No agrega comportamiento; solo expone la clase generada por el compilador
+// para que Microsoft.AspNetCore.Mvc.Testing pueda encontrar el entry point.
+public partial class Program { }
