@@ -141,20 +141,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white px-5 py-6 lg:block">
-        <Link className="flex items-center gap-3" href={homeHref}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
+        <Link aria-label="Inicio — Clinixa" className="flex items-center gap-3" href={homeHref}>
+          <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
             <Activity size={22} />
           </div>
           <p className="text-sm font-semibold">Clinixa</p>
         </Link>
 
-        <nav className="mt-10 space-y-1 text-sm">
+        <nav aria-label="Navegación principal" className="mt-10 space-y-1 text-sm">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
 
             return (
               <Link
+                aria-current={active ? "page" : undefined}
                 className={clsx(
                   "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition",
                   active ? "bg-teal-50 font-medium text-primary" : "text-slate-700 hover:bg-slate-100"
@@ -162,7 +163,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 key={item.href}
               >
-                <Icon size={18} />
+                <Icon aria-hidden="true" size={18} />
                 {item.label}
               </Link>
             );
@@ -184,20 +185,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-20 border-b border-border bg-white px-4 py-3 lg:hidden">
         <div className="flex items-center justify-between">
-          <Link className="flex items-center gap-2" href={homeHref}>
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
+          <Link aria-label="Inicio — Clinixa" className="flex items-center gap-2" href={homeHref}>
+            <div aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
               <Activity size={19} />
             </div>
             <span className="text-sm font-semibold">Clinixa</span>
           </Link>
         </div>
-        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm">
+        <nav aria-label="Navegación principal" className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
 
             return (
               <Link
+                aria-current={active ? "page" : undefined}
                 className={clsx(
                   "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2",
                   active ? "border-teal-200 bg-teal-50 text-primary" : "border-border bg-white text-slate-700"
@@ -205,7 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 key={item.href}
               >
-                <Icon size={16} />
+                <Icon aria-hidden="true" size={16} />
                 {item.label}
               </Link>
             );

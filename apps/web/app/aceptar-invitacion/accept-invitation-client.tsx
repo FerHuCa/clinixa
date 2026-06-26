@@ -234,7 +234,7 @@ export function AcceptInvitationClient() {
                 ) : (
                   <form className="space-y-4" onSubmit={submit}>
                     <label className="block">
-                      <span className="text-xs font-medium uppercase text-slate-400">Nombre completo</span>
+                      <span className="text-xs font-medium uppercase text-slate-600">Nombre completo</span>
                       <input
                         className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                         onChange={(event) => setFullName(event.target.value)}
@@ -253,7 +253,7 @@ export function AcceptInvitationClient() {
                     ) : invitation.requiresAccount ? (
                       <>
                         <label className="block">
-                          <span className="text-xs font-medium uppercase text-slate-400">Contraseña</span>
+                          <span className="text-xs font-medium uppercase text-slate-600">Contraseña</span>
                           <input
                             className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                             onChange={(event) => setPassword(event.target.value)}
@@ -263,7 +263,7 @@ export function AcceptInvitationClient() {
                           />
                         </label>
                         <label className="block">
-                          <span className="text-xs font-medium uppercase text-slate-400">Confirmar contraseña</span>
+                          <span className="text-xs font-medium uppercase text-slate-600">Confirmar contraseña</span>
                           <input
                             className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                             onChange={(event) => setConfirmPassword(event.target.value)}

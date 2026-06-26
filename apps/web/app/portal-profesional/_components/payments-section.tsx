@@ -123,7 +123,7 @@ export function PaymentsSection({
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[720px] text-sm">
                     <thead>
-                      <tr className="border-b border-border text-left text-xs uppercase text-slate-400">
+                      <tr className="border-b border-border text-left text-xs uppercase text-slate-600">
                         <th className="px-2 py-2 font-medium">Fecha</th>
                         <th className="px-2 py-2 font-medium">Paciente</th>
                         <th className="px-2 py-2 font-medium">Servicio</th>

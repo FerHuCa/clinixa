@@ -102,15 +102,15 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
           <Panel title="Resumen de seguimiento">
             <div className="space-y-4 p-4 text-sm">
               <div>
-                <p className="text-xs font-medium uppercase text-slate-400">Motivo principal</p>
+                <p className="text-xs font-medium uppercase text-slate-600">Motivo principal</p>
                 <p className="mt-1 text-slate-700">{patient.mainReason}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase text-slate-400">Riesgo</p>
+                <p className="text-xs font-medium uppercase text-slate-600">Riesgo</p>
                 <p className="mt-1 text-slate-700">{patient.riskLevel}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase text-slate-400">Avance</p>
+                <p className="text-xs font-medium uppercase text-slate-600">Avance</p>
                 <p className="mt-1 leading-6 text-slate-700">{progressTextFor(patient.progress)}</p>
               </div>
             </div>

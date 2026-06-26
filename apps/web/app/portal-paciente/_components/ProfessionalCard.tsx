@@ -70,15 +70,15 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{professional.bio}</p>
               <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
                 <span className="flex items-center gap-1">
-                  <MapPin size={15} className="text-slate-400" />
+                  <MapPin aria-hidden="true" className="text-slate-400" size={15} />
                   {professional.location}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Monitor size={15} className="text-slate-400" />
+                  <Monitor aria-hidden="true" className="text-slate-400" size={15} />
                   {modeLabel(professional.appointmentMode)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock size={15} className="text-slate-400" />
+                  <Clock aria-hidden="true" className="text-slate-400" size={15} />
                   {professional.nextAvailable}
                 </span>
               </div>

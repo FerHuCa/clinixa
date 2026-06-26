@@ -134,7 +134,7 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
                   <Star size={14} className="shrink-0 fill-amber-400 text-amber-400" />
                   <span className="font-medium">{pro.averageRating.toFixed(1)}</span>
-                  <span className="text-slate-400">({pro.reviewCount} {pro.reviewCount === 1 ? "reseña" : "reseñas"})</span>
+                  <span className="text-slate-600">({pro.reviewCount} {pro.reviewCount === 1 ? "reseña" : "reseñas"})</span>
                 </p>
               )}
               {pro.basePrice > 0 && (

@@ -127,7 +127,7 @@ export function AgendaPageClient() {
           <Panel title="Crear cita">
             <form className="space-y-4 p-4 text-sm" id="crear-cita" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                 <select
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="patientId"
@@ -145,7 +145,7 @@ export function AgendaPageClient() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Fecha</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Fecha</span>
                   <input
                     className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                     name="date"
@@ -157,7 +157,7 @@ export function AgendaPageClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Hora</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Hora</span>
                   <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
                     <Clock size={16} className="text-slate-400" />
                     <input
@@ -175,7 +175,7 @@ export function AgendaPageClient() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Duración</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Duración</span>
                   <select
                     className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                     name="duration"
@@ -189,7 +189,7 @@ export function AgendaPageClient() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Tipo</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Tipo</span>
                   <select
                     className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                     name="type"
@@ -205,7 +205,7 @@ export function AgendaPageClient() {
               </div>
 
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Motivo</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Motivo</span>
                 <textarea
                   className="mt-1 min-h-24 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="reason"

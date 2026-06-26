@@ -98,7 +98,7 @@ function PeriodSection({ label, data, lifetime }: { label: string; data: Analyti
             max={totalAppts}
             colorClass="bg-teal-500"
           />
-          <div className="mt-1 flex justify-between text-xs text-slate-400">
+          <div className="mt-1 flex justify-between text-xs text-slate-600">
             <span>{data.appointmentsCompleted} completadas</span>
             <span>{totalAppts} total</span>
           </div>
@@ -113,7 +113,7 @@ function PeriodSection({ label, data, lifetime }: { label: string; data: Analyti
             max={lifetimeAppts}
             colorClass="bg-blue-500"
           />
-          <div className="mt-1 flex justify-between text-xs text-slate-400">
+          <div className="mt-1 flex justify-between text-xs text-slate-600">
             <span>{totalAppts} citas</span>
             <span>{lifetimeAppts} en total</span>
           </div>

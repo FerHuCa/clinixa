@@ -15,6 +15,19 @@
   box-sizing: border-box;
 }
 
+/**
+ * Global keyboard-focus indicator.
+ * Overrides `outline-none` / `focus:outline-none` that Tailwind utilities set,
+ * because :focus-visible has higher specificity when the user is navigating
+ * via keyboard (browser heuristic). Mouse clicks do NOT trigger :focus-visible,
+ * so this ring is invisible during pointer use.
+ */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 body {
   margin: 0;
   background: hsl(var(--background));

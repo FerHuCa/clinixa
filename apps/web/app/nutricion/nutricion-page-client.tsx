@@ -191,7 +191,7 @@ export function NutricionPageClient() {
             <Panel title="Nueva dieta">
               <div className="space-y-3 p-4">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                   <select
                     className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                     onChange={(e) => setDietDraft((d) => ({ ...d, patientId: e.target.value }))}
@@ -204,7 +204,7 @@ export function NutricionPageClient() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Título del plan</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Título del plan</span>
                   <input
                     className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                     onChange={(e) => setDietDraft((d) => ({ ...d, title: e.target.value }))}
@@ -213,7 +213,7 @@ export function NutricionPageClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Plan detallado</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Plan detallado</span>
                   <textarea
                     className="mt-1 min-h-32 w-full resize-none rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                     onChange={(e) => setDietDraft((d) => ({ ...d, content: e.target.value }))}
@@ -223,7 +223,7 @@ export function NutricionPageClient() {
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Válido desde</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Válido desde</span>
                     <input
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       onChange={(e) => setDietDraft((d) => ({ ...d, validFrom: e.target.value }))}
@@ -232,7 +232,7 @@ export function NutricionPageClient() {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Válido hasta (opcional)</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Válido hasta (opcional)</span>
                     <input
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       onChange={(e) => setDietDraft((d) => ({ ...d, validUntil: e.target.value }))}
@@ -276,7 +276,7 @@ export function NutricionPageClient() {
                           {diet.status === "active" ? "Activo" : "Archivado"}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-xs text-slate-600">
                         {diet.patientName} · desde {diet.validFrom}
                         {diet.validUntil ? ` hasta ${diet.validUntil}` : ""}
                       </p>
@@ -298,7 +298,7 @@ export function NutricionPageClient() {
               <div className="space-y-3 p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                     <select
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       onChange={(e) => setMeasurementDraft((d) => ({ ...d, patientId: e.target.value }))}
@@ -311,7 +311,7 @@ export function NutricionPageClient() {
                     </select>
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Fecha de medición</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Fecha de medición</span>
                     <input
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       onChange={(e) => setMeasurementDraft((d) => ({ ...d, measuredAt: e.target.value }))}
@@ -331,7 +331,7 @@ export function NutricionPageClient() {
                     ["muscleMassKg", "Masa muscular (kg)"],
                   ] as Array<[keyof MeasurementDraft, string]>).map(([field, label]) => (
                     <label className="block" key={field}>
-                      <span className="text-xs font-medium uppercase text-slate-400">{label}</span>
+                      <span className="text-xs font-medium uppercase text-slate-600">{label}</span>
                       <input
                         className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                         min={0}
@@ -345,7 +345,7 @@ export function NutricionPageClient() {
                   ))}
                 </div>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Notas</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Notas</span>
                   <textarea
                     className="mt-1 min-h-16 w-full resize-none rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                     onChange={(e) => setMeasurementDraft((d) => ({ ...d, notes: e.target.value }))}
@@ -376,7 +376,7 @@ export function NutricionPageClient() {
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-400">
+                      <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-600">
                         <th className="px-4 py-2">Fecha</th>
                         <th className="px-4 py-2">Paciente</th>
                         <th className="px-4 py-2">Peso</th>

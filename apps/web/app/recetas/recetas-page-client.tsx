@@ -88,7 +88,7 @@ export function RecetasPageClient() {
         <Panel title="Nueva receta">
           <div className="space-y-3 p-4">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
               <select
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(e) => setDraft((d) => ({ ...d, patientId: e.target.value }))}
@@ -102,7 +102,7 @@ export function RecetasPageClient() {
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Medicamento</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Medicamento</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                   onChange={(e) => setDraft((d) => ({ ...d, medicationName: e.target.value }))}
@@ -111,7 +111,7 @@ export function RecetasPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Dosis</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Dosis</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                   onChange={(e) => setDraft((d) => ({ ...d, dosage: e.target.value }))}
@@ -120,7 +120,7 @@ export function RecetasPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Frecuencia</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Frecuencia</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                   onChange={(e) => setDraft((d) => ({ ...d, frequency: e.target.value }))}
@@ -129,7 +129,7 @@ export function RecetasPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Duración</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Duración</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                   onChange={(e) => setDraft((d) => ({ ...d, duration: e.target.value }))}
@@ -139,7 +139,7 @@ export function RecetasPageClient() {
               </label>
             </div>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Indicaciones</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Indicaciones</span>
               <textarea
                 className="mt-1 min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(e) => setDraft((d) => ({ ...d, instructions: e.target.value }))}
@@ -186,7 +186,7 @@ export function RecetasPageClient() {
                     <p className="mt-0.5 text-sm text-slate-600">
                       {rx.dosage} · {rx.frequency} · {rx.duration}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-600">
                       {rx.patientName} · {rx.issuedAt}
                     </p>
                     {rx.instructions ? (

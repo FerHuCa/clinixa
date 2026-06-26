@@ -96,7 +96,7 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-400">
+        <span className="text-xs font-medium uppercase text-slate-600">
           Biografía <span className="text-slate-300">(mín. 20 caracteres)</span>
         </span>
         <textarea
@@ -105,11 +105,11 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
           placeholder="Describe tu enfoque, experiencia y a quién ayudas."
           value={bio}
         />
-        <span className="mt-1 block text-xs text-slate-400">{bio.trim().length} / 20+ caracteres</span>
+        <span className="mt-1 block text-xs text-slate-600">{bio.trim().length} / 20+ caracteres</span>
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-400">Ubicación</span>
+        <span className="text-xs font-medium uppercase text-slate-600">Ubicación</span>
         <div className="mt-1 flex items-center gap-2 rounded-md border border-border px-3 py-2">
           <MapPin size={16} className="shrink-0 text-primary" />
           <input
@@ -196,7 +196,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-400">Nombre del servicio</span>
+        <span className="text-xs font-medium uppercase text-slate-600">Nombre del servicio</span>
         <input
           className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm font-medium outline-none focus:border-teal-400"
           onChange={(event) => setName(event.target.value)}
@@ -206,7 +206,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-400">Descripción</span>
+        <span className="text-xs font-medium uppercase text-slate-600">Descripción</span>
         <textarea
           className="mt-1 min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
           onChange={(event) => setDescription(event.target.value)}
@@ -217,7 +217,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
 
       <div className="grid gap-2 sm:grid-cols-3">
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Duración (min)</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             min={15}
@@ -228,7 +228,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Precio (MXN)</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             min={0}
@@ -239,7 +239,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
           <select
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => setMode(event.target.value)}
@@ -319,7 +319,7 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
 
       <div className="grid gap-2 sm:grid-cols-[1fr_110px_110px]">
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Día</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Día</span>
           <select
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => setWeekday(Number(event.target.value))}
@@ -336,7 +336,7 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Inicio</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Inicio</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => setStartsAt(event.target.value)}
@@ -346,7 +346,7 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Fin</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Fin</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => setEndsAt(event.target.value)}
@@ -438,7 +438,7 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-400">Número de cédula profesional</span>
+        <span className="text-xs font-medium uppercase text-slate-600">Número de cédula profesional</span>
         <input
           className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
           onChange={(event) => {

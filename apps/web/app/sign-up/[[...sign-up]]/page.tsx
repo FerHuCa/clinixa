@@ -74,7 +74,7 @@ export default function SignUpPage() {
             </Link>
           </p>
 
-          <p className="mt-4 text-center text-xs leading-5 text-slate-400">
+          <p className="mt-4 text-center text-xs leading-5 text-slate-600">
             Al crear una cuenta aceptas el{" "}
             <Link className="text-primary underline-offset-2 hover:underline" href="/privacy" target="_blank">
               Aviso de Privacidad

@@ -62,15 +62,15 @@ export function NextAppointmentHero({ appointment, appointmentActionId, onPay }:
           <p className="mt-1 text-sm text-slate-500">{appointment.specialtyLabel ?? appointment.type}</p>
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
             <span className="flex items-center gap-1">
-              <CalendarDays size={15} className="text-slate-400" />
+              <CalendarDays aria-hidden="true" className="text-slate-400" size={15} />
               {dateLabel(appointment.date)}
             </span>
             <span className="flex items-center gap-1">
-              <Clock size={15} className="text-slate-400" />
+              <Clock aria-hidden="true" className="text-slate-400" size={15} />
               {appointment.time} h
             </span>
             <span className="flex items-center gap-1">
-              <Monitor size={15} className="text-slate-400" />
+              <Monitor aria-hidden="true" className="text-slate-400" size={15} />
               {modeLabel(appointment.mode)}
             </span>
           </div>

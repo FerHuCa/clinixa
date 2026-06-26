@@ -573,7 +573,7 @@ export function SecurityPageClient() {
                                 status={item.verificationStatus === "verified" ? "active" : item.verificationStatus === "rejected" ? "cancelled" : "pending"}
                               />
                               {item.verificationStatus === "verified" && item.licenseVerifiedAt ? (
-                                <span className="text-xs text-slate-400">{formatDate(item.licenseVerifiedAt)}</span>
+                                <span className="text-xs text-slate-600">{formatDate(item.licenseVerifiedAt)}</span>
                               ) : null}
                             </div>
                           </div>
@@ -644,7 +644,7 @@ export function SecurityPageClient() {
                       <p className="mt-1 text-sm text-slate-500">
                         {log.resourceType} · {log.resourceId}
                       </p>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-slate-600">
                         Actor: {roleLabel(log.actorRole)} {log.actorUserId ? `· ${log.actorUserId}` : ""}
                       </p>
                     </div>

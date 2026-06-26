@@ -77,7 +77,7 @@ export function ProfileSection({
         </div>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Nombre para mostrar</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Nombre para mostrar</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, displayName: event.target.value } : current))}
@@ -86,7 +86,7 @@ export function ProfileSection({
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Biografía</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Biografía</span>
           <textarea
             className="mt-1 min-h-24 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, bio: event.target.value } : current))}
@@ -96,7 +96,7 @@ export function ProfileSection({
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Ubicación</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Ubicación</span>
           <div className="mt-1 flex items-center gap-2 rounded-md border border-border px-3 py-2">
             <MapPin size={16} className="text-primary" />
             <input
@@ -110,7 +110,7 @@ export function ProfileSection({
 
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-medium uppercase text-slate-400">Especialidad</span>
+            <span className="text-xs font-medium uppercase text-slate-600">Especialidad</span>
             <select
               className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
               onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, specialty: event.target.value } : current))}
@@ -124,7 +124,7 @@ export function ProfileSection({
             </select>
           </label>
           <label className="block">
-            <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+            <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
             <select
               className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
               onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, appointmentMode: event.target.value } : current))}
@@ -138,7 +138,7 @@ export function ProfileSection({
         </div>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Precio base (MXN)</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Precio base (MXN)</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             min={0}
@@ -149,7 +149,7 @@ export function ProfileSection({
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Cédula profesional</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Cédula profesional</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, licenseNumber: event.target.value } : current))}
@@ -162,7 +162,7 @@ export function ProfileSection({
         </label>
 
         <div className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">Foto de perfil</span>
+          <span className="text-xs font-medium uppercase text-slate-600">Foto de perfil</span>
           <div className="mt-2 flex items-start gap-4">
             {/* Avatar actual o preview */}
             {avatarPreview ?? (professional.profilePhotoUrl ? (professional.profilePhotoUrl.startsWith("/") ? `${apiBaseUrl}${professional.profilePhotoUrl}` : professional.profilePhotoUrl) : null) ? (
@@ -222,7 +222,7 @@ export function ProfileSection({
         </div>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-400">WhatsApp de contacto</span>
+          <span className="text-xs font-medium uppercase text-slate-600">WhatsApp de contacto</span>
           <input
             className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
             onChange={(event) => onProfileDraftChange((current) => (current ? { ...current, whatsappNumber: event.target.value } : current))}
