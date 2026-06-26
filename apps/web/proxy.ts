@@ -72,40 +72,49 @@ function hasDeveloperSession(request: NextRequest) {
   return devAuthEnabled && Boolean(request.cookies.get("healthhub-dev-user")?.value);
 }
 
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  return response;
+}
+
 const clerkProxy = clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request) || hasDeveloperSession(request)) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   const { userId } = await auth();
 
   if (!userId) {
-    return NextResponse.redirect(new URL("/bienvenida", request.url));
+    return addSecurityHeaders(NextResponse.redirect(new URL("/bienvenida", request.url)));
   }
 
   // Usuario autenticado: aplicar guardia de rol basada en cookie.
   const roleRedirect = applyRoleRouting(request);
 
   if (roleRedirect) {
-    return roleRedirect;
+    return addSecurityHeaders(roleRedirect);
   }
 
-  return NextResponse.next();
+  return addSecurityHeaders(NextResponse.next());
 });
 
 function developmentProxy(request: NextRequest) {
   if (isPublicRoute(request) || hasDeveloperSession(request)) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   // En dev, si hay sesión de usuario (cookie) también aplicamos la guardia de rol.
   const roleRedirect = applyRoleRouting(request);
 
   if (roleRedirect) {
-    return roleRedirect;
+    return addSecurityHeaders(roleRedirect);
   }
 
-  return NextResponse.redirect(new URL("/bienvenida", request.url));
+  return addSecurityHeaders(NextResponse.redirect(new URL("/bienvenida", request.url)));
 }
 
 export default clerkEnabled ? clerkProxy : developmentProxy;
