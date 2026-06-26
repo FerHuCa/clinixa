@@ -3107,8 +3107,28 @@ Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-A
 - **web:** ahora en `9e3828b` (HEAD de main) — **por primera vez con los fixes de la auditoría en vivo**.
 - **api:** ya estaba en código actual (build .NET nunca falló). Confirmado: paginación opt-in fix/10 responde envelope `{items:[...]}` solo con `?page=&pageSize=`.
 
-### Pendientes (sin cambios respecto a la lista de la auditoría)
-- #8 credenciales MP suscripción prod + gatear endpoints pro.
-- #10 `dotnet test` con Docker.
-- Piloto: 1 tx real.
-- **Nuevo aprendizaje operativo:** tras cada push a `main`, confirmar que el deploy de **web** quede verde (su build puede fallar y dejar prod en código viejo en silencio). `npm run build:web` antes de pushear cambios de web.
+### Paso 3 — #8 Monetización: gate de suscripción + credenciales ✅ (código) / validación pendiente
+
+**Código (commit `83d641e`):** se extendió el gate de suscripción (`CheckSubscriptionGate`) más allá de publicar/crear-servicio (decisión del usuario: gatear **también lo clínico**):
+- Refactor: el gate ahora es profesional-only y cuenta el trial desde `Professional.CreatedAt` (más correcto: un paciente que luego se vuelve profesional arranca su trial al volverse profesional, no desde su alta original). Nuevo wrapper `CheckSubscriptionGateForActor(User)` (las funciones locales de C# no permiten sobrecarga); `internal_admin`/`clinic_admin` pasan sin gate (no son suscriptores).
+- Endpoints gateados (POST/creación): pacientes, disponibilidad, notas SOAP, recetas, tareas, dietas, mediciones corporales (+ servicios/publicar que ya estaban). **Lecturas (GET) y PATCH de status quedan SIN gate**: continuidad de atención.
+- **No gateados a propósito:** PATCH de edición de servicios/disponibilidad (son ediciones, no negocio nuevo, y pueden venir de `clinic_admin` donde `actor.Professional` es null); perfil/avatar (cosméticos).
+- Test nuevo `SubscriptionGateTests` (2 casos: 402 con trial vencido sin plan; pasa con suscripción activa). Corre en CI bajo #10 (Docker). Build sln verde 0/0.
+- Los profesionales sembrados tienen trial activo (CreatedAt = seed time) → los tests authz existentes no se rompen.
+
+**Credenciales (no era el bloqueador que creíamos):** el checkout de suscripción y el de citas comparten `MERCADOPAGO_ACCESS_TOKEN` + `MERCADOPAGO_WEBHOOK_SECRET`. Como el flujo de citas ya está en prod, **la suscripción ya está en modo real**. El `notification_url` se deriva solo (`https://api.clinixa.mx/api/webhooks/mercadopago-subscription`) y va en el cuerpo del preapproval ([Program.cs:2887](apps/api/Program.cs:2887)); el webhook valida con el mismo secreto ([Program.cs:1687](apps/api/Program.cs:1687)).
+- **Webhook MP dashboard:** NO se toca. La pantalla de webhooks configura un solo URL (el de pagos/citas, ya correcto). Las suscripciones llegan a su endpoint vía el `notification_url` por-preapproval. **Dejar "Planes y suscripciones" DESmarcado** (si se marca, MP mandaría preapproval al URL de pagos, que no lo procesa).
+- **Validación pendiente:** 1 suscripción real de bajo monto desde el portal profesional; observar en Deploy Logs del API el POST a `/api/webhooks/mercadopago-subscription` (`subscription_preapproval`) → pro pasa a `active`. (El usuario la hará directo.)
+
+---
+
+## Próximos 5 pasos (para retomar)
+
+1. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional. Confirmar: llega webhook a `/api/webhooks/mercadopago-subscription`, el profesional pasa a `SubscriptionStatus="active"`, y el gate 402 dispara al vencer el trial sin plan. Si el webhook NO llega, marcar "Planes y suscripciones" en MP es contraproducente (URL de pagos) → habría que unificar endpoints o ajustar el `notification_url`.
+2. **#10 tests con Docker** — `dotnet test HealthHub.sln` en entorno con Docker (Testcontainers). Cubre 11 authz + 2 nuevos de `SubscriptionGateTests`. Integrar a CI (GitHub Actions) para que corra en cada push.
+3. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace (distinto de la suscripción del paso 1). Cierra el piloto.
+4. **Guard de deploy en CI** — añadir `npm run build:web` (y `dotnet build`) como check de CI o pre-push. Esta sesión un `next build` roto (`/suscripcion` sin Suspense) dejó prod en código pre-auditoría sin avisar; un check lo hubiera atrapado.
+5. **Follow-ups menores** — (a) confirmar si exponer `whatsappNumber` en `GET /api/professionals` es intencional o se quita del DTO público; (b) decidir si gatear los PATCH de edición de servicios/disponibilidad (hoy sin gate, requiere resolver el caso `clinic_admin`).
+
+### Pendientes históricos
+- **Aprendizaje operativo:** tras cada push a `main`, confirmar que el deploy de **web** quede verde (su build puede fallar y dejar prod en código viejo en silencio). `npm run build:web` antes de pushear cambios de web.
