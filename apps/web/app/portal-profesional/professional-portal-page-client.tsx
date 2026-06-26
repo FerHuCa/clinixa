@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Home } from "lucide-react";
+import { CheckCircle2, Clock, Home, XCircle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { MarketplacePanel } from "@/components/marketplace-panel";
 import { OnboardingChecklist, buildChecklistSteps } from "@/components/onboarding-checklist";
@@ -59,6 +59,7 @@ export function ProfessionalPortalPageClient() {
     loadProfessionalDashboard,
     loadProfessionalOnboarding,
     loadProfessionalPayments,
+    loadVerificationStatus,
     professionals,
     publishProfessional,
     ready,
@@ -96,6 +97,7 @@ export function ProfessionalPortalPageClient() {
   const [avatarMessage, setAvatarMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const [paymentsState, setPaymentsState] = useState<{ month: string; data: import("@/lib/healthhub-store").ProfessionalPayments | null } | null>(null);
   const [paymentsMonth, setPaymentsMonth] = useState(() => monthKey(new Date()));
+  const [ownVerificationStatus, setOwnVerificationStatus] = useState<string | null>(null);
 
   const currentMonth = monthKey(new Date());
   const previousMonth = monthKey(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1));
@@ -109,14 +111,18 @@ export function ProfessionalPortalPageClient() {
       };
     }
 
-    Promise.all([loadProfessionalDashboard(), loadProfessionalOnboarding()])
-      .then(([nextDashboard, nextOnboarding]) => {
+    Promise.all([loadProfessionalDashboard(), loadProfessionalOnboarding(), loadVerificationStatus()])
+      .then(([nextDashboard, nextOnboarding, nextVerif]) => {
         if (cancelled) {
           return;
         }
 
         setDashboard(nextDashboard);
         setOnboarding(nextOnboarding);
+
+        if (nextVerif) {
+          setOwnVerificationStatus(nextVerif.verificationStatus);
+        }
 
         const source = nextDashboard?.professional;
 
@@ -142,7 +148,7 @@ export function ProfessionalPortalPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [currentUser.id, loadProfessionalDashboard, loadProfessionalOnboarding, ready]);
+  }, [currentUser.id, loadProfessionalDashboard, loadProfessionalOnboarding, loadVerificationStatus, ready]);
 
   // Estado de cuenta del mes seleccionado. Solo aplica a cuentas profesionales;
   // si la carga falla, el panel lo dice sin romper el resto de la configuración.
@@ -419,6 +425,34 @@ export function ProfessionalPortalPageClient() {
           <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 size={16} />
             Tu perfil está publicado y visible para pacientes.
+          </div>
+        ) : null}
+
+        {/* Estado de verificación de cédula: visible solo cuando la carga ya completó */}
+        {!loadingDashboard && ownVerificationStatus === "pending" ? (
+          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <Clock size={16} className="shrink-0" />
+            <span>
+              <strong>Cédula en revisión.</strong> Tu número de cédula está siendo verificado por el equipo de Clinixa. Te avisaremos por correo cuando esté listo.
+            </span>
+          </div>
+        ) : null}
+
+        {!loadingDashboard && ownVerificationStatus === "verified" ? (
+          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <CheckCircle2 size={16} className="shrink-0" />
+            <span>
+              <strong>Cédula verificada.</strong> Tu cédula profesional ha sido validada exitosamente.
+            </span>
+          </div>
+        ) : null}
+
+        {!loadingDashboard && ownVerificationStatus === "rejected" ? (
+          <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <XCircle size={16} className="shrink-0" />
+            <span>
+              <strong>Cédula rechazada.</strong> No fue posible verificar tu número de cédula. Revisa tus datos en la sección de perfil y contáctanos si tienes dudas.
+            </span>
           </div>
         ) : null}
 
