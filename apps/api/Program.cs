@@ -1803,10 +1803,11 @@ professionalsApi.MapGet("/{id}/reviews", async (string id, HealthHubDbContext db
         .AsNoTracking()
         .Where(review => review.ProfessionalId == id && review.Status == "published")
         .OrderByDescending(review => review.CreatedAt)
-        .Select(review => review.ToDto())
         .ToListAsync();
 
-    return Results.Ok(reviews);
+    // Use ToPublicDto to anonymize PatientName before returning to unauthenticated callers.
+    // Full name is preserved in the DB; only the public projection is masked (CWE-359).
+    return Results.Ok(reviews.Select(review => review.ToPublicDto()));
 });
 
 // Reglas de resenas: solo pacientes reales (cita completada con el profesional),
