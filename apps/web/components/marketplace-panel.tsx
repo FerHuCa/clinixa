@@ -137,7 +137,7 @@ export function MarketplacePanel() {
                 </div>
               </dl>
             ) : null}
-            <p className="text-sm text-slate-600">Tu cuenta está en revisión por el equipo de HealthHub.</p>
+            <p className="text-sm text-slate-600">Tu cuenta está en revisión por el equipo de Clinixa.</p>
           </div>
         ) : status.status === "rejected" ? (
           <div className="space-y-3">

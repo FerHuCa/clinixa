@@ -20,7 +20,7 @@ function roleLabel(role: string) {
   }
 
   if (role === "internal_admin") {
-    return "Admin HealthHub";
+    return "Admin Clinixa";
   }
 
   return "Paciente";
@@ -56,7 +56,7 @@ function ClerkAccessPanel() {
         {!isSignedIn ? (
           <div className="flex w-full max-w-md flex-col items-center gap-4 text-center">
             <p className="text-sm text-slate-600">
-              Inicia sesión o crea una cuenta para acceder a HealthHub con tu usuario real.
+              Inicia sesión o crea una cuenta para acceder a Clinixa con tu usuario real.
             </p>
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
@@ -80,7 +80,7 @@ function ClerkAccessPanel() {
             <UserButton />
             <div>
               <p className="font-semibold">Sesión Clerk activa</p>
-              <p className="mt-1 text-sm text-slate-500">La API valida el JWT y aplica los permisos guardados en HealthHub.</p>
+              <p className="mt-1 text-sm text-slate-500">La API valida el JWT y aplica los permisos guardados en Clinixa.</p>
             </div>
           </div>
         )}

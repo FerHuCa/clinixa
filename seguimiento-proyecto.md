@@ -2803,29 +2803,79 @@ Se corrió una auditoría de sobre-ingeniería (`ponytail-audit`) sobre el árbo
 
 ---
 
-## Siguientes pasos (actualizado 2026-06-22)
+## Sesión 2026-06-25 — Admin producción + MP OAuth + scope rebrand
 
-### 1. Mercado Pago a PRODUCCIÓN — *desbloquea cobro real* **CRÍTICO** *(sin cambios)*
-- Credenciales PROD desde MP Dashboard, actualizar `.env`/deployment, registrar webhook PROD, test 1-2 transacciones reales.
-- **Valor:** cierra flujo de dinero real. **Esfuerzo:** 1-2h. *Único bloqueador real del piloto.*
+### Completado
+- ✅ **Admin producción:** `usr-murcielagolambo-gmail-com` promovido a `internal_admin` vía SQL en Railway. Verificado: `https://clinixa.mx/seguridad` accesible.
+- ✅ **`.env.save`:** no existía en el árbol — ya resuelto en sesión anterior.
+- ✅ **MP OAuth redirect URI:** registrado `https://clinixa.mx/portal-profesional/marketplace-callback` en el panel de desarrolladores de MP. OAuth del profesional vinculado exitosamente.
 
-### 2. Quitar `.env.save` del árbol — *higiene de credenciales*
-- Archivo sin trackear visible en `git status`. Confirmar que no tenga secretos vivos y borrarlo o moverlo fuera del repo.
-- **Valor:** evita fuga accidental de credenciales. **Esfuerzo:** 5 min.
-
-### 3. Verificación visual adicional (Opcional, UI) *(sin cambios)*
-- Cancelar cita pagada → "Reembolsada", directorio `/profesionales` + filtro, perfil público `/profesionales/{slug}`, avatar.
-- **Valor:** desriesga UI + directorio. **Esfuerzo:** 1-2h.
-
-### 4. Continuar higiene técnica (Opcional, oportunista) — *del audit ponytail*
-- El refactor cubrió `healthhub-store.ts`. Pendiente de revisar bajo el mismo lente: `professional-portal-page-client.tsx` (1082 líneas) y `portal-patient-page-client.tsx` (948 líneas).
-- **Valor:** sostenibilidad del front. **Esfuerzo:** 2-3h. *No bloquea piloto — hacer entre features.*
-
-### 5. WhatsApp recordatorios 24h / Dashboard analytics / Piloto controlado *(sin cambios — ver secciones previas)*
+### Pendiente de sesión
+- ⏳ **Transacción real MP:** bloqueada por auto-login de MP (mismo usuario como comprador y vendedor). Requiere pagar desde cuenta/sesión diferente a la del profesional conectado. Para retomar: abrir incógnito completamente limpio, iniciar sesión en clinixa.mx con cuenta paciente y pagar sin sesión activa de MP.
 
 ---
 
-**Bloqueador único del piloto:** MP PRODUCCIÓN (1-2h). Todo lo demás es opcional o post-piloto.
+## Siguientes pasos (actualizado 2026-06-25)
+
+### 1. Transacción real MP **CRÍTICO — ÚNICO BLOQUEADOR DEL PILOTO**
+- Abrir incógnito limpio → login en clinixa.mx como paciente → agendar cita con el profesional de prueba → pagar sin sesión de MP activa (como invitado con tarjeta).
+- **Bloqueo conocido:** pagar con la misma cuenta MP del profesional falla. Usar incógnito sin cookies de MP.
+- **Esfuerzo:** 30 min.
+
+### 2. Rebrand HealthHub → Clinixa en el código ✅ **HECHO 2026-06-25 (tarde)**
+Aplicado: 4 strings visibles (`session-page-client.tsx` líneas 23/59/83, `marketplace-panel.tsx` línea 140). Grep de verificación = 0 rastros visibles restantes. Identifiers técnicos intactos por diseño. **Pendiente manual (no es código):** renombrar la app en el panel de desarrolladores de MP para que el checkout deje de mostrar "Health Hub MX".
+
+<details><summary>Scope original (referencia)</summary>
+
+Quedan rastros visibles al usuario. Scope identificado:
+
+**Frontend (texto visible):**
+- `apps/web/app/sesion/session-page-client.tsx` líneas 23, 59, 83 — "Admin HealthHub", "HealthHub" × 2
+- `apps/web/components/marketplace-panel.tsx` línea 140 — "equipo de HealthHub"
+
+**API (texto visible en emails/respuestas):**
+- Ya OK — `EmailSender.cs` ya usa "Clinixa" en todos los emails ✅
+
+**MP Dashboard (no es código):**
+- El checkout de MP muestra "Health Hub MX" — viene del nombre de la app en el panel de desarrolladores de MP, no del código. Renombrar desde `mercadopago.com.mx/developers/panel` → editar la app.
+
+**Identifiers técnicos que NO cambiar** (son nombres de clases/vars internas sin valor visible):
+- `useHealthHubStore` / `healthhub-store.ts` — refactor enorme sin beneficio para el usuario
+- `HealthHub.Api.*` namespaces C# — mismo caso
+- `HealthHubDbContext`, `ConnectionStrings__HealthHubDb` — vars internas
+- Migrations — históricas
+
+**Esfuerzo total:** ~30 min de código + renombrar app en MP dashboard.
+
+</details>
+
+### 3. Verificación visual (Opcional, UI)
+- Cancelar cita pagada → "Reembolsada", directorio `/profesionales` + filtro, perfil público `/profesionales/{slug}`, avatar.
+- **Esfuerzo:** 1-2h.
+
+### 4. Higiene técnica — refactor portales ✅ **HECHO 2026-06-25 (tarde)**
+- `professional-portal-page-client.tsx`: 1082 → **502 líneas**. Extraídos a `portal-profesional/_components/`: `profile-section`, `services-panel`, `availability-panel`, `payments-section`.
+- `portal-patient-page-client.tsx`: 948 → **614 líneas**. Extraídos a `portal-paciente/_components/`: `NextAppointmentHero`, `SearchFilters`, `BookingRequestForm`, `ProfessionalCard`, `SidebarMyAppointments`.
+- Extracción conservadora: todo `useState`, efectos y handlers (booking/pago/avatar) quedaron en el padre; los hijos son presentacionales. `tsc --noEmit` limpio en ambos.
+- ⚠️ Sin tests automatizados (apps/web no tiene runner). Verificado por compilación, no por click-through. El flujo booking+pago del portal paciente debe validarse en vivo durante la transacción real del piloto (paso 1).
+
+### 5. WhatsApp recordatorios 24h / Dashboard analytics / Piloto controlado ✅ **MÍNIMO CONSTRUIDO 2026-06-25 (tarde)**
+
+**5A — WhatsApp recordatorios 24h (modo simulado):**
+- `apps/api/Infrastructure/WhatsAppSender.cs` (nuevo) espeja la degradación de `EmailSender`: sin `WHATSAPP_API_KEY` → loguea `[WHATSAPP SIMULADO]` y no-op. El seam para el proveedor real (HTTP POST) está marcado con `// ponytail:`.
+- `EmailReminderService` ahora también despacha WhatsApp en el mismo barrido de 24h cuando el usuario tiene el canal `whatsapp` habilitado (`Enabled && ReminderUpdates`). Teléfono: `Patient.Phone → User.Phone`. Email sigue default-on; WhatsApp default-off.
+- **Para activar producción:** elegir proveedor (Twilio/Meta), poner `WHATSAPP_API_KEY` + el POST en el seam. La fontanería ya está.
+
+**5B — Dashboard analytics (mínimo, sin dependencias):**
+- Endpoint `GET /api/professional-portal/analytics` → totales mes actual + lifetime: citas agendadas/completadas, pacientes activos, bruto/comisión/neto (solo pagos `approved`). DTOs en `ApiContracts.cs`.
+- Ruta web `apps/web/app/portal-profesional/analytics/` (page + client): tarjetas resumen + barras de proporción con `div`/CSS planos. **Sin librería de charts.** Fetch directo al endpoint, sin tocar el store ni el page-client del portal.
+
+**5C — Piloto controlado (flag mínimo):**
+- `IsPilotEnabled()` en `Program.cs` (espeja `IsDevAuthEnabled`), lee env `CLINIXA_PILOT_MODE`. Expuesto en `/health` como `pilotMode`. Sin tablas de cohorte ni tagging por usuario (YAGNI).
+
+---
+
+**Bloqueador único del piloto:** transacción real MP (~30 min, requiere incógnito limpio sin sesión MP).
 
 ---
 

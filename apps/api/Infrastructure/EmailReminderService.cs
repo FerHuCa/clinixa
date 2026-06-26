@@ -4,12 +4,13 @@ using Microsoft.EntityFrameworkCore;
 namespace HealthHub.Api.Infrastructure;
 
 /// <summary>
-/// Job en segundo plano que envia correos transaccionales de recordatorio en best-effort:
-/// recordatorios de citas dentro de las proximas 24 horas y avisos de invitaciones de clinica
-/// proximas a expirar (dentro de 48 horas). Corre 1 minuto despues del arranque y luego cada
-/// 30 minutos. Cada correo se marca con su columna de dedup (ReminderSentAt / ExpiryReminderSentAt)
-/// para no reenviarlo. Jamas lanza hacia el host: toda la corrida y cada envio van en try/catch,
-/// y el envio mismo nunca falla la peticion porque EmailSender degrada a log simulado sin API key.
+/// Job en segundo plano que envia recordatorios transaccionales en best-effort:
+/// recordatorios de citas dentro de las proximas 24 horas (por email y/o WhatsApp según las
+/// preferencias del usuario) y avisos de invitaciones de clinica proximas a expirar (48 h).
+/// Corre 1 minuto despues del arranque y luego cada 30 minutos. Cada mensaje se marca con su
+/// columna de dedup (ReminderSentAt / ExpiryReminderSentAt) para no reenviarlo. Jamas lanza
+/// hacia el host: toda la corrida y cada envio van en try/catch, y los senders degradan a log
+/// simulado cuando no hay credenciales configuradas.
 /// </summary>
 public sealed class EmailReminderService(
     IServiceScopeFactory scopeFactory,
@@ -55,9 +56,10 @@ public sealed class EmailReminderService(
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<HealthHubDbContext>();
             var emailSender = scope.ServiceProvider.GetRequiredService<EmailSender>();
+            var whatsAppSender = scope.ServiceProvider.GetRequiredService<WhatsAppSender>();
             var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-            await SendAppointmentRemindersAsync(db, emailSender, stoppingToken);
+            await SendAppointmentRemindersAsync(db, emailSender, whatsAppSender, stoppingToken);
             await SendInvitationExpiryRemindersAsync(db, emailSender, configuration, stoppingToken);
         }
         catch (Exception exception)
@@ -67,7 +69,8 @@ public sealed class EmailReminderService(
     }
 
     // Recordatorios de citas dentro de las proximas 24 horas, una sola vez por cita.
-    private async Task SendAppointmentRemindersAsync(HealthHubDbContext db, EmailSender emailSender, CancellationToken stoppingToken)
+    // Envía email y/o WhatsApp según las preferencias de notificación del usuario.
+    private async Task SendAppointmentRemindersAsync(HealthHubDbContext db, EmailSender emailSender, WhatsAppSender whatsAppSender, CancellationToken stoppingToken)
     {
         var now = DateTimeOffset.UtcNow;
         var horizon = now.Add(AppointmentWindow);
@@ -76,6 +79,7 @@ public sealed class EmailReminderService(
         var appointments = await db.Appointments
             .Include(appointment => appointment.Patient)
                 .ThenInclude(patient => patient!.User)
+                    .ThenInclude(user => user!.NotificationPreferences)
             .Where(appointment => appointment.StartsAt != null
                 && appointment.StartsAt >= now
                 && appointment.StartsAt <= horizon
@@ -88,7 +92,7 @@ public sealed class EmailReminderService(
             return;
         }
 
-        logger.LogInformation("[EMAIL REMINDER JOB] {Count} cita(s) por recordar", appointments.Count);
+        logger.LogInformation("[REMINDER JOB] {Count} cita(s) por recordar", appointments.Count);
 
         foreach (var appointment in appointments)
         {
@@ -99,16 +103,54 @@ public sealed class EmailReminderService(
 
             try
             {
-                var patientEmail = appointment.Patient?.Email;
+                var patient = appointment.Patient;
+                var user = patient?.User;
 
-                if (string.IsNullOrWhiteSpace(patientEmail))
+                // Preferencias del usuario; si no hay preferencias configuradas se usan
+                // los canales por defecto (email: sí, whatsapp: no).
+                var prefs = user?.NotificationPreferences ?? [];
+                var emailPref = prefs.FirstOrDefault(p => p.Channel == "email");
+                var whatsappPref = prefs.FirstOrDefault(p => p.Channel == "whatsapp");
+
+                // Canal email: habilitado por defecto cuando no hay preferencia guardada.
+                var emailEnabled = emailPref is null ? true : (emailPref.Enabled && emailPref.ReminderUpdates);
+                // Canal whatsapp: deshabilitado por defecto hasta que el usuario lo active.
+                var whatsappEnabled = whatsappPref is { Enabled: true, ReminderUpdates: true };
+
+                if (emailEnabled)
                 {
-                    patientEmail = appointment.Patient?.User?.Email;
+                    var patientEmail = patient?.Email;
+
+                    if (string.IsNullOrWhiteSpace(patientEmail))
+                    {
+                        patientEmail = user?.Email;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(patientEmail))
+                    {
+                        var html = EmailSender.BuildAppointmentReminderEmail(
+                            appointment.PatientName,
+                            appointment.ProfessionalName,
+                            appointment.Type,
+                            appointment.Date,
+                            appointment.Time,
+                            appointment.Mode);
+
+                        await emailSender.SendAsync(patientEmail, "Recordatorio: tu cita es mañana", html);
+                    }
                 }
 
-                if (!string.IsNullOrWhiteSpace(patientEmail))
+                if (whatsappEnabled)
                 {
-                    var html = EmailSender.BuildAppointmentReminderEmail(
+                    // Número de teléfono: se busca primero en Patient, luego en User.
+                    var phone = patient?.Phone;
+
+                    if (string.IsNullOrWhiteSpace(phone))
+                    {
+                        phone = user?.Phone;
+                    }
+
+                    var text = WhatsAppSender.BuildAppointmentReminderText(
                         appointment.PatientName,
                         appointment.ProfessionalName,
                         appointment.Type,
@@ -116,15 +158,15 @@ public sealed class EmailReminderService(
                         appointment.Time,
                         appointment.Mode);
 
-                    await emailSender.SendAsync(patientEmail, "Recordatorio: tu cita es mañana", html);
+                    await whatsAppSender.SendAsync(phone ?? string.Empty, text);
                 }
             }
             catch (Exception exception)
             {
-                logger.LogWarning(exception, "[EMAIL REMINDER JOB] Fallo al recordar la cita {AppointmentId}", appointment.Id);
+                logger.LogWarning(exception, "[REMINDER JOB] Fallo al recordar la cita {AppointmentId}", appointment.Id);
             }
 
-            // Marca el recordatorio como enviado aunque no haya email: evita reintentos infinitos.
+            // Marca el recordatorio como enviado aunque no haya email/phone: evita reintentos infinitos.
             appointment.ReminderSentAt = DateTimeOffset.UtcNow;
         }
 

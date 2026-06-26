@@ -26,6 +26,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddDbContext<HealthHubDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddHttpClient<EmailSender>();
+builder.Services.AddHttpClient<WhatsAppSender>();
 builder.Services.AddHttpClient<MercadoPagoService>();
 builder.Services.AddHttpClient<MercadoPagoMarketplaceService>();
 builder.Services.AddSingleton<TokenEncryptionService>();
@@ -163,7 +164,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.MapGet("/health", async (HealthHubDbContext db) =>
+app.MapGet("/health", async (HealthHubDbContext db, IConfiguration configuration) =>
 {
     var canConnect = await db.Database.CanConnectAsync();
 
@@ -172,6 +173,7 @@ app.MapGet("/health", async (HealthHubDbContext db) =>
         service = "HealthHub.Api",
         status = canConnect ? "ok" : "database_unavailable",
         database = canConnect ? "connected" : "unavailable",
+        pilotMode = IsPilotEnabled(configuration),
         timestamp = DateTimeOffset.UtcNow
     });
 });
@@ -2487,6 +2489,76 @@ professionalPortalApi.MapGet("/payments", async (HttpRequest request, string? mo
         summary));
 });
 
+// Analytics del profesional autenticado: totales del mes en curso y de todos los tiempos
+// para citas, pacientes activos y pagos (bruto/comision/neto). Solo pagos "approved" cuentan.
+professionalPortalApi.MapGet("/analytics", async (HttpRequest request, HealthHubDbContext db) =>
+{
+    var currentUser = await GetUserFromRequestAsync(request, db);
+
+    if (currentUser is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (currentUser.Professional is null)
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    var professionalId = currentUser.Professional.Id;
+    var now = DateTimeOffset.UtcNow;
+    var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+    var monthEnd = monthStart.AddMonths(1);
+
+    // --- Citas ---
+    var allAppointments = await db.Appointments
+        .AsNoTracking()
+        .Where(appointment => appointment.ProfessionalId == professionalId)
+        .Select(appointment => new { appointment.Status, appointment.CreatedAt })
+        .ToListAsync();
+
+    var thisMonthAppts = allAppointments
+        .Where(appointment => appointment.CreatedAt >= monthStart && appointment.CreatedAt < monthEnd)
+        .ToList();
+
+    // --- Pacientes activos (mismo valor en ambos períodos: es un conteo puntual) ---
+    var activePatients = await db.ProfessionalPatients
+        .AsNoTracking()
+        .CountAsync(item => item.ProfessionalId == professionalId && item.Status == "active");
+
+    // --- Pagos ---
+    var allPayments = await db.Payments
+        .AsNoTracking()
+        .Where(payment => payment.ProfessionalId == professionalId && payment.Status == "approved")
+        .Select(payment => new { payment.Amount, payment.CommissionAmount, payment.CreatedAt })
+        .ToListAsync();
+
+    var thisMonthPayments = allPayments
+        .Where(payment => payment.CreatedAt >= monthStart && payment.CreatedAt < monthEnd)
+        .ToList();
+
+    var thisMonth = new ProfessionalAnalyticsPeriodDto(
+        AppointmentsScheduled: thisMonthAppts.Count(appointment => appointment.Status is "scheduled" or "confirmed"),
+        AppointmentsCompleted: thisMonthAppts.Count(appointment => appointment.Status == "completed"),
+        ActivePatients: activePatients,
+        GrossTotal: thisMonthPayments.Sum(payment => payment.Amount),
+        CommissionTotal: thisMonthPayments.Sum(payment => payment.CommissionAmount),
+        NetTotal: thisMonthPayments.Sum(payment => payment.Amount - payment.CommissionAmount));
+
+    var lifetime = new ProfessionalAnalyticsPeriodDto(
+        AppointmentsScheduled: allAppointments.Count(appointment => appointment.Status is "scheduled" or "confirmed"),
+        AppointmentsCompleted: allAppointments.Count(appointment => appointment.Status == "completed"),
+        ActivePatients: activePatients,
+        GrossTotal: allPayments.Sum(payment => payment.Amount),
+        CommissionTotal: allPayments.Sum(payment => payment.CommissionAmount),
+        NetTotal: allPayments.Sum(payment => payment.Amount - payment.CommissionAmount));
+
+    return Results.Ok(new ProfessionalAnalyticsDto(
+        monthStart.ToString("yyyy-MM", CultureInfo.InvariantCulture),
+        thisMonth,
+        lifetime));
+});
+
 // Estado del trial y planes de suscripcion del piloto. El trial corre desde la creacion de la
 // cuenta (User.CreatedAt) y dura 14 dias. Lectura ligera de configuracion propia: no se audita.
 professionalPortalApi.MapGet("/subscription", async (HttpRequest request, HealthHubDbContext db) =>
@@ -4396,6 +4468,20 @@ static bool IsLegacyAuthEnabled(HttpRequest request)
 {
     var configuration = request.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
     return IsDevAuthEnabled(request) && configuration.GetValue<bool>("Authentication:EnableLegacyAuth");
+}
+
+/// <summary>
+/// Modo piloto controlado: activo cuando CLINIXA_PILOT_MODE=true.
+/// Expuesto en /health como "pilotMode". Sigue el patrón de IsDevAuthEnabled —
+/// env var → IConfiguration → bool. Sin lógica de cohort ni tablas adicionales (YAGNI).
+/// </summary>
+static bool IsPilotEnabled(IConfiguration configuration)
+{
+    return configuration.GetValue<bool>("CLINIXA_PILOT_MODE")
+        || string.Equals(
+            Environment.GetEnvironmentVariable("CLINIXA_PILOT_MODE"),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
 }
 
 static string GetRateLimitPartitionKey(HttpContext context)

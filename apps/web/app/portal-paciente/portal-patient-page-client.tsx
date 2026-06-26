@@ -8,11 +8,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  MapPin,
-  MessageCircle,
   Monitor,
-  Search,
-  SlidersHorizontal,
   Star,
   Stethoscope,
   WalletCards
@@ -25,20 +21,11 @@ import { StatusPill } from "@/components/status-pill";
 import { UserMenu } from "@/components/user-menu";
 import { citaStatusUiFor, pagoStatusUiFor } from "@/lib/appointment-states";
 import { useHealthHubStore, type Appointment, type AvailableSlot, type Professional } from "@/lib/healthhub-store";
-
-const specialties = [
-  { value: "all", label: "Todas" },
-  { value: "doctor", label: "Medicina" },
-  { value: "psychologist", label: "Psicología" },
-  { value: "physiotherapist", label: "Fisioterapia" },
-  { value: "nutritionist", label: "Nutrición" }
-];
-
-const modeFilters = [
-  { value: "all", label: "Todos" },
-  { value: "online", label: "Online" },
-  { value: "in_person", label: "Presencial" }
-];
+import { NextAppointmentHero } from "./_components/NextAppointmentHero";
+import { SearchFilters } from "./_components/SearchFilters";
+import { BookingRequestForm } from "./_components/BookingRequestForm";
+import { ProfessionalCard } from "./_components/ProfessionalCard";
+import { SidebarMyAppointments } from "./_components/SidebarMyAppointments";
 
 function money(value: number) {
   return new Intl.NumberFormat("es-MX", {
@@ -353,6 +340,18 @@ export function PatientPortalPageClient() {
     }
   }
 
+  // Handler passed to BookingRequestForm for service changes (updates service, mode, and reloads slots)
+  function handleBookingServiceChange(serviceId: string) {
+    const nextService = bookingProfessional?.services.find((service) => service.id === serviceId);
+    setBookingServiceId(serviceId);
+    setBookingMode(nextService?.mode === "in_person" ? "in_person" : "online");
+    setAvailableSlots([]);
+
+    if (nextService && bookingProfessional) {
+      void loadSlotsFor(bookingProfessional, nextService.id);
+    }
+  }
+
   return (
     <AppShell>
       <PageHeader
@@ -384,62 +383,11 @@ export function PatientPortalPageClient() {
         ) : null}
 
         {nextAppointment ? (
-          (() => {
-            const nextCitaUi = citaStatusUiFor(nextAppointment.status);
-            const nextPagoUi = pagoStatusUiFor(nextAppointment);
-
-            return (
-              <Panel
-                action={
-                  <a className="text-xs font-medium text-primary hover:underline" href="#mis-citas">
-                    Ver todas mis citas
-                  </a>
-                }
-                title="Tu próxima cita"
-              >
-                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold">{nextAppointment.professionalName || "Profesional por asignar"}</p>
-                      <StatusPill label={nextCitaUi.label} status={nextCitaUi.pill} />
-                      <StatusPill label={nextPagoUi.label} status={nextPagoUi.pill} />
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">{nextAppointment.specialtyLabel ?? nextAppointment.type}</p>
-                    <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
-                      <span className="flex items-center gap-1">
-                        <CalendarDays size={15} className="text-slate-400" />
-                        {dateLabel(nextAppointment.date)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock size={15} className="text-slate-400" />
-                        {nextAppointment.time} h
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Monitor size={15} className="text-slate-400" />
-                        {modeLabel(nextAppointment.mode)}
-                      </span>
-                    </div>
-                  </div>
-                  {canPayOnline(nextAppointment) ? (
-                    <button
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
-                      disabled={appointmentActionId === nextAppointment.id}
-                      onClick={() => payPatientAppointment(nextAppointment)}
-                      type="button"
-                    >
-                      <WalletCards size={16} />
-                      {appointmentActionId === nextAppointment.id ? "Procesando..." : "Pagar y confirmar"}
-                    </button>
-                  ) : null}
-                </div>
-                {nextAppointment.status === "scheduled" ? (
-                  <p className="border-t border-border px-4 py-3 text-xs leading-5 text-slate-500">
-                    Tu solicitud está pendiente de confirmación por el profesional. Si pagas en línea, tu cita se confirma al instante.
-                  </p>
-                ) : null}
-              </Panel>
-            );
-          })()
+          <NextAppointmentHero
+            appointment={nextAppointment}
+            appointmentActionId={appointmentActionId}
+            onPay={payPatientAppointment}
+          />
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -545,152 +493,35 @@ export function PatientPortalPageClient() {
               : null}
 
             <Panel title="Buscar profesionales">
-              <div className="space-y-4 p-4">
-                <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
-                  <label className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-                    <Search size={18} className="text-slate-400" />
-                    <input
-                      className="w-full bg-transparent text-sm outline-none"
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Nombre, especialidad, servicio o ubicación"
-                      value={query}
-                    />
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-                    <SlidersHorizontal size={18} className="text-slate-400" />
-                    <select
-                      className="w-full bg-transparent text-sm outline-none"
-                      onChange={(event) => setSpecialty(event.target.value)}
-                      value={specialty}
-                    >
-                      {specialties.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {modeFilters.map((item) => (
-                    <button
-                      className={clsx(
-                        "rounded-md border px-3 py-2 text-sm transition",
-                        mode === item.value ? "border-teal-200 bg-teal-50 font-medium text-primary" : "border-border bg-white text-slate-700 hover:bg-slate-50"
-                      )}
-                      key={item.value}
-                      onClick={() => setMode(item.value)}
-                      type="button"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SearchFilters
+                mode={mode}
+                query={query}
+                specialty={specialty}
+                onModeChange={setMode}
+                onQueryChange={setQuery}
+                onSpecialtyChange={setSpecialty}
+              />
             </Panel>
 
             {bookingProfessional ? (
-              <div className="scroll-mt-24" id="solicitar-cita">
-              <Panel title="Solicitar cita">
-                <div className="grid gap-4 p-4 lg:grid-cols-2">
-                  <div className="lg:col-span-2">
-                    <p className="text-sm font-semibold">{bookingProfessional.displayName}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {bookingProfessional.specialtyLabel} · {bookingProfessional.location}
-                    </p>
-                    <p className="mt-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-800">
-                      El profesional confirmará tu solicitud. Si pagas en línea, tu cita se confirma al instante.
-                    </p>
-                  </div>
-
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Servicio</span>
-                    <select
-                      className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      onChange={(event) => {
-                        const nextService = bookingProfessional.services.find((service) => service.id === event.target.value);
-                        setBookingServiceId(event.target.value);
-                        setBookingMode(nextService?.mode === "in_person" ? "in_person" : "online");
-                        setAvailableSlots([]);
-
-                        if (nextService) {
-                          void loadSlotsFor(bookingProfessional, nextService.id);
-                        }
-                      }}
-                      value={bookingServiceId}
-                    >
-                      {bookingProfessional.services.map((service) => (
-                        <option key={service.id} value={service.id}>
-                          {service.name} · {service.durationMinutes} min · {money(service.price)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">{slotsLoading ? "Cargando horarios" : "Horario disponible"}</span>
-                    <select
-                      className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      disabled={slotsLoading || bookingSlots.length === 0}
-                      onChange={(event) => setBookingSlotId(event.target.value)}
-                      value={bookingSlotId}
-                    >
-                      {bookingSlots.length > 0 ? (
-                        bookingSlots.map((slot) => (
-                          <option key={slot.id} value={slot.id}>
-                            {slot.label} · {slot.date}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Sin horarios disponibles</option>
-                      )}
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
-                    <select
-                      className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      disabled={bookingService?.mode !== "hybrid"}
-                      onChange={(event) => setBookingMode(event.target.value as "online" | "in_person")}
-                      value={bookingMode}
-                    >
-                      <option value="online">Online</option>
-                      <option value="in_person">Presencial</option>
-                    </select>
-                  </label>
-
-                  <label className="block lg:col-span-2">
-                    <span className="text-xs font-medium uppercase text-slate-400">Motivo</span>
-                    <textarea
-                      className="mt-1 min-h-20 w-full resize-none rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
-                      onChange={(event) => setBookingReason(event.target.value)}
-                      value={bookingReason}
-                    />
-                  </label>
-
-                  <div className="flex flex-col gap-2 lg:col-span-2 sm:flex-row sm:justify-end">
-                    <button
-                      className="rounded-md border border-border px-3 py-2 text-sm font-medium"
-                      onClick={() => setBookingProfessionalId("")}
-                      type="button"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
-                      disabled={bookingSaving || !currentPatient || !bookingService || !bookingSlot}
-                      onClick={submitBookingRequest}
-                      type="button"
-                    >
-                      <CheckCircle2 size={16} />
-                      {bookingSaving ? "Enviando solicitud..." : "Solicitar cita"}
-                    </button>
-                  </div>
-                </div>
-              </Panel>
-              </div>
+              <BookingRequestForm
+                bookingMode={bookingMode}
+                bookingReason={bookingReason}
+                bookingSaving={bookingSaving}
+                bookingServiceId={bookingServiceId}
+                bookingSlotId={bookingSlotId}
+                bookingSlots={bookingSlots}
+                currentPatient={currentPatient}
+                professional={bookingProfessional}
+                selectedService={bookingService}
+                slotsLoading={slotsLoading}
+                onCancel={() => setBookingProfessionalId("")}
+                onModeChange={setBookingMode}
+                onReasonChange={setBookingReason}
+                onServiceChange={handleBookingServiceChange}
+                onSlotChange={setBookingSlotId}
+                onSubmit={submitBookingRequest}
+              />
             ) : null}
 
             <Panel title={`${filteredProfessionals.length} profesionales encontrados`}>
@@ -698,127 +529,17 @@ export function PatientPortalPageClient() {
                 {filteredProfessionals.map((professional) => {
                   const professionalReviews = reviews.filter((review) => review.professionalId === professional.id);
                   const expanded = expandedProfessionalId === professional.id;
-                  const firstService = professional.services[0];
 
                   return (
-                    <article className="px-4 py-4" key={professional.id}>
-                      <div className="grid gap-4 lg:grid-cols-[1fr_190px]">
-                        <div className="min-w-0">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-teal-50 text-sm font-semibold text-primary">
-                              {initials(professional.displayName)}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="font-semibold">{professional.displayName}</h2>
-                                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">{professional.specialtyLabel}</span>
-                                <span className="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
-                                  <Star size={13} />
-                                  {professional.averageRating.toFixed(1)} · {professional.reviewCount}
-                                </span>
-                                {professional.verificationStatus === "verified" ? (
-                                  <span className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-                                    <BadgeCheck size={13} />
-                                    Cédula {professional.licenseNumber} verificada
-                                  </span>
-                                ) : null}
-                              </div>
-                              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{professional.bio}</p>
-                              <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
-                                <span className="flex items-center gap-1">
-                                  <MapPin size={15} className="text-slate-400" />
-                                  {professional.location}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Monitor size={15} className="text-slate-400" />
-                                  {modeLabel(professional.appointmentMode)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock size={15} className="text-slate-400" />
-                                  {professional.nextAvailable}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {firstService ? (
-                            <div className="mt-4 rounded-md border border-border bg-slate-50 px-3 py-3">
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                  <p className="text-sm font-medium">{firstService.name}</p>
-                                  <p className="mt-1 text-xs text-slate-500">{firstService.description}</p>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm">
-                                  <span className="flex items-center gap-1 text-slate-600">
-                                    <Clock size={15} />
-                                    {firstService.durationMinutes} min
-                                  </span>
-                                  <span className="flex items-center gap-1 font-medium text-slate-800">
-                                    <WalletCards size={15} />
-                                    {money(firstService.price)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <button
-                            className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white"
-                            disabled={!currentPatient}
-                            onClick={() => startBooking(professional)}
-                            type="button"
-                          >
-                            <CalendarDays size={16} />
-                            {currentPatient ? "Solicitar cita" : "Sesión de paciente"}
-                          </button>
-                          <button
-                            className="flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-slate-700"
-                            onClick={() => toggleReviews(professional.id)}
-                            type="button"
-                          >
-                            <Star size={16} />
-                            {expanded ? "Ocultar opiniones" : "Ver opiniones"}
-                          </button>
-                          {professional.whatsappNumber ? (
-                            <a
-                              className="flex items-center justify-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
-                              href={`https://wa.me/${professional.whatsappNumber.replace(/\D/g, "")}`}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              <MessageCircle size={16} />
-                              WhatsApp
-                            </a>
-                          ) : null}
-                          <div className="rounded-md border border-border px-3 py-2 text-sm text-slate-600">
-                            Desde <span className="font-semibold text-slate-900">{money(professional.basePrice)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {expanded ? (
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                          {professionalReviews.length > 0 ? (
-                            professionalReviews.map((review) => (
-                              <div className="rounded-md border border-border bg-white p-3" key={review.id}>
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="text-sm font-medium">{review.patientName}</p>
-                                  <span className="flex items-center gap-1 text-sm font-medium text-amber-700">
-                                    <Star size={14} />
-                                    {review.rating}
-                                  </span>
-                                </div>
-                                <p className="mt-2 text-sm leading-6 text-slate-600">{review.comment}</p>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-sm text-slate-500">Sin opiniones publicadas.</p>
-                          )}
-                        </div>
-                      ) : null}
-                    </article>
+                    <ProfessionalCard
+                      currentPatient={currentPatient}
+                      expanded={expanded}
+                      key={professional.id}
+                      professional={professional}
+                      reviews={professionalReviews}
+                      onStartBooking={startBooking}
+                      onToggleReviews={toggleReviews}
+                    />
                   );
                 })}
               </div>
@@ -857,68 +578,13 @@ export function PatientPortalPageClient() {
               </div>
             </Panel>
 
-            <div className="scroll-mt-24" id="mis-citas">
-            <Panel title="Mis citas">
-              <div className="divide-y divide-border">
-                {upcomingAppointments.length > 0 ? (
-                  upcomingAppointments.map((appointment) => {
-                    const citaUi = citaStatusUiFor(appointment.status);
-                    const pagoUi = pagoStatusUiFor(appointment);
-
-                    return (
-                      <div className="px-4 py-4" key={appointment.id}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium">{appointment.professionalName || "Profesional por asignar"}</p>
-                            <p className="mt-1 text-xs text-slate-500">{appointment.specialtyLabel ?? appointment.type}</p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <StatusPill label={citaUi.label} status={citaUi.pill} />
-                            <StatusPill label={pagoUi.label} status={pagoUi.pill} />
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
-                          <span>{appointment.date}</span>
-                          <span>{appointment.time}</span>
-                          <span>{modeLabel(appointment.mode)}</span>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {canPayOnline(appointment) ? (
-                            <button
-                              className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-                              disabled={appointmentActionId === appointment.id}
-                              onClick={() => payPatientAppointment(appointment)}
-                              type="button"
-                            >
-                              {appointmentActionId === appointment.id ? "Procesando..." : "Pagar y confirmar"}
-                            </button>
-                          ) : null}
-                          <button
-                            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-60"
-                            disabled={appointmentActionId === appointment.id}
-                            onClick={() => reschedulePatientAppointment(appointment)}
-                            type="button"
-                          >
-                            {appointmentActionId === appointment.id ? "Procesando..." : "Reprogramar"}
-                          </button>
-                          <button
-                            className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-60"
-                            disabled={appointmentActionId === appointment.id}
-                            onClick={() => cancelPatientAppointment(appointment)}
-                            type="button"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="px-4 py-4 text-sm text-slate-500">Aún no tienes citas. Busca un profesional y envía tu primera solicitud.</p>
-                )}
-              </div>
-            </Panel>
-            </div>
+            <SidebarMyAppointments
+              appointmentActionId={appointmentActionId}
+              upcomingAppointments={upcomingAppointments}
+              onCancel={cancelPatientAppointment}
+              onPay={payPatientAppointment}
+              onReschedule={reschedulePatientAppointment}
+            />
 
             <Panel title="Mis documentos">
               <div className="divide-y divide-border">

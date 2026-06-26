@@ -573,3 +573,18 @@ public sealed record CreateBodyMeasurementRequest(
     decimal? BodyFatPercentage,
     decimal? MuscleMassKg,
     string? Notes);
+
+// Resumen de analytics del profesional: totales del mes en curso y de todos los tiempos.
+// GET /api/professional-portal/analytics
+public sealed record ProfessionalAnalyticsPeriodDto(
+    int AppointmentsScheduled,
+    int AppointmentsCompleted,
+    int ActivePatients,
+    decimal GrossTotal,
+    decimal CommissionTotal,
+    decimal NetTotal);
+
+public sealed record ProfessionalAnalyticsDto(
+    string CurrentMonth,
+    ProfessionalAnalyticsPeriodDto ThisMonth,
+    ProfessionalAnalyticsPeriodDto Lifetime);
