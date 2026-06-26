@@ -91,6 +91,17 @@ public sealed record ReviewDto(
     string Status,
     DateTimeOffset CreatedAt);
 
+// DTO for unauthenticated public callers: PatientName is anonymized (first name + last initial)
+// to avoid exposing which patients are linked to a given professional (CWE-359).
+public sealed record PublicReviewDto(
+    string Id,
+    string ProfessionalId,
+    string PatientDisplayName,
+    int Rating,
+    string Comment,
+    string Status,
+    DateTimeOffset CreatedAt);
+
 public sealed record AppointmentDto(
     string Id,
     string PatientId,

@@ -158,6 +158,32 @@ public static class MappingExtensions
             review.Status,
             review.CreatedAt);
 
+    // Returns "First L." (first name + last initial) or "F." (single token) so the
+    // public endpoint never exposes a full surname (CWE-359).
+    internal static string AnonymizePatientName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "Paciente";
+
+        var tokens = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 1)
+            return tokens[0][0] + ".";
+
+        // Use the first token as the display first name and the last token's initial
+        // as the anonymized surname, e.g. "María González López" → "María G."
+        return $"{tokens[0]} {char.ToUpperInvariant(tokens[^1][0])}.";
+    }
+
+    public static PublicReviewDto ToPublicDto(this Review review) =>
+        new(
+            review.Id,
+            review.ProfessionalId,
+            AnonymizePatientName(review.PatientName),
+            review.Rating,
+            review.Comment,
+            review.Status,
+            review.CreatedAt);
+
     // lastPayment: ultimo Payment de la cita (por CreatedAt); null cuando no hay pagos.
     public static AppointmentDto ToDto(this Appointment appointment, Payment? lastPayment = null) =>
         new(
