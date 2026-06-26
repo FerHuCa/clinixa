@@ -238,13 +238,26 @@ export type SubscriptionPlan = {
   currency: string;
   features: string[];
 };
+
+export type ActiveSubscription = {
+  subscriptionId: string;
+  planId: string;
+  /** pending_checkout | authorized | paused | cancelled */
+  status: string;
+  checkoutUrl: string;
+  authorizedAt: string | null;
+  nextPaymentDate: string | null;
+};
+
 export type SubscriptionStatus = {
   trialStartedAt: string;
   trialEndsAt: string;
   daysLeft: number;
-  status: "trial" | "expired";
+  /** "trial" | "expired" | "active_subscription" | "paused_subscription" */
+  status: "trial" | "expired" | "active_subscription" | "paused_subscription";
   interestRegisteredAt: string | null;
   plans: SubscriptionPlan[];
+  activeSubscription: ActiveSubscription | null;
 };
 
 export type MarketplaceStatus = "not_connected" | "pending" | "verified" | "rejected";
@@ -1114,6 +1127,14 @@ export function useHealthHubStore() {
         const subscription = await apiPost<SubscriptionStatus>("/api/professional-portal/subscription/interest", {});
         setApiStatus("connected");
         return subscription;
+      },
+      async startSubscriptionCheckout(planId: string) {
+        const result = await apiPost<{ checkoutUrl: string; subscriptionId: string; reused: boolean }>(
+          "/api/professional-portal/subscription/checkout",
+          { planId }
+        );
+        setApiStatus("connected");
+        return result;
       },
       async loadMarketplaceStatus() {
         const status = await apiGet<ProfessionalMarketplaceStatus>("/api/professional-marketplace/status");

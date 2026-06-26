@@ -237,9 +237,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Ver planes
               </Link>
             </div>
-          ) : (
-            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 lg:px-8">
-              Tu periodo de prueba terminó ·{" "}
+          ) : trialBanner.status === "active_subscription" ? null : (
+            <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 lg:px-8">
+              Tu periodo de prueba terminó — acceso limitado ·{" "}
               <Link className="font-medium underline underline-offset-2" href="/suscripcion">
                 Activa tu plan
               </Link>

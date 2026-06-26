@@ -31,6 +31,10 @@ public sealed class Professional
     // (CTA "Quiero activar mi plan" durante el piloto). Null = sin interes registrado.
     public DateTimeOffset? SubscriptionInterestAt { get; set; }
 
+    // Estado denormalizado de la suscripcion activa (para el gate de acceso sin JOIN).
+    // none | pending_checkout | active | paused | cancelled.
+    public string SubscriptionStatus { get; set; } = "none";
+
     public User? User { get; set; }
     public ProfessionalMercadoPago? MercadoPagoAccount { get; set; }
     public List<ProfessionalService> Services { get; set; } = [];

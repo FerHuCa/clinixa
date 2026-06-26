@@ -478,9 +478,25 @@ public sealed record SubscriptionStatusDto(
     DateTimeOffset TrialStartedAt,
     DateTimeOffset TrialEndsAt,
     int DaysLeft,
+    // "trial" | "expired" | "active_subscription" | "paused_subscription"
     string Status,
     DateTimeOffset? InterestRegisteredAt,
-    IReadOnlyList<SubscriptionPlanDto> Plans);
+    IReadOnlyList<SubscriptionPlanDto> Plans,
+    // Suscripcion activa (no nulo si existe un preapproval en curso o autorizado).
+    ActiveSubscriptionDto? ActiveSubscription = null);
+
+/// <summary>Estado resumido de la suscripcion activa del profesional.</summary>
+public sealed record ActiveSubscriptionDto(
+    string SubscriptionId,
+    string PlanId,
+    // pending_checkout | authorized | paused | cancelled
+    string Status,
+    string CheckoutUrl,
+    DateTimeOffset? AuthorizedAt,
+    DateTimeOffset? NextPaymentDate);
+
+/// <summary>Request para iniciar un checkout de suscripcion.</summary>
+public sealed record CreateSubscriptionCheckoutRequest(string PlanId);
 
 // Fase 4: Mercado Pago Marketplace
 public sealed record MercadoPagoMarketplaceOAuthCallbackRequest(
