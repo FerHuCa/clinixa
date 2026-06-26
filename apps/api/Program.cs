@@ -132,7 +132,7 @@ const int MaxActiveSessionsPerUser = 5;
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HealthHubDbContext>();
-    await DatabaseSeeder.InitializeAsync(db);
+    await DatabaseSeeder.InitializeAsync(db, app.Environment.IsDevelopment());
 }
 
 app.UseCors("WebApp");
