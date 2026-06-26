@@ -1,10 +1,20 @@
 using HealthHub.Api.Entities;
+using HealthHub.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthHub.Api.Data;
 
-public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> options) : DbContext(options)
+public sealed class HealthHubDbContext : DbContext
 {
+    private readonly TokenEncryptionService _enc;
+
+    public HealthHubDbContext(
+        DbContextOptions<HealthHubDbContext> options,
+        TokenEncryptionService enc) : base(options)
+    {
+        _enc = enc;
+    }
+
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
@@ -34,6 +44,11 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // PHI encryption: transparently encrypt/decrypt clinical text columns at rest.
+        // Ciphertext produced by AES-256-GCM is larger than plaintext (base64-encoded),
+        // so these columns are mapped to PostgreSQL text (no length cap).
+        var clinicalEnc = new ClinicalEncryptionConverter(_enc);
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
@@ -274,7 +289,9 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
             entity.Property(record => record.ProfessionalId).HasMaxLength(120);
             entity.Property(record => record.RecordType).HasMaxLength(80).IsRequired();
             entity.Property(record => record.Title).HasMaxLength(200).IsRequired();
-            entity.Property(record => record.Summary).HasMaxLength(1200).IsRequired();
+            // PHI: Summary cifrado en reposo (texto = sin límite de longitud para ciphertext).
+            entity.Property(record => record.Summary).HasColumnType("text").IsRequired()
+                .HasConversion(clinicalEnc);
             entity.Property(record => record.Visibility).HasMaxLength(80).IsRequired();
             entity.Property(record => record.Status).HasMaxLength(40).IsRequired();
             entity.HasOne(record => record.Patient)
@@ -379,10 +396,16 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
             entity.Property(note => note.Title).HasMaxLength(200).IsRequired();
             entity.Property(note => note.Status).HasMaxLength(40).IsRequired();
             entity.Property(note => note.StatusLabel).HasMaxLength(80).IsRequired();
-            entity.Property(note => note.Subjective).HasMaxLength(3000).IsRequired();
-            entity.Property(note => note.Objective).HasMaxLength(3000).IsRequired();
-            entity.Property(note => note.Assessment).HasMaxLength(3000).IsRequired();
-            entity.Property(note => note.Plan).HasMaxLength(3000).IsRequired();
+            // PHI (SOAP): campos clínicos cifrados en reposo con AES-256-GCM.
+            // Mapeados a text porque el ciphertext base64 supera el límite original de 3000 chars.
+            entity.Property(note => note.Subjective).HasColumnType("text").IsRequired()
+                .HasConversion(clinicalEnc);
+            entity.Property(note => note.Objective).HasColumnType("text").IsRequired()
+                .HasConversion(clinicalEnc);
+            entity.Property(note => note.Assessment).HasColumnType("text").IsRequired()
+                .HasConversion(clinicalEnc);
+            entity.Property(note => note.Plan).HasColumnType("text").IsRequired()
+                .HasConversion(clinicalEnc);
             entity.HasOne(note => note.Patient)
                 .WithMany(patient => patient.SoapNotes)
                 .HasForeignKey(note => note.PatientId)

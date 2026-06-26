@@ -30,6 +30,16 @@ builder.Services.AddHttpClient<WhatsAppSender>();
 builder.Services.AddHttpClient<MercadoPagoService>();
 builder.Services.AddHttpClient<MercadoPagoMarketplaceService>();
 builder.Services.AddSingleton<TokenEncryptionService>();
+
+// --- Comando de backfill PHI (solo en CLI, no arranca el servidor web) ---
+// Uso: dotnet run -- backfill-phi
+// Ver scripts/backfill-phi-encryption.md para instrucciones completas.
+if (args is ["backfill-phi"])
+{
+    var cliApp = builder.Build();
+    return await PhiBackfillCommand.RunAsync(cliApp.Services);
+}
+
 builder.Services.AddHostedService<MercadoPagoTokenRefreshService>();
 builder.Services.AddHostedService<EmailReminderService>();
 builder.Services.AddHttpClient("Clerk", client =>
@@ -128,6 +138,14 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 const int SessionHours = 8;
 const int MaxActiveSessionsPerUser = 5;
+
+// Verificación de ida y vuelta del cifrado clínico PHI al arranque.
+// En Development siempre corre; en producción solo si la clave está configurada.
+var encService = app.Services.GetRequiredService<TokenEncryptionService>();
+if (encService.IsConfigured)
+{
+    ClinicalEncryptionConverter.SelfCheck(encService);
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -4147,6 +4165,7 @@ app.MapPost("/api/body-measurements", async (HttpRequest request, HealthHubDbCon
 });
 
 app.Run();
+return 0;
 
 static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional(
     HttpRequest request, HealthHubDbContext db, string? requiredSpecialty = null)
