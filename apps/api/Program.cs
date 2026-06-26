@@ -3,6 +3,8 @@ using HealthHub.Api.Data;
 using HealthHub.Api.Entities;
 using HealthHub.Api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -125,6 +127,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ForwardedHeaders: trust the single Railway proxy hop so RemoteIpAddress and
+// Request.Scheme reflect the real client values (needed for HTTPS redirects and
+// rate-limiting by IP).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Clear default networks/proxies so we trust the Railway proxy explicitly.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// ProblemDetails: RFC 7807 error responses — no stack traces in Production.
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 const int SessionHours = 8;
 const int MaxActiveSessionsPerUser = 5;
@@ -133,6 +149,49 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HealthHubDbContext>();
     await DatabaseSeeder.InitializeAsync(db);
+}
+
+// Must be first: rewrite scheme/IP before any other middleware reads them.
+app.UseForwardedHeaders();
+
+// Exception handling: developer page in Development, RFC 7807 ProblemDetails
+// in all other environments (no stack traces exposed to clients).
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+            if (exceptionFeature?.Error is not null)
+            {
+                logger.LogError(exceptionFeature.Error, "Unhandled exception for {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+            }
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+
+            var problem = new
+            {
+                type = "https://tools.ietf.org/html/rfc7807",
+                title = "An unexpected error occurred.",
+                status = 500,
+                traceId = context.TraceIdentifier
+            };
+
+            await context.Response.WriteAsJsonAsync(problem);
+        });
+    });
+
+    // HSTS: only meaningful over HTTPS in Production.
+    app.UseHsts();
 }
 
 app.UseCors("WebApp");
