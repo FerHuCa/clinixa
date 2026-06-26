@@ -211,34 +211,9 @@ app.MapPatch("/api/me", async (HttpRequest request, UpdateMyProfileRequest updat
     user.FullName = fullName;
     user.UpdatedAt = now;
 
-    var requestedRole = updateRequest.Role?.Trim().ToLowerInvariant();
-
-    if (requestedRole is "patient" or "professional" &&
-        user.PrimaryRole is "patient" or "professional" &&
-        user.PrimaryRole != requestedRole)
-    {
-        user.PrimaryRole = requestedRole;
-
-        if (!await db.UserRoles.AnyAsync(role => role.UserId == user.Id && role.Role == requestedRole))
-        {
-            db.UserRoles.Add(new UserRole
-            {
-                Id = $"role-{now.ToUnixTimeMilliseconds()}-{Guid.NewGuid():N}",
-                UserId = user.Id,
-                Role = requestedRole,
-                ScopeType = "global",
-                ScopeId = null,
-                CreatedAt = now,
-                UpdatedAt = now
-            });
-        }
-
-        if ((requestedRole == "patient" && user.Patient is null) ||
-            (requestedRole == "professional" && user.Professional is null))
-        {
-            await EnsureProvisionedProfileAsync(db, user, requestedRole, now);
-        }
-    }
+    // CWE-269: role field is intentionally IGNORED here.
+    // Role changes (patient → professional) must go through the verified onboarding
+    // flow (/activacion wizard + admin cédula verification) — never via this endpoint.
 
     if (user.Patient is not null)
     {
@@ -3715,6 +3690,15 @@ soapNotesApi.MapPost("/", async (HttpRequest httpRequest, CreateSoapNoteRequest 
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
+    // Gate: professional must have a verified license before creating/finalizing SOAP notes.
+    if (actor.PrimaryRole == "professional" && actor.Professional?.VerificationStatus != "verified")
+    {
+        return Results.Problem(
+            title: "Cédula profesional no verificada",
+            detail: "Tu cédula profesional aún no ha sido verificada. Completa el proceso de activación antes de crear notas SOAP.",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
     var errors = RequestValidation.ValidateSoapNote(request);
 
     if (errors.Count > 0)
@@ -4155,6 +4139,13 @@ static async Task<(Professional? pro, IResult? error)> GetAuthorizedProfessional
 
     if (user is null) return (null, Results.Unauthorized());
     if (user.Professional is null) return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
+
+    // Gate all clinical actions: only professionals with a verified license may act.
+    if (user.Professional.VerificationStatus != "verified")
+        return (null, Results.Problem(
+            title: "Cédula profesional no verificada",
+            detail: "Tu cédula profesional aún no ha sido verificada. Completa el proceso de activación antes de realizar acciones clínicas.",
+            statusCode: StatusCodes.Status403Forbidden));
 
     if (requiredSpecialty is not null && user.Professional.Specialty != requiredSpecialty)
         return (null, Results.StatusCode(StatusCodes.Status403Forbidden));
