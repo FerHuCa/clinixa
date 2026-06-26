@@ -3073,4 +3073,13 @@ El único bloqueador restante antes del piloto es la transacción real de valida
 
 **Fortalezas confirmadas:** sin IDOR, webhook MP fail-closed e idempotente, modelo EF bien indexado, recordatorios 24h (email + WhatsApp), verificación de cédula + consentimiento explícito.
 
-**Para retomar:** ejecutar el plan por orden de impacto (puntos 1–5 antes del piloto). Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-AUDITORIA-2026-06-25.md`.
+**Cierre (2026-06-25, noche):** 10/10 críticos **pusheados a `origin/main`** (`6d03a29..785bced`, 21 commits). Ramas `fix/*` mergeadas y eliminadas; árbol limpio; `main == origin/main`. Sin PRs (push directo, como se pidió).
+
+**Para retomar (mañana) — solo acciones manuales, el código ya está en main:**
+1. **#1** purga BD prod: backup → correr `apps/api/Data/PURGE-DEMO-PROD.sql`; confirmar que `/profesionales` solo muestra perfiles reales.
+2. **#7** verificar headers de seguridad en respuesta de `clinixa.mx` (`apps/web/SECURITY-HEADERS-CHECK.md`).
+3. **#8** suscripción MP a producción: credenciales preapproval + `notification_url` HTTPS; gatear endpoints pro restantes (helper `CheckSubscriptionGate` ya existe).
+4. **#10** correr `dotnet test HealthHub.sln` en entorno con Docker (Testcontainers) — 11 tests authz compilan pero faltan ejecutar; integrarlos a CI.
+5. **Piloto:** 1 tx real para cerrar.
+
+Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-AUDITORIA-2026-06-25.md`.
