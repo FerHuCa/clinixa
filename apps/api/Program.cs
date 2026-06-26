@@ -29,6 +29,7 @@ builder.Services.AddHttpClient<EmailSender>();
 builder.Services.AddHttpClient<WhatsAppSender>();
 builder.Services.AddHttpClient<MercadoPagoService>();
 builder.Services.AddHttpClient<MercadoPagoMarketplaceService>();
+builder.Services.AddHttpClient<MercadoPagoSubscriptionService>();
 builder.Services.AddSingleton<TokenEncryptionService>();
 builder.Services.AddHostedService<MercadoPagoTokenRefreshService>();
 builder.Services.AddHostedService<EmailReminderService>();
@@ -1584,6 +1585,155 @@ app.MapPost("/api/webhooks/mercadopago", async (HttpRequest httpRequest, Mercado
     return Results.Ok(new { received = true, processed = true, status = payment.Status });
 });
 
+// Webhook de suscripciones MercadoPago (preapproval). Publico, exige firma x-signature igual
+// que el webhook de pagos. Actualiza el estado de la suscripcion de forma idempotente:
+// si el EventId ya fue procesado no hace nada. Status MP → estado local:
+//   authorized → authorized  (suscripcion activa)
+//   paused     → paused
+//   cancelled  → cancelled
+app.MapPost("/api/webhooks/mercadopago-subscription", async (
+    HttpRequest httpRequest,
+    MercadoPagoService mercadoPago,
+    MercadoPagoSubscriptionService mpSubscription,
+    HealthHubDbContext db) =>
+{
+    string? notificationType = httpRequest.Query["type"].FirstOrDefault();
+    string? dataId = httpRequest.Query["data.id"].FirstOrDefault();
+
+    try
+    {
+        using var document = await JsonDocument.ParseAsync(httpRequest.Body);
+        var root = document.RootElement;
+
+        if (root.TryGetProperty("type", out var typeEl))
+        {
+            notificationType = typeEl.GetString() ?? notificationType;
+        }
+
+        if (root.TryGetProperty("data", out var dataEl) && dataEl.TryGetProperty("id", out var idEl))
+        {
+            dataId = idEl.ValueKind == JsonValueKind.Number ? idEl.GetRawText() : idEl.GetString() ?? dataId;
+        }
+    }
+    catch (JsonException) { /* cuerpo vacio o invalido: notificacion por query string */ }
+
+    var signature = httpRequest.Headers["x-signature"].ToString();
+    var requestId = httpRequest.Headers["x-request-id"].ToString();
+
+    if (!mercadoPago.ValidateWebhookSignature(signature, requestId, dataId ?? string.Empty))
+    {
+        AddAuditLog(db, httpRequest, null, "subscription.webhook.invalid_signature", "subscription", dataId ?? "unknown", null, null, "denied");
+        await db.SaveChangesAsync();
+        return Results.Unauthorized();
+    }
+
+    // Solo procesamos notificaciones de tipo "subscription_preapproval"
+    if (notificationType != "subscription_preapproval" || string.IsNullOrWhiteSpace(dataId))
+    {
+        return Results.Ok(new { received = true, processed = false });
+    }
+
+    // Busca la suscripcion local por MpPreapprovalId
+    var subscription = await db.ProfessionalSubscriptions
+        .Include(s => s.Professional)
+        .FirstOrDefaultAsync(s => s.MpPreapprovalId == dataId);
+
+    if (subscription is null)
+    {
+        // En modo simulado el preapprovalId tiene formato "sim-preapproval-{subId}":
+        // el external_reference es el subscriptionId, buscar por Id.
+        var subIdFromSim = dataId.StartsWith("sim-preapproval-", StringComparison.OrdinalIgnoreCase)
+            ? dataId["sim-preapproval-".Length..]
+            : null;
+
+        if (subIdFromSim is not null)
+        {
+            subscription = await db.ProfessionalSubscriptions
+                .Include(s => s.Professional)
+                .FirstOrDefaultAsync(s => s.Id == subIdFromSim);
+        }
+    }
+
+    if (subscription is null)
+    {
+        return Results.NotFound();
+    }
+
+    // Anti-replay: si este eventId ya fue procesado, responder 200 sin re-aplicar.
+    var eventKey = $"{notificationType}:{dataId}";
+
+    if (subscription.LastWebhookEventId == eventKey)
+    {
+        return Results.Ok(new { received = true, processed = false, reason = "duplicate" });
+    }
+
+    var now = DateTimeOffset.UtcNow;
+
+    // Consulta el estado real en MP (si hay credenciales); en modo simulado usamos "authorized".
+    string mpStatus;
+
+    if (mpSubscription.IsConfigured && !dataId.StartsWith("sim-", StringComparison.OrdinalIgnoreCase))
+    {
+        var mpInfo = await mpSubscription.GetPreapprovalStatusAsync(dataId);
+        mpStatus = mpInfo?.Status ?? "pending";
+        if (mpInfo.HasValue && mpInfo.Value.NextPaymentDate is not null)
+        {
+            subscription.NextPaymentDate = mpInfo.Value.NextPaymentDate;
+        }
+    }
+    else
+    {
+        mpStatus = "authorized"; // modo simulado: asumimos autorizado
+    }
+
+    var localStatus = mpStatus switch
+    {
+        "authorized" => "authorized",
+        "paused" => "paused",
+        "cancelled" or "expired" => "cancelled",
+        _ => subscription.Status   // mantener estado previo si no reconocemos
+    };
+
+    subscription.Status = localStatus;
+    subscription.LastWebhookAt = now;
+    subscription.LastWebhookEventId = eventKey;
+    subscription.UpdatedAt = now;
+
+    if (localStatus == "authorized" && subscription.AuthorizedAt is null)
+    {
+        subscription.AuthorizedAt = now;
+    }
+
+    if (localStatus == "cancelled" && subscription.CancelledAt is null)
+    {
+        subscription.CancelledAt = now;
+    }
+
+    // Actualizar estado denormalizado en professionals para acelerar el gate.
+    if (subscription.Professional is not null)
+    {
+        subscription.Professional.SubscriptionStatus = localStatus switch
+        {
+            "authorized" => "active",
+            "paused" => "paused",
+            "cancelled" => "cancelled",
+            _ => subscription.Professional.SubscriptionStatus
+        };
+        subscription.Professional.UpdatedAt = now;
+    }
+
+    AddAuditLog(db, httpRequest, null,
+        $"subscription.{localStatus}",
+        "subscription",
+        subscription.Id,
+        null,
+        subscription.ProfessionalId);
+
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { received = true, processed = true, status = localStatus });
+});
+
 var professionalsApi = app.MapGroup("/api/professionals");
 
 professionalsApi.MapGet("/", async (string? specialty, string? query, HealthHubDbContext db) =>
@@ -2053,6 +2203,18 @@ professionalPortalApi.MapPost("/services", async (HttpRequest request, CreatePro
         return Results.Unauthorized();
     }
 
+    // Gate: bloquea si el trial expiro y no hay suscripcion activa.
+    {
+        var proForGate = await db.Professionals.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == actor.Professional.Id);
+
+        if (proForGate is not null)
+        {
+            var gateResult = CheckSubscriptionGate(proForGate, actor);
+            if (gateResult is not null) return gateResult;
+        }
+    }
+
     var errors = ValidateCreateProfessionalService(serviceRequest);
 
     if (errors.Count > 0)
@@ -2388,6 +2550,12 @@ professionalPortalApi.MapPost("/publish", async (HttpRequest request, HealthHubD
         return Results.NotFound();
     }
 
+    // Gate: bloquea si el trial expiro y no hay suscripcion activa.
+    {
+        var gateResult = CheckSubscriptionGate(professional, actor);
+        if (gateResult is not null) return gateResult;
+    }
+
     var onboarding = BuildOnboardingStatus(professional);
 
     if (!onboarding.CanPublish)
@@ -2560,7 +2728,7 @@ professionalPortalApi.MapGet("/analytics", async (HttpRequest request, HealthHub
 });
 
 // Estado del trial y planes de suscripcion del piloto. El trial corre desde la creacion de la
-// cuenta (User.CreatedAt) y dura 14 dias. Lectura ligera de configuracion propia: no se audita.
+// cuenta (User.CreatedAt) y dura 14 dias. Incluye el estado de la suscripcion activa si existe.
 professionalPortalApi.MapGet("/subscription", async (HttpRequest request, HealthHubDbContext db) =>
 {
     var currentUser = await GetUserFromRequestAsync(request, db);
@@ -2575,7 +2743,15 @@ professionalPortalApi.MapGet("/subscription", async (HttpRequest request, Health
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
-    return Results.Ok(BuildSubscriptionStatus(currentUser, currentUser.Professional));
+    // Carga la suscripcion activa mas reciente (authorized o pending_checkout).
+    var activeSub = await db.ProfessionalSubscriptions
+        .AsNoTracking()
+        .Where(s => s.ProfessionalId == currentUser.Professional.Id
+                 && (s.Status == "authorized" || s.Status == "pending_checkout" || s.Status == "paused"))
+        .OrderByDescending(s => s.CreatedAt)
+        .FirstOrDefaultAsync();
+
+    return Results.Ok(BuildSubscriptionStatus(currentUser, currentUser.Professional, activeSub));
 });
 
 // Registra interes de compra de suscripcion durante el piloto. Idempotente: la primera llamada
@@ -2636,7 +2812,114 @@ professionalPortalApi.MapPost("/subscription/interest", async (HttpRequest reque
         await db.SaveChangesAsync();
     }
 
-    return Results.Ok(BuildSubscriptionStatus(actor, professional));
+    var activeSubForInterest = await db.ProfessionalSubscriptions
+        .AsNoTracking()
+        .Where(s => s.ProfessionalId == professional.Id
+                 && (s.Status == "authorized" || s.Status == "pending_checkout" || s.Status == "paused"))
+        .OrderByDescending(s => s.CreatedAt)
+        .FirstOrDefaultAsync();
+
+    return Results.Ok(BuildSubscriptionStatus(actor, professional, activeSubForInterest));
+});
+
+// Inicia el checkout de una suscripcion recurrente via MercadoPago preapproval.
+// Idempotente: si ya hay una suscripcion pending_checkout devuelve la URL existente.
+// Retorna { checkoutUrl } y la URL de checkout a la que debe redirigirse el profesional.
+professionalPortalApi.MapPost("/subscription/checkout", async (
+    HttpRequest request,
+    CreateSubscriptionCheckoutRequest checkoutRequest,
+    MercadoPagoSubscriptionService mpSubscription,
+    IConfiguration configuration,
+    HealthHubDbContext db) =>
+{
+    var actor = await GetUserFromRequestAsync(request, db);
+
+    if (actor is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (actor.Professional is null)
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    var professional = await db.Professionals
+        .FirstOrDefaultAsync(p => p.Id == actor.Professional.Id);
+
+    if (professional is null)
+    {
+        return Results.NotFound();
+    }
+
+    var planId = string.IsNullOrWhiteSpace(checkoutRequest.PlanId) ? "basico" : checkoutRequest.PlanId.ToLowerInvariant();
+    var plan = SubscriptionPlans.All.FirstOrDefault(p => p.Name.Equals(planId, StringComparison.OrdinalIgnoreCase))
+        ?? SubscriptionPlans.All.FirstOrDefault(p => p.Name == "Básico")!;
+    // planId puede ser "basico"/"pro" (slug) o "Básico"/"Pro" (nombre); normalizar a slug.
+    planId = plan.Name == "Pro" ? "pro" : "basico";
+    var amountMxn = plan.MonthlyPrice;
+
+    // Idempotencia: reusar suscripcion pending_checkout existente para el mismo plan.
+    var existing = await db.ProfessionalSubscriptions
+        .Where(s => s.ProfessionalId == professional.Id
+                 && s.PlanId == planId
+                 && s.Status == "pending_checkout")
+        .OrderByDescending(s => s.CreatedAt)
+        .FirstOrDefaultAsync();
+
+    if (existing is not null)
+    {
+        AddAuditLog(db, request, actor, "subscription.checkout.reused", "subscription", existing.Id, null, professional.Id);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { checkoutUrl = existing.CheckoutUrl, subscriptionId = existing.Id, reused = true });
+    }
+
+    var now = DateTimeOffset.UtcNow;
+    var subscriptionId = $"sub-{now.ToUnixTimeMilliseconds()}-{Guid.NewGuid():N}";
+    var webBaseUrl = (configuration["Web:BaseUrl"] ?? Environment.GetEnvironmentVariable("WEB_BASE_URL") ?? "http://localhost:3000").TrimEnd('/');
+    var notificationUrl = $"{request.Scheme}://{request.Host}/api/webhooks/mercadopago-subscription";
+
+    var preapproval = await mpSubscription.CreatePreapprovalAsync(
+        subscriptionId,
+        planId,
+        amountMxn,
+        actor.Email,
+        webBaseUrl,
+        notificationUrl);
+
+    if (preapproval is null)
+    {
+        return Results.Problem(
+            title: "No se pudo crear el checkout de suscripción",
+            detail: "Hubo un error al contactar a Mercado Pago. Inténtalo de nuevo en unos minutos.",
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+
+    var subscription = new ProfessionalSubscription
+    {
+        Id = subscriptionId,
+        ProfessionalId = professional.Id,
+        PlanId = planId,
+        MpPreapprovalId = preapproval.PreapprovalId,
+        CheckoutUrl = preapproval.CheckoutUrl,
+        Status = "pending_checkout",
+        AmountMxn = amountMxn,
+        CreatedAt = now,
+        UpdatedAt = now
+    };
+
+    db.ProfessionalSubscriptions.Add(subscription);
+    professional.UpdatedAt = now;
+    // Denormalizar estado pendiente en el profesional para que el gate lo vea sin JOIN.
+    if (professional.SubscriptionStatus == "none" || professional.SubscriptionStatus == "cancelled")
+    {
+        professional.SubscriptionStatus = "pending_checkout";
+    }
+
+    AddAuditLog(db, request, actor, "subscription.checkout.created", "subscription", subscriptionId, null, professional.Id);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { checkoutUrl = preapproval.CheckoutUrl, subscriptionId, reused = false });
 });
 
 // Fase 4: Endpoints Mercado Pago Marketplace
@@ -4511,8 +4794,8 @@ static bool IsPublicApiRequest(HttpRequest request)
         return true;
     }
 
-    // Webhook de Mercado Pago: publico por diseno (server-to-server); la seguridad
-    // la da la validacion de firma x-signature dentro del endpoint.
+    // Webhooks de Mercado Pago (pagos y suscripciones): publicos por diseno (server-to-server);
+    // la seguridad la da la validacion de firma x-signature dentro del endpoint.
     if (request.Path.StartsWithSegments("/api/webhooks/mercadopago"))
     {
         return true;
@@ -5034,20 +5317,86 @@ static async Task<Dictionary<string, Payment>> GetLatestPaymentsByAppointmentAsy
 }
 
 // Trial del piloto: 14 dias desde la creacion de la cuenta del usuario, daysLeft nunca negativo.
-static SubscriptionStatusDto BuildSubscriptionStatus(User user, Professional professional)
+// Acepta una suscripcion activa opcional para enriquecer el DTO y ajustar el status derivado.
+static SubscriptionStatusDto BuildSubscriptionStatus(
+    User user,
+    Professional professional,
+    ProfessionalSubscription? activeSub = null)
 {
     var trialStartedAt = user.CreatedAt;
     var trialEndsAt = trialStartedAt.AddDays(SubscriptionPlans.TrialDays);
     var now = DateTimeOffset.UtcNow;
     var daysLeft = Math.Max(0, (int)Math.Ceiling((trialEndsAt - now).TotalDays));
 
+    // Status derivado: si tiene suscripcion activa, reflejarla; si no, trial/expired.
+    string status;
+
+    if (activeSub?.Status == "authorized")
+    {
+        status = "active_subscription";
+    }
+    else if (activeSub?.Status == "paused")
+    {
+        status = "paused_subscription";
+    }
+    else if (now < trialEndsAt)
+    {
+        status = "trial";
+    }
+    else
+    {
+        status = "expired";
+    }
+
+    ActiveSubscriptionDto? activeSubDto = activeSub is not null
+        ? new ActiveSubscriptionDto(
+            activeSub.Id,
+            activeSub.PlanId,
+            activeSub.Status,
+            activeSub.CheckoutUrl,
+            activeSub.AuthorizedAt,
+            activeSub.NextPaymentDate)
+        : null;
+
     return new SubscriptionStatusDto(
         trialStartedAt,
         trialEndsAt,
         daysLeft,
-        now < trialEndsAt ? "trial" : "expired",
+        status,
         professional.SubscriptionInterestAt,
-        SubscriptionPlans.All);
+        SubscriptionPlans.All,
+        activeSubDto);
+}
+
+/// <summary>
+/// Gate de suscripcion: bloquea acciones de profesional cuando el trial expiro Y no hay
+/// suscripcion activa. Devuelve un IResult 402 si debe bloquearse, null si puede continuar.
+/// Debe llamarse DESPUES de validar que actor.Professional no es null.
+/// </summary>
+/// <param name="professional">Entidad Professional ya cargada (necesita SubscriptionStatus).</param>
+/// <param name="user">Usuario autenticado (para calcular si el trial aun corre).</param>
+static IResult? CheckSubscriptionGate(Professional professional, User user)
+{
+    // Suscripcion activa: siempre dejar pasar.
+    if (professional.SubscriptionStatus == "active")
+    {
+        return null;
+    }
+
+    // Trial activo: dejar pasar.
+    var trialEndsAt = user.CreatedAt.AddDays(SubscriptionPlans.TrialDays);
+
+    if (DateTimeOffset.UtcNow < trialEndsAt)
+    {
+        return null;
+    }
+
+    // Trial expirado sin suscripcion activa: bloquear con 402.
+    return Results.Problem(
+        title: "Suscripción requerida",
+        detail: "Tu periodo de prueba ha terminado. Activa tu plan para seguir usando Clinixa.",
+        statusCode: StatusCodes.Status402PaymentRequired,
+        extensions: new Dictionary<string, object?> { ["code"] = "trial_expired" });
 }
 
 static void AddAuditLog(

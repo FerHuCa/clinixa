@@ -31,6 +31,7 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
     public DbSet<PatientTask> PatientTasks => Set<PatientTask>();
     public DbSet<PatientDiet> PatientDiets => Set<PatientDiet>();
     public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
+    public DbSet<ProfessionalSubscription> ProfessionalSubscriptions => Set<ProfessionalSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -640,6 +641,27 @@ public sealed class HealthHubDbContext(DbContextOptions<HealthHubDbContext> opti
                 .HasForeignKey(measurement => measurement.ProfessionalId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(measurement => new { measurement.PatientId, measurement.MeasuredAt });
+        });
+
+        modelBuilder.Entity<ProfessionalSubscription>(entity =>
+        {
+            entity.ToTable("professional_subscriptions");
+            entity.HasKey(sub => sub.Id);
+            entity.Property(sub => sub.Id).HasMaxLength(120);
+            entity.Property(sub => sub.ProfessionalId).HasMaxLength(120).IsRequired();
+            entity.Property(sub => sub.PlanId).HasMaxLength(40).IsRequired();
+            entity.Property(sub => sub.MpPreapprovalId).HasMaxLength(120).IsRequired();
+            entity.Property(sub => sub.CheckoutUrl).HasMaxLength(500).IsRequired();
+            entity.Property(sub => sub.Status).HasMaxLength(40).IsRequired();
+            entity.Property(sub => sub.AmountMxn).HasColumnType("numeric(12,2)");
+            entity.Property(sub => sub.LastWebhookEventId).HasMaxLength(120).IsRequired();
+            entity.HasOne(sub => sub.Professional)
+                .WithMany()
+                .HasForeignKey(sub => sub.ProfessionalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(sub => sub.ProfessionalId);
+            entity.HasIndex(sub => sub.MpPreapprovalId);
+            entity.HasIndex(sub => sub.Status);
         });
     }
 }
