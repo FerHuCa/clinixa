@@ -625,3 +625,28 @@ public sealed record ProfessionalAnalyticsDto(
     string CurrentMonth,
     ProfessionalAnalyticsPeriodDto ThisMonth,
     ProfessionalAnalyticsPeriodDto Lifetime);
+
+/// <summary>
+/// Respuesta paginada generica usada por todos los endpoints de listado.
+/// Metadatos compatibles hacia atras: los callers que solo leen "items"
+/// siguen funcionando sin cambios; "total", "page" y "pageSize" son nuevos.
+/// </summary>
+public sealed record PagedResult<T>(
+    IReadOnlyList<T> Items,
+    int Total,
+    int Page,
+    int PageSize,
+    int TotalPages)
+{
+    public static PagedResult<T> From(IReadOnlyList<T> all, int page, int pageSize)
+    {
+        var capped = Math.Min(Math.Max(pageSize, 1), 100);
+        var safePage = Math.Max(page, 1);
+        var totalPages = capped == 0 ? 0 : (int)Math.Ceiling(all.Count / (double)capped);
+        var items = all
+            .Skip((safePage - 1) * capped)
+            .Take(capped)
+            .ToList();
+        return new PagedResult<T>(items, all.Count, safePage, capped, totalPages);
+    }
+}
