@@ -8,16 +8,24 @@ public static class DatabaseSeeder
 {
     private const string DemoPassword = "healthhub123";
 
-    public static async Task InitializeAsync(HealthHubDbContext db)
+    public static async Task InitializeAsync(HealthHubDbContext db, bool isDevelopment = false)
     {
         await db.Database.MigrateAsync();
 
-        if (!await db.Patients.AnyAsync())
+        // Demo/clinical seeding is ONLY allowed in the Development environment.
+        // Never runs in Production or Staging — gate is enforced by the caller
+        // passing app.Environment.IsDevelopment().
+        if (isDevelopment)
         {
-            SeedClinicalDemo(db);
+            if (!await db.Patients.AnyAsync())
+            {
+                SeedClinicalDemo(db);
+            }
+
+            await SeedIdentityAndPortalDemoAsync(db);
         }
 
-        await SeedIdentityAndPortalDemoAsync(db);
+        // Commission tiers must be present in every environment.
         await SeedCommissionTiersAsync(db);
         await db.SaveChangesAsync();
     }
