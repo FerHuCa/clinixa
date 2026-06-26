@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, FileText } from "lucide-react";
+import { Download, Plus, FileText } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
 import { UserMenu } from "@/components/user-menu";
 import { useHealthHubStore, type Prescription } from "@/lib/healthhub-store";
+import { getAuthHeaders } from "@/lib/auth-client";
 
 type PrescriptionDraft = {
   patientId: string;
@@ -14,8 +15,10 @@ type PrescriptionDraft = {
   dosage: string;
   frequency: string;
   duration: string;
+  route: string;
   instructions: string;
   refills: number;
+  patientIdentifier: string;
 };
 
 const EMPTY_DRAFT: PrescriptionDraft = {
@@ -24,17 +27,38 @@ const EMPTY_DRAFT: PrescriptionDraft = {
   dosage: "",
   frequency: "",
   duration: "",
+  route: "",
   instructions: "",
   refills: 0,
+  patientIdentifier: "",
 };
 
+// Vías de administración comunes en México (no controladas)
+const ROUTES = [
+  "Oral",
+  "Sublingual",
+  "Tópica",
+  "Inhalatoria",
+  "Ótica",
+  "Oftálmica",
+  "Nasal",
+  "Rectal",
+  "Vaginal",
+  "Subcutánea",
+  "Intramuscular",
+  "Intravenosa",
+  "Transdérmica",
+  "Otra",
+];
+
 export function RecetasPageClient() {
-  const { currentUser, loadPrescriptions, createPrescription, patients, ready } = useHealthHubStore();
+  const { currentUser, loadPrescriptions, createPrescription, patients, ready, apiBaseUrl } = useHealthHubStore();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<PrescriptionDraft>(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -51,10 +75,24 @@ export function RecetasPageClient() {
       setMessage({ kind: "error", text: "Selecciona un paciente e ingresa el medicamento." });
       return;
     }
+    if (!draft.route) {
+      setMessage({ kind: "error", text: "La vía de administración es obligatoria para una receta válida." });
+      return;
+    }
     setSaving(true);
     setMessage(null);
     try {
-      const created = await createPrescription(draft);
+      const created = await createPrescription({
+        patientId: draft.patientId,
+        medicationName: draft.medicationName,
+        dosage: draft.dosage,
+        frequency: draft.frequency,
+        duration: draft.duration,
+        route: draft.route,
+        instructions: draft.instructions,
+        refills: draft.refills,
+        patientIdentifier: draft.patientIdentifier || undefined,
+      });
       setPrescriptions((prev) => [created, ...prev]);
       setDraft(EMPTY_DRAFT);
       setMessage({ kind: "success", text: "Receta creada correctamente." });
@@ -65,11 +103,33 @@ export function RecetasPageClient() {
     }
   }
 
+  async function handleDownloadPdf(rx: Prescription) {
+    setDownloadingId(rx.id);
+    try {
+      const headers = await getAuthHeaders();
+      const resp = await fetch(`${apiBaseUrl}/api/prescriptions/${rx.id}/pdf`, {
+        headers,
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receta-${rx.id.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage({ kind: "error", text: "No se pudo descargar el PDF." });
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   return (
     <AppShell>
       <PageHeader
         action={<UserMenu fullName={currentUser.fullName} />}
-        description="Historial de recetas por paciente."
+        description="Historial de recetas por paciente. Solo médicos pueden emitir recetas."
         title="Recetas"
       />
       <div className="space-y-5 px-5 py-6 lg:px-8">
@@ -100,6 +160,17 @@ export function RecetasPageClient() {
                 ))}
               </select>
             </label>
+            <label className="block">
+              <span className="text-xs font-medium uppercase text-slate-400">
+                Identificador del paciente <span className="normal-case text-slate-300">(CURP, fecha nac. — opcional)</span>
+              </span>
+              <input
+                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                onChange={(e) => setDraft((d) => ({ ...d, patientIdentifier: e.target.value }))}
+                placeholder="Ej. LOOA881212HDFPLS09 o 12/12/1988"
+                value={draft.patientIdentifier}
+              />
+            </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-xs font-medium uppercase text-slate-400">Medicamento</span>
@@ -118,6 +189,21 @@ export function RecetasPageClient() {
                   placeholder="Ej. 1 tableta"
                   value={draft.dosage}
                 />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium uppercase text-slate-400">
+                  Vía de administración <span className="text-red-400">*</span>
+                </span>
+                <select
+                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  onChange={(e) => setDraft((d) => ({ ...d, route: e.target.value }))}
+                  value={draft.route}
+                >
+                  <option value="">Seleccionar vía</option>
+                  {ROUTES.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
               </label>
               <label className="block">
                 <span className="text-xs font-medium uppercase text-slate-400">Frecuencia</span>
@@ -184,15 +270,34 @@ export function RecetasPageClient() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{rx.medicationName}</p>
                     <p className="mt-0.5 text-sm text-slate-600">
-                      {rx.dosage} · {rx.frequency} · {rx.duration}
+                      {rx.dosage}
+                      {rx.route ? ` · ${rx.route}` : ""}
+                      {" · "}{rx.frequency} · {rx.duration}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-400">
                       {rx.patientName} · {rx.issuedAt}
                     </p>
+                    {rx.prescriberName ? (
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        Dr. {rx.prescriberName}
+                        {rx.prescriberLicense ? ` · Céd. ${rx.prescriberLicense}` : ""}
+                      </p>
+                    ) : null}
                     {rx.instructions ? (
                       <p className="mt-1 text-sm text-slate-600">{rx.instructions}</p>
                     ) : null}
                   </div>
+                  <button
+                    aria-label="Imprimir / Descargar PDF"
+                    className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    disabled={downloadingId === rx.id}
+                    onClick={() => handleDownloadPdf(rx)}
+                    title="Imprimir / Descargar PDF"
+                    type="button"
+                  >
+                    <Download size={14} />
+                    {downloadingId === rx.id ? "..." : "PDF"}
+                  </button>
                 </div>
               ))}
             </div>

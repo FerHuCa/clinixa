@@ -284,6 +284,12 @@ export type Prescription = {
   status: string;
   issuedAt: string;
   expiresAt: string | null;
+  // Campos legales (audit #5)
+  prescriberName: string;
+  prescriberLicense: string;
+  patientFullName: string;
+  patientIdentifier: string | null;
+  route: string;
 };
 export type PatientDiet = {
   id: string;
@@ -1403,6 +1409,8 @@ export function useHealthHubStore() {
         instructions: string;
         refills: number;
         expiresAt?: string;
+        route: string;
+        patientIdentifier?: string;
       }) {
         const prescription = await apiPost<Prescription>("/api/prescriptions", data);
         setApiStatus("connected");

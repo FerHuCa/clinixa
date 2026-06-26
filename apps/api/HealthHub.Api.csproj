@@ -7,5 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <!-- QuestPDF: generación de PDFs imprimibles para recetas médicas (licencia Community, gratuita para proyectos con <1M USD ingresos/año) -->
+    <PackageReference Include="QuestPDF" Version="2025.1.0" />
   </ItemGroup>
 </Project>
