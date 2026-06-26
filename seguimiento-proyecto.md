@@ -3037,3 +3037,40 @@ El único bloqueador restante antes del piloto es la transacción real de valida
 # No hay servidores locales que levantar — todo está en Railway.
 # Pendiente: login en https://clinixa.mx con cuenta profesional, conectar MP OAuth, pagar cita real.
 ```
+
+---
+
+## Sesión 2026-06-25 — Auditoría del consejo y plan de acción
+
+**Objetivo:** auditoría integral de Clinixa por un consejo de 5 revisores (Seguridad, Flujos, UI/UX, Arquitectura, Profesional de Salud) sobre el repo y el sitio en producción `https://clinixa.mx`.
+
+**Entregable:** plan de 10 pasos priorizados en **`PLAN-ACCION-AUDITORIA-2026-06-25.md`**. Ese plan es la hoja de ruta y **se le da seguimiento aquí** (checklist abajo).
+
+### Correcciones de auditorías previas
+- ✅ **`proxy.ts` NO está roto:** Next.js 16 renombró `middleware.ts` → `proxy.ts`; el guard de Clerk funciona. El `middleware-manifest.json` vacío es un artefacto obsoleto, no un fallo (verificado contra docs de Next.js 16 y el sitio en vivo).
+- ⬆️ **`/{id}/reviews` sube de "gap menor" a crítico:** no es solo info por ID conocido — devuelve el **nombre completo** del paciente, vinculando persona ↔ profesional de salud.
+
+### Hallazgos críticos (bloquean piloto con datos reales)
+1. Datos demo + cuentas con password fijo `healthhub123` sembrados en prod (confirmado en vivo en `/profesionales`).
+2. Reseñas públicas filtran el nombre completo del paciente.
+3. Notas SOAP / PHI sin cifrar en reposo.
+4. Auto-elevación de rol vía `PATCH /api/me` + acciones clínicas sin gate de cédula verificada.
+5. Recetas legalmente incompletas y no imprimibles.
+
+### Checklist de seguimiento (plan 2026-06-25)
+- [x] 1. Purgar datos demo y cuentas con password fijo de prod; gatear seeding a dev — `fix/01-purge-demo`. **Pendiente manual:** correr `apps/api/Data/PURGE-DEMO-PROD.sql` en prod (tras backup).
+- [x] 2. Anonimizar reseñas públicas (iniciales) — `fix/02-anon-reviews`. `ToPublicDto` → "María G."; test `scripts/test-anonymize-review.mjs` 9/9.
+- [x] 3. Cifrar PHI clínica en reposo (SOAP / expediente) — `fix/03-encrypt-phi`. EF ValueConverter (AES-GCM) sobre SOAP + PatientRecord. **Pendiente manual:** backfill `dotnet run -- backfill-phi` si hubiera datos legacy (prod sin datos clínicos reales aún).
+- [x] 4. Quitar auto-elevación de rol + gatear prescribir/finalizar a cédula verificada — `fix/04-role-gate`. `PATCH /api/me` ignora `role`; gate `verified` centralizado en `GetAuthorizedProfessional` + SOAP create.
+- [x] 5. Recetas válidas (cédula, vía, datos paciente) + PDF; solo doctores — `fix/05-recetas`. QuestPDF (Community); `GET /api/prescriptions/{id}/pdf`; controlados fuera de alcance (documentado).
+- [x] 6. Accesibilidad: `:focus-visible`, aria-labels, teclado en el menú — `fix/06-a11y`. Ring global, menú con Escape/foco/aria, contraste slate-400→600 (26 archivos).
+- [x] 7. Higiene de seguridad: hardening API + headers — `fix/07-hardening`. `UseForwardedHeaders`+`UseHsts`+`UseExceptionHandler`/ProblemDetails; CSP+headers en `next.config.mjs`. Resend key **ya rotada** por Fernando. **Pendiente manual:** verificar headers en prod (`apps/web/SECURITY-HEADERS-CHECK.md`).
+- [x] 8. Monetización: **checkout MP real elegido (opción B)** — `fix/08-subscription-checkout`. Preapproval + webhook idempotente + gate 402 al vencer trial; modo simulado sin credenciales. **TODO:** gatear endpoints pro restantes (helper listo) + credenciales/notification_url HTTPS de prod.
+- [x] 9. Routing por rol en `proxy.ts` + redirect de logout + cola de verificación — `fix/09-routing-verif`. Cookie de rol en proxy; `signOut({redirectUrl:"/bienvenida"})`; endpoint self-status + cola admin (ya existía).
+- [x] 10. Suite de pruebas de autorización + refactor de `Program.cs` + paginación — `fix/10-authz-tests`. Proyecto `HealthHub.Api.Tests` (xUnit+Testcontainers, 11 tests authz) + `HealthHub.sln`; paginación opt-in en 5 listas; 1er módulo extraído (`Endpoints/ReviewsEndpoints.cs`). **Tests NO ejecutados** (sin Docker en este entorno) — correr `dotnet test` en CI con Docker.
+
+**Ejecución (2026-06-25, noche):** 10 ramas `fix/0X-*` implementadas por subagentes sonnet en worktrees aislados, mergeadas a `main` local en orden de solape (6→1→2→4→9→7→3→8→5→10). Build API+sln verde; `lint:web` 0 errores. **Regresión detectada y corregida al integrar:** la extracción de #10 (basada en `main` previo a #2) reintrodujo `ToDto()` en el GET público de reseñas → corregido a `ToPublicDto()` + paginación anonimizada. **No pusheado / sin PR** — listo para `git push` o abrir PRs. **Manuales pendientes:** purga BD prod (#1), verificar headers prod (#7), credenciales MP suscripción prod (#8), 1 tx real.
+
+**Fortalezas confirmadas:** sin IDOR, webhook MP fail-closed e idempotente, modelo EF bien indexado, recordatorios 24h (email + WhatsApp), verificación de cédula + consentimiento explícito.
+
+**Para retomar:** ejecutar el plan por orden de impacto (puntos 1–5 antes del piloto). Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-AUDITORIA-2026-06-25.md`.
