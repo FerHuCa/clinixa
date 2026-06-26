@@ -64,7 +64,7 @@ export function BookingRequestForm({
           </div>
 
           <label className="block">
-            <span className="text-xs font-medium uppercase text-slate-400">Servicio</span>
+            <span className="text-xs font-medium uppercase text-slate-600">Servicio</span>
             <select
               className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
               onChange={(event) => onServiceChange(event.target.value)}
@@ -79,7 +79,7 @@ export function BookingRequestForm({
           </label>
 
           <label className="block">
-            <span className="text-xs font-medium uppercase text-slate-400">{slotsLoading ? "Cargando horarios" : "Horario disponible"}</span>
+            <span className="text-xs font-medium uppercase text-slate-600">{slotsLoading ? "Cargando horarios" : "Horario disponible"}</span>
             <select
               className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
               disabled={slotsLoading || bookingSlots.length === 0}
@@ -99,7 +99,7 @@ export function BookingRequestForm({
           </label>
 
           <label className="block">
-            <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+            <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
             <select
               className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
               disabled={selectedService?.mode !== "hybrid"}
@@ -112,7 +112,7 @@ export function BookingRequestForm({
           </label>
 
           <label className="block lg:col-span-2">
-            <span className="text-xs font-medium uppercase text-slate-400">Motivo</span>
+            <span className="text-xs font-medium uppercase text-slate-600">Motivo</span>
             <textarea
               className="mt-1 min-h-20 w-full resize-none rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
               onChange={(event) => onReasonChange(event.target.value)}

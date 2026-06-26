@@ -282,7 +282,7 @@ export function MiSaludPageClient() {
                         {rx.frequency ? ` · ${rx.frequency}` : ""}
                         {rx.duration ? ` · ${rx.duration}` : ""}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-xs text-slate-600">
                         Emitida: {rx.issuedAt}
                         {rx.expiresAt ? ` · Vence: ${rx.expiresAt}` : ""}
                       </p>
@@ -351,7 +351,7 @@ export function MiSaludPageClient() {
                           <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
                         ) : null}
                         {task.dueDate ? (
-                          <p className="mt-0.5 text-xs text-slate-400">Límite: {task.dueDate}</p>
+                          <p className="mt-0.5 text-xs text-slate-600">Límite: {task.dueDate}</p>
                         ) : null}
                         {task.patientNotes ? (
                           <p className="mt-1 text-sm italic text-slate-500">Nota: {task.patientNotes}</p>
@@ -424,7 +424,7 @@ export function MiSaludPageClient() {
                         {dietStatusLabel(diet.status)}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-600">
                       Desde {diet.validFrom}
                       {diet.validUntil ? ` hasta ${diet.validUntil}` : ""}
                     </p>

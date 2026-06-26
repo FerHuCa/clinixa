@@ -432,33 +432,33 @@ export function PatientPortalPageClient() {
 
                           <dl className="mt-4 grid gap-3 rounded-md border border-border bg-slate-50 px-4 py-3 text-sm sm:grid-cols-2">
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-400">Profesional</dt>
+                              <dt className="text-xs font-medium uppercase text-slate-600">Profesional</dt>
                               <dd className="mt-0.5 font-medium text-slate-800">{bookingSuccess.professionalName}</dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-400">Servicio</dt>
+                              <dt className="text-xs font-medium uppercase text-slate-600">Servicio</dt>
                               <dd className="mt-0.5 font-medium text-slate-800">
                                 {bookingSuccess.serviceName} · {bookingSuccess.durationMinutes} min
                               </dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-400">Fecha y hora</dt>
+                              <dt className="text-xs font-medium uppercase text-slate-600">Fecha y hora</dt>
                               <dd className="mt-0.5 font-medium text-slate-800">
                                 {dateLabel(bookingSuccess.appointment.date)} · {bookingSuccess.appointment.time} h
                               </dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-400">Modalidad</dt>
+                              <dt className="text-xs font-medium uppercase text-slate-600">Modalidad</dt>
                               <dd className="mt-0.5 font-medium text-slate-800">{modeLabel(bookingSuccess.appointment.mode)}</dd>
                             </div>
                             {bookingSuccess.servicePrice !== null ? (
                               <div>
-                                <dt className="text-xs font-medium uppercase text-slate-400">Precio</dt>
+                                <dt className="text-xs font-medium uppercase text-slate-600">Precio</dt>
                                 <dd className="mt-0.5 font-medium text-slate-800">{money(bookingSuccess.servicePrice)}</dd>
                               </div>
                             ) : null}
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-400">Estado</dt>
+                              <dt className="text-xs font-medium uppercase text-slate-600">Estado</dt>
                               <dd className="mt-1 flex flex-wrap gap-1.5">
                                 <StatusPill label={successCitaUi.label} status={successCitaUi.pill} />
                                 <StatusPill label={successPagoUi.label} status={successPagoUi.pill} />

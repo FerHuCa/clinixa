@@ -17,7 +17,7 @@ export default function SignInPage() {
 
       <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/onboarding" />
 
-      <p className="text-center text-xs leading-5 text-slate-400">
+      <p className="text-center text-xs leading-5 text-slate-600">
         Consulta el{" "}
         <Link className="text-primary underline-offset-2 hover:underline" href="/privacy" target="_blank">
           Aviso de Privacidad

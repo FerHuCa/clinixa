@@ -109,7 +109,7 @@ export function TareasPageClient() {
         <Panel title="Nueva tarea">
           <div className="space-y-3 p-4">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
               <select
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(e) => setDraft((d) => ({ ...d, patientId: e.target.value }))}
@@ -122,7 +122,7 @@ export function TareasPageClient() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Título</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Título</span>
               <input
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
@@ -131,7 +131,7 @@ export function TareasPageClient() {
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Descripción</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Descripción</span>
               <textarea
                 className="mt-1 min-h-20 w-full resize-none rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
@@ -141,7 +141,7 @@ export function TareasPageClient() {
             </label>
             <div className="flex items-end justify-between gap-3">
               <label className="block flex-1">
-                <span className="text-xs font-medium uppercase text-slate-400">Fecha límite (opcional)</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Fecha límite (opcional)</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                   onChange={(e) => setDraft((d) => ({ ...d, dueDate: e.target.value }))}
@@ -202,7 +202,7 @@ export function TareasPageClient() {
                     {task.description ? (
                       <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
                     ) : null}
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-600">
                       {task.patientName}
                       {task.dueDate ? ` · Límite: ${task.dueDate}` : ""}
                     </p>

@@ -102,7 +102,7 @@ export function ProfessionalCard({ pro }: Props) {
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
           </svg>
           <span className="font-medium">{pro.averageRating.toFixed(1)}</span>
-          <span className="text-slate-400">({pro.reviewCount})</span>
+          <span className="text-slate-600">({pro.reviewCount})</span>
         </p>
       ) : null}
 
@@ -116,7 +116,7 @@ export function ProfessionalCard({ pro }: Props) {
             </span>
           </span>
         ) : (
-          <span className="text-sm text-slate-400">Consultar precio</span>
+          <span className="text-sm text-slate-600">Consultar precio</span>
         )}
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${appointmentModeClass(pro.appointmentMode)}`}

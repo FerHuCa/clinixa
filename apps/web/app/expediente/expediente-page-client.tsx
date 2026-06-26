@@ -109,11 +109,11 @@ export function ExpedientePageClient() {
                   </div>
                   <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
                     <div className="rounded-md bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase text-slate-400">Evaluación</p>
+                      <p className="text-xs font-medium uppercase text-slate-600">Evaluación</p>
                       <p className="mt-1 text-slate-700">{note.assessment}</p>
                     </div>
                     <div className="rounded-md bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase text-slate-400">Plan</p>
+                      <p className="text-xs font-medium uppercase text-slate-600">Plan</p>
                       <p className="mt-1 text-slate-700">{note.plan}</p>
                     </div>
                   </div>
@@ -128,7 +128,7 @@ export function ExpedientePageClient() {
           <Panel title="Borrador SOAP">
             <form className="space-y-4 p-4 text-sm" id="borrador-soap" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Paciente</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                 <select
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="patientId"
@@ -146,7 +146,7 @@ export function ExpedientePageClient() {
 
               <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Título</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Título</span>
                   <input
                     className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                     name="title"
@@ -156,7 +156,7 @@ export function ExpedientePageClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-400">Fecha</span>
+                  <span className="text-xs font-medium uppercase text-slate-600">Fecha</span>
                   <input
                     className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                     name="date"
@@ -176,7 +176,7 @@ export function ExpedientePageClient() {
                   ["plan", "Plan"]
                 ].map(([field, label]) => (
                   <label className="block" key={field}>
-                    <span className="text-xs font-medium uppercase text-slate-400">{label}</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">{label}</span>
                     <textarea
                       className="mt-1 min-h-20 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                       name={field}
@@ -190,7 +190,7 @@ export function ExpedientePageClient() {
               </div>
 
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Estado</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Estado</span>
                 <select
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="status"

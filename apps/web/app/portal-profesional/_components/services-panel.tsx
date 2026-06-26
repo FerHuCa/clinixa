@@ -78,7 +78,7 @@ export function ServicesPanel({
                 />
                 <div className="grid gap-2 sm:grid-cols-3">
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Duración (min)</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
                     <input
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       min={15}
@@ -93,7 +93,7 @@ export function ServicesPanel({
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Precio (MXN)</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
                     <input
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       min={0}
@@ -105,7 +105,7 @@ export function ServicesPanel({
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+                    <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
                     <select
                       className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                       onChange={(event) =>
@@ -154,7 +154,7 @@ export function ServicesPanel({
           />
           <div className="grid gap-2 sm:grid-cols-3">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Duración (min)</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
               <input
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 min={15}
@@ -164,7 +164,7 @@ export function ServicesPanel({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Precio (MXN)</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
               <input
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 min={0}
@@ -174,7 +174,7 @@ export function ServicesPanel({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">Modalidad</span>
+              <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
               <select
                 className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
                 onChange={(event) => onNewServiceChange((current) => ({ ...current, mode: event.target.value }))}

@@ -84,7 +84,7 @@ export function PatientsPageClient() {
           <Panel title="Nuevo paciente">
             <form className="grid gap-4 p-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Nombre completo</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Nombre completo</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="fullName"
@@ -94,7 +94,7 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Edad</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Edad</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   min="1"
@@ -106,7 +106,7 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Correo</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Correo</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="email"
@@ -117,7 +117,7 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Teléfono</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Teléfono</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="phone"
@@ -127,7 +127,7 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Foco de atención</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Foco de atención</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="focus"
@@ -138,7 +138,7 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-400">Motivo principal</span>
+                <span className="text-xs font-medium uppercase text-slate-600">Motivo principal</span>
                 <input
                   className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
                   name="mainReason"

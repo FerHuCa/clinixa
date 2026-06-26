@@ -31,8 +31,9 @@ export function SearchFilters({ mode, query, specialty, onModeChange, onQueryCha
     <div className="space-y-4 p-4">
       <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
         <label className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-          <Search size={18} className="text-slate-400" />
+          <Search aria-hidden="true" className="text-slate-400" size={18} />
           <input
+            aria-label="Buscar profesional"
             className="w-full bg-transparent text-sm outline-none"
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Nombre, especialidad, servicio o ubicación"
@@ -40,7 +41,7 @@ export function SearchFilters({ mode, query, specialty, onModeChange, onQueryCha
           />
         </label>
         <label className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-          <SlidersHorizontal size={18} className="text-slate-400" />
+          <SlidersHorizontal aria-hidden="true" className="text-slate-400" size={18} />
           <select
             className="w-full bg-transparent text-sm outline-none"
             onChange={(event) => onSpecialtyChange(event.target.value)}
