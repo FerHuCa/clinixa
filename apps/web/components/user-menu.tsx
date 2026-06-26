@@ -45,7 +45,7 @@ export function UserMenu({ fullName }: UserMenuProps) {
             className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50"
             onClick={() => {
               setIsOpen(false);
-              void signOut();
+              void signOut({ redirectUrl: "/bienvenida" });
             }}
             type="button"
           >

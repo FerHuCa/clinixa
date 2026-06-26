@@ -1271,6 +1271,19 @@ export function useHealthHubStore() {
       async loadProfessionalOnboarding() {
         return loadWithFallback(() => apiGet<ProfessionalOnboarding>("/api/professional-portal/onboarding"), null);
       },
+      async loadVerificationStatus() {
+        return loadWithFallback(
+          () =>
+            apiGet<{
+              id: string;
+              verificationStatus: string;
+              licenseNumber: string | null;
+              licenseVerifiedAt: string | null;
+              status: string;
+            }>("/api/professional-portal/verification-status"),
+          null
+        );
+      },
       async updateProfessionalProfile(input: {
         displayName: string;
         bio: string;

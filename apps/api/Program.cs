@@ -2237,6 +2237,42 @@ professionalPortalApi.MapGet("/onboarding", async (HttpRequest request, HealthHu
     return Results.Ok(BuildOnboardingStatus(professional));
 });
 
+// Estado de verificacion de cedula del profesional autenticado.
+// Permite al profesional ver su propio estatus (pending/verified/rejected) sin
+// necesitar permisos de admin. Solo lectura; el cambio sigue siendo exclusivo de admin.
+professionalPortalApi.MapGet("/verification-status", async (HttpRequest request, HealthHubDbContext db) =>
+{
+    var currentUser = await GetUserFromRequestAsync(request, db);
+
+    if (currentUser is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (currentUser.Professional is null)
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    var professional = await db.Professionals
+        .AsNoTracking()
+        .FirstOrDefaultAsync(item => item.Id == currentUser.Professional.Id);
+
+    if (professional is null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(new
+    {
+        id = professional.Id,
+        verificationStatus = professional.VerificationStatus,
+        licenseNumber = professional.LicenseNumber,
+        licenseVerifiedAt = professional.LicenseVerifiedAt,
+        status = professional.Status
+    });
+});
+
 professionalPortalApi.MapPatch("/profile", async (HttpRequest request, UpdateProfessionalProfileRequest profileRequest, EmailSender emailSender, HealthHubDbContext db) =>
 {
     var actor = await GetUserFromRequestAsync(request, db);
