@@ -18,6 +18,13 @@ concurrency:
 jobs:
   web:
     runs-on: ubuntu-latest
+    env:
+      # next build statically prerenders pages that call Clerk's useAuth, which
+      # needs <ClerkProvider> — mounted only when a publishable key is present
+      # (see apps/web/app/layout.tsx). Prod builds on Railway with the real
+      # pk_live; CI uses a dummy key (parsed locally, no network at prerender)
+      # so the build mirrors prod instead of failing on a missing provider.
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

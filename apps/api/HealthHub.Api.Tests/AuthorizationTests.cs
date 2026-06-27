@@ -242,11 +242,14 @@ public sealed class AuthorizationTests : IClassFixture<HealthHubApiFactory>
 
         var review = reviews.First();
 
-        // El DTO de resena publica debe tener estos campos.
+        // El DTO de resena publica debe tener estos campos. El nombre se expone
+        // anonimizado como 'patientDisplayName' (nombre + inicial), no 'patientName'
+        // (privacidad CWE-359, ver PublicReviewDto).
         Assert.True(review.TryGetProperty("id", out _), "Falta campo 'id'");
         Assert.True(review.TryGetProperty("rating", out _), "Falta campo 'rating'");
         Assert.True(review.TryGetProperty("comment", out _), "Falta campo 'comment'");
-        Assert.True(review.TryGetProperty("patientName", out _), "Falta campo 'patientName'");
+        Assert.True(review.TryGetProperty("patientDisplayName", out _), "Falta campo 'patientDisplayName'");
+        Assert.False(review.TryGetProperty("patientName", out _), "El campo 'patientName' (sin anonimizar) no debe estar en la respuesta publica");
 
         // NO debe exponer patientId en la respuesta publica.
         Assert.False(review.TryGetProperty("patientId", out _), "El campo 'patientId' no debe estar en la respuesta publica");
