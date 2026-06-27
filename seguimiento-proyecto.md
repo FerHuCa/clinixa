@@ -3132,3 +3132,49 @@ Detalle, evidencia (archivo:línea) y criterios de aceptación en `PLAN-ACCION-A
 
 ### Pendientes históricos
 - **Aprendizaje operativo:** tras cada push a `main`, confirmar que el deploy de **web** quede verde (su build puede fallar y dejar prod en código viejo en silencio). `npm run build:web` antes de pushear cambios de web.
+
+---
+
+## Sesión 2026-06-27 — Outage de login (Clerk) + CI guard #5 y smoke prod #6
+
+### Login en producción roto — diagnóstico de 2 capas de config + 1 fix de código
+Síntomas: `<SignIn>` en blanco ("pantalla sin botones") + banner "No pudimos validar tu sesión".
+- **Descarte previo (todo sano):** instancia Clerk prod (`pk_live` → `clerk.clinixa.mx`), DNS, FAPI/OIDC 200, versiones `@clerk/nextjs@7.4.3`↔clerk-js v6 consistentes. No falta middleware (auth es por Bearer al API .NET, nunca tuvo). API valida JWT contra `CLERK_ISSUER` y aprovisiona con `CLERK_SECRET_KEY`.
+- **Capa 1 — CSP (código, `9974fa2`):** el CSP de `apps/web/next.config.mjs` (agregado 2026-06-26, #7 headers) sólo permitía dominios Clerk **dev** (`*.clerk.com`, `*.clerk.accounts.dev`). La instancia prod sirve clerk-js desde el dominio custom `clerk.clinixa.mx`, **bloqueado** → `failed_to_load_clerk_js` → sin `window.Clerk` no hay token. Fix: whitelist `clerk.clinixa.mx` en `script/connect/img/frame-src`, `accounts.clinixa.mx` en `frame-src`, y `worker-src 'self' blob:` (Clerk usa worker para refrescar token). Verificado header en vivo.
+- **Capa 2 — env Railway web:** `NEXT_PUBLIC_API_BASE_URL` en el servicio web apuntaba a la **URL cruda** `https://api-production-e76e.up.railway.app`, que el CSP `connect-src` (sólo `api.clinixa.mx`) bloqueaba → todas las `/api/*` fallaban → "No pudimos cargar tu perfil". Fix: `NEXT_PUBLIC_API_BASE_URL=https://api.clinixa.mx` + redeploy (es `NEXT_PUBLIC`, se hornea en build). Verificado: bundle hornea `api.clinixa.mx`; **login OK**.
+- **Lección:** todo cambio a CSP/headers debe incluir los dominios custom de Clerk prod; el web debe llamar al API por `api.clinixa.mx`, nunca la URL cruda de Railway. Diagnóstico Clerk en prod: consola del navegador → buscar `failed_to_load_clerk_js` / violaciones CSP antes de tocar Railway/`CLERK_ISSUER`.
+
+### #5 Guard de CI ✅ — `.github/workflows/ci.yml`
+Triggers `push:main` + `pull_request` + `workflow_dispatch`, `concurrency cancel-in-progress`.
+- **Job `web`** (ubuntu, node 20): `npm ci` → `lint:web` → **`build:web`** — atrapa la clase de bug que dejó prod estancado (`9e3828b`, `/suscripcion` sin Suspense). Sin secretos (next build pasa sin env).
+- **Job `api`** (ubuntu, .NET 8): `dotnet build` + **`dotnet test`** (xUnit + Testcontainers `postgres:16-alpine`; Docker viene en el runner, sin `services:`). **Cubre también el paso #10.**
+- Usa `dotnet` vía `setup-dotnet`, no los scripts `build:api`/`test:api` (esos están hardcodeados a `$HOME/.dotnet`, ruta local del usuario, inexistente en runners).
+- **Pendiente de config manual:** para que CI **bloquee** el deploy, activar en Railway "Wait for CI" o branch protection en GitHub. Hoy CI sólo hace *visible* la rotura.
+
+### #6 Smoke post-deploy ✅ — `scripts/smoke-prod.mjs` + `smoke:prod` + `.github/workflows/smoke-prod.yml`
+Script Node sin dependencias (estilo `smoke-api.mjs`), 6 checks read-only que codifican el diagnóstico de hoy, exit 1 si algo falla. Workflow: cron horario (`17 * * * *`) + `workflow_dispatch`.
+1. web 200 + 6 headers de seguridad
+2. CSP: `clerk.clinixa.mx` en `script-src`; clerk+api en `connect-src`; `worker-src blob:`
+3. bundle servido **sin** `*.up.railway.app` (el bug de hoy)
+4. `api/health` 200 + `database: connected`
+5. preflight CORS refleja `https://clinixa.mx`
+6. Clerk FAPI openid-config 200, issuer correcto
+- **Verificado 6/6 verde en vivo** (corrida independiente del verificador y mía). `build:web` exit 0 confirma que el guard funciona.
+- **Límite conocido:** check 3 atrapa el *regreso* de la URL railway, no un typo a un tercer host (la presencia de `api.clinixa.mx` se delega al CSP `connect-src`, que sí lo lista) — endurecer si importa.
+
+### Construcción
+Hecho con un **workflow de agentes** (2 implementadores en paralelo + verificador adversarial + ronda de reparación), verdict `allPass`.
+
+### Estado git al cierre
+`9974fa2` (fix CSP login) **ya en main**. Sin commitear aún: `.github/` (ci.yml, smoke-prod.yml), `scripts/smoke-prod.mjs`, `package.json` (script `smoke:prod`).
+
+---
+
+## Próximos pasos (actualizado 2026-06-27)
+
+1. **Commitear + pushear CI/smoke** — `.github/`, `scripts/smoke-prod.mjs`, `package.json`. El primer push **dispara CI por primera vez**: vigilar que los jobs `web` y `api` queden verdes (el `api` baja `postgres:16-alpine` por Testcontainers, primera corrida más lenta).
+2. **Activar bloqueo de deploy** — Railway "Wait for CI" o branch protection en GitHub sobre `main`. Sin esto, CI avisa pero no impide un deploy roto. (Config manual, no código.)
+3. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial. (Sin cambios; sigue pendiente.)
+4. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto. (Sin cambios.)
+5. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual). Endurecer check 3 del smoke si se quiere atrapar cualquier host equivocado, no sólo el railway.
+6. **Follow-ups menores previos** — (a) `whatsappNumber` en `GET /api/professionals` ¿intencional o se quita del DTO?; (b) ¿gatear PATCH de edición de servicios/disponibilidad? (hoy sin gate; resolver caso `clinic_admin`).

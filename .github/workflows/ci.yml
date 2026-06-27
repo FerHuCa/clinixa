@@ -1,0 +1,40 @@
+# CI guard: catch build/test breakage on PRs and before main hits Railway.
+# Railway builds each app via its own Dockerfile on push to main; if a build
+# breaks (e.g. /suscripcion missing Suspense), the Docker build fails silently
+# and prod stays on stale code. This gate runs the same web build + API tests
+# up front so a broken commit fails loudly here instead of rotting in prod.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:web
+      - run: npm run build:web # core guard against build-breaking regressions
+
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet build apps/api/HealthHub.Api.csproj -c Release
+      # xUnit + Testcontainers postgres (Docker preinstalled on ubuntu runners)
+      - run: dotnet test apps/api/HealthHub.Api.Tests/HealthHub.Api.Tests.csproj -c Release
