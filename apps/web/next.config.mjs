@@ -5,9 +5,10 @@
 // Applied to every route (source: '/(.*)')
 //
 // CSP origin notes:
-//   - Clerk:        scripts/frames served from *.clerk.accounts.dev and
-//                   *.clerk.com; connect goes to clerk.clinixa.mx (issuer) and
-//                   api.clerk.com.
+//   - Clerk (prod):  production instance serves clerk-js, frames and avatars
+//                   from the custom domains clerk.clinixa.mx / accounts.clinixa.mx.
+//   - Clerk (dev):   dev instances use *.clerk.accounts.dev and *.clerk.com;
+//                   kept so local dev with a pk_test key still works.
 //   - MercadoPago:  checkout redirect is a full navigation (no frame/script
 //                   inline needed here), but the SDK JS is loaded from
 //                   sdk.mercadopago.com and http2.mlstatic.com.
@@ -56,7 +57,7 @@ const securityHeaders = [
       // Scripts: self + Next.js inline hydration (unsafe-inline, TODO: migrate
       // to nonces) + Clerk components + MercadoPago SDK.
       // TODO: remove 'unsafe-inline' when Next.js nonce support is wired up.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.accounts.dev https://sdk.mercadopago.com https://http2.mlstatic.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.clinixa.mx https://*.clerk.com https://*.clerk.accounts.dev https://sdk.mercadopago.com https://http2.mlstatic.com",
 
       // Styles: self + unsafe-inline (Tailwind + Clerk widget styles).
       // TODO: remove 'unsafe-inline' when adopting CSS-in-JS with nonces.
@@ -67,17 +68,17 @@ const securityHeaders = [
 
       // Images: self + data URIs (used by Clerk avatars and chart libs) +
       // MercadoPago badge assets.
-      "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://http2.mlstatic.com",
+      "img-src 'self' data: blob: https://clerk.clinixa.mx https://*.clerk.com https://img.clerk.com https://http2.mlstatic.com",
 
       // Fetch/XHR: self (API calls via Next.js rewrites) + Clerk backend +
       // MercadoPago.
-      "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://api.mercadopago.com https://api.clinixa.mx",
+      "connect-src 'self' https://clerk.clinixa.mx https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://api.mercadopago.com https://api.clinixa.mx",
 
       // Frames: Clerk uses an iframe for its UI components.
-      "frame-src https://*.clerk.com https://*.clerk.accounts.dev https://www.mercadopago.com.mx https://www.mercadopago.com",
+      "frame-src https://clerk.clinixa.mx https://accounts.clinixa.mx https://*.clerk.com https://*.clerk.accounts.dev https://www.mercadopago.com.mx https://www.mercadopago.com",
 
-      // Workers: none expected.
-      "worker-src 'none'",
+      // Workers: Clerk spawns a worker (blob URL) to refresh session tokens.
+      "worker-src 'self' blob:",
 
       // Object/base: locked down.
       "object-src 'none'",
