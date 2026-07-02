@@ -3204,8 +3204,8 @@ Todo en `main` y **CI verde** (`web` ✅ + `api` ✅, run sobre `9a43ae3`):
 
 ## Próximos pasos (actualizado 2026-07-01)
 
-1. **Activar bloqueo de deploy** — Railway "Wait for CI" o branch protection en GitHub sobre `main`. **← siguiente acción.**
-2. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial.
+1. ✅ **Bloqueo de deploy activado** — Railway "Wait for CI" configurado (config manual del usuario, 2026-07-01). Railway ya no despliega si el workflow de GitHub Actions no queda verde.
+2. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial. **← siguiente acción.**
 3. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto.
 4. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual).
 5. ✅ **Follow-ups menores previos** — cerrados ambos (gate PATCH + WhatsApp oculto, ver sesión 2026-07-01 arriba).
