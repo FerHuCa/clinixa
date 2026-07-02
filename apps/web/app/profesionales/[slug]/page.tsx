@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Activity, MapPin, Star, Clock, MessageCircle, UserRound } from "lucide-react";
+import { Activity, MapPin, Star, Clock, UserRound } from "lucide-react";
 import { LegalFooter } from "@/components/legal-footer";
 import {
   fetchProfessionalBySlug,
@@ -42,11 +42,6 @@ function formatMXN(amount: number): string {
     currency: "MXN",
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-// Limpiar número de WhatsApp (quitar + y espacios)
-function cleanWhatsApp(number: string): string {
-  return number.replace(/[+\s]/g, "");
 }
 
 // Placeholder con iniciales
@@ -90,8 +85,6 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
   const pro = await fetchProfessionalBySlug(slug);
 
   if (!pro) notFound();
-
-  const whatsappClean = pro.whatsappNumber ? cleanWhatsApp(pro.whatsappNumber) : null;
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -145,17 +138,6 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
               )}
               {/* CTAs */}
               <div className="mt-4 flex flex-wrap gap-3">
-                {whatsappClean && (
-                  <a
-                    className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                    href={`https://wa.me/${whatsappClean}`}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <MessageCircle size={16} />
-                    WhatsApp
-                  </a>
-                )}
                 <Link
                   className="flex items-center gap-2 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground transition hover:bg-slate-50"
                   href="/sign-up"
@@ -257,16 +239,6 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
               >
                 Crear cuenta para agendar
               </Link>
-              {whatsappClean && (
-                <a
-                  className="mt-2 block rounded-md border border-green-600 px-4 py-2 text-sm font-medium text-green-700 transition hover:bg-green-50"
-                  href={`https://wa.me/${whatsappClean}`}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Contactar por WhatsApp
-                </a>
-              )}
             </div>
           </div>
         </div>

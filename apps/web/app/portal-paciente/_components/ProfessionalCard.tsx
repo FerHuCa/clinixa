@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, CalendarDays, Clock, MapPin, MessageCircle, Monitor, Star, WalletCards } from "lucide-react";
+import { BadgeCheck, CalendarDays, Clock, MapPin, Monitor, Star, WalletCards } from "lucide-react";
 import type { Patient, Professional, ProfessionalReview } from "@/lib/healthhub-store";
 
 function money(value: number) {
@@ -125,17 +125,6 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
             <Star size={16} />
             {expanded ? "Ocultar opiniones" : "Ver opiniones"}
           </button>
-          {professional.whatsappNumber ? (
-            <a
-              className="flex items-center justify-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
-              href={`https://wa.me/${professional.whatsappNumber.replace(/\D/g, "")}`}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <MessageCircle size={16} />
-              WhatsApp
-            </a>
-          ) : null}
           <div className="rounded-md border border-border px-3 py-2 text-sm text-slate-600">
             Desde <span className="font-semibold text-slate-900">{money(professional.basePrice)}</span>
           </div>

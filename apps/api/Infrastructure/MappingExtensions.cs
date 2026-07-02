@@ -131,6 +131,42 @@ public static class MappingExtensions
             professional.ProfilePhotoUrl ?? "");
     }
 
+    public static PublicProfessionalDto ToPublicDto(this Professional professional)
+    {
+        var publishedReviews = professional.Reviews
+            .Where(review => review.Status == "published")
+            .ToList();
+
+        return new PublicProfessionalDto(
+            professional.Id,
+            professional.DisplayName,
+            professional.Specialty,
+            SpecialtyLabel(professional.Specialty),
+            professional.Bio,
+            professional.Location,
+            professional.AppointmentMode,
+            professional.BasePrice,
+            professional.Status,
+            professional.VerificationStatus,
+            professional.LicenseNumber,
+            NextAvailability(professional.Availability),
+            publishedReviews.Count == 0 ? 0 : Math.Round(publishedReviews.Average(review => review.Rating), 1),
+            publishedReviews.Count,
+            professional.Services
+                .Where(service => service.Status == "active")
+                .OrderBy(service => service.Price)
+                .Select(service => service.ToDto())
+                .ToList(),
+            professional.Availability
+                .Where(availability => availability.Status == "active")
+                .OrderBy(availability => availability.Weekday)
+                .ThenBy(availability => availability.StartsAt)
+                .Select(availability => availability.ToDto())
+                .ToList(),
+            Slugify(professional.DisplayName, professional.Id),
+            professional.ProfilePhotoUrl ?? "");
+    }
+
     public static ProfessionalServiceDto ToDto(this ProfessionalService service) =>
         new(
             service.Id,

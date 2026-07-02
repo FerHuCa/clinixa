@@ -1837,7 +1837,7 @@ professionalsApi.MapGet("/", async (HttpRequest httpRequest, string? specialty, 
     }
 
     var dtoList = professionals
-        .Select(professional => professional.ToDto())
+        .Select(professional => professional.ToPublicDto())
         .OrderByDescending(professional => professional.AverageRating)
         .ThenBy(professional => professional.BasePrice)
         .ToList();
@@ -1859,7 +1859,7 @@ professionalsApi.MapGet("/by-slug/{slug}", async (string slug, HealthHubDbContex
     var match = candidates.FirstOrDefault(item =>
         MappingExtensions.Slugify(item.DisplayName, item.Id) == slug);
 
-    return match is null ? Results.NotFound() : Results.Ok(match.ToDto());
+    return match is null ? Results.NotFound() : Results.Ok(match.ToPublicDto());
 });
 
 professionalsApi.MapGet("/{id}", async (string id, HealthHubDbContext db) =>
@@ -1872,7 +1872,7 @@ professionalsApi.MapGet("/{id}", async (string id, HealthHubDbContext db) =>
         .Include(item => item.Reviews)
         .FirstOrDefaultAsync(item => item.Id == id && item.Status == "active" && item.VerificationStatus == "verified");
 
-    return professional is null ? Results.NotFound() : Results.Ok(professional.ToDto());
+    return professional is null ? Results.NotFound() : Results.Ok(professional.ToPublicDto());
 });
 
 // Verificacion de cedula profesional. Solo internal_admin puede cambiar el estatus.
@@ -2229,6 +2229,18 @@ professionalPortalApi.MapPatch("/services/{id}", async (HttpRequest request, str
         return Results.StatusCode(StatusCodes.Status403Forbidden);
     }
 
+    // Gate de suscripcion: trial vencido sin plan no edita servicios existentes.
+    // Se gatea contra el profesional dueno del recurso (no el actor), para cubrir tambien al clinic_admin.
+    {
+        var owner = await db.Professionals.FirstOrDefaultAsync(p => p.Id == service.ProfessionalId);
+        var gateResult = owner is not null ? CheckSubscriptionGate(owner) : null;
+
+        if (gateResult is not null)
+        {
+            return gateResult;
+        }
+    }
+
     var errors = ValidateUpdateProfessionalService(serviceRequest);
 
     if (errors.Count > 0)
@@ -2321,6 +2333,18 @@ professionalPortalApi.MapPatch("/availability/{id}", async (HttpRequest request,
         AddAuditLog(db, request, actor, "professional_availability.update.denied", "professional_availability", availability.Id, null, availability.ProfessionalId, "denied");
         await db.SaveChangesAsync();
         return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    // Gate de suscripcion: trial vencido sin plan no edita disponibilidad existente.
+    // Se gatea contra el profesional dueno del recurso (no el actor), para cubrir tambien al clinic_admin.
+    {
+        var owner = await db.Professionals.FirstOrDefaultAsync(p => p.Id == availability.ProfessionalId);
+        var gateResult = owner is not null ? CheckSubscriptionGate(owner) : null;
+
+        if (gateResult is not null)
+        {
+            return gateResult;
+        }
     }
 
     var errors = ValidateProfessionalAvailability(availabilityRequest.Weekday, availabilityRequest.StartsAt, availabilityRequest.EndsAt);

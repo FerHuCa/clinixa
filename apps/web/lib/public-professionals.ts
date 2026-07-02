@@ -9,7 +9,7 @@ export type PublicProfessionalAvailability = {
 export type PublicProfessional = {
   id: string; displayName: string; specialty: string; specialtyLabel: string; bio: string;
   location: string; appointmentMode: string; basePrice: number; status: string; verificationStatus: string;
-  whatsappNumber: string; nextAvailable: string; averageRating: number; reviewCount: number;
+  nextAvailable: string; averageRating: number; reviewCount: number;
   services: PublicProfessionalService[]; availability: PublicProfessionalAvailability[];
   slug: string; profilePhotoUrl: string;
 };

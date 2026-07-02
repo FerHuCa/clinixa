@@ -82,6 +82,28 @@ public sealed record ProfessionalDto(
     string Slug,
     string ProfilePhotoUrl);
 
+// DTO for unauthenticated public callers: sin WhatsappNumber. La comunicacion inicial
+// pasa por la solicitud de cita; el profesional decide si comparte su WhatsApp despues.
+public sealed record PublicProfessionalDto(
+    string Id,
+    string DisplayName,
+    string Specialty,
+    string SpecialtyLabel,
+    string Bio,
+    string Location,
+    string AppointmentMode,
+    decimal BasePrice,
+    string Status,
+    string VerificationStatus,
+    string LicenseNumber,
+    string NextAvailable,
+    double AverageRating,
+    int ReviewCount,
+    IReadOnlyList<ProfessionalServiceDto> Services,
+    IReadOnlyList<ProfessionalAvailabilityDto> Availability,
+    string Slug,
+    string ProfilePhotoUrl);
+
 public sealed record ReviewDto(
     string Id,
     string ProfessionalId,

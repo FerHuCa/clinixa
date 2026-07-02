@@ -3166,15 +3166,46 @@ Script Node sin dependencias (estilo `smoke-api.mjs`), 6 checks read-only que co
 Hecho con un **workflow de agentes** (2 implementadores en paralelo + verificador adversarial + ronda de reparación), verdict `allPass`.
 
 ### Estado git al cierre
-`9974fa2` (fix CSP login) **ya en main**. Sin commitear aún: `.github/` (ci.yml, smoke-prod.yml), `scripts/smoke-prod.mjs`, `package.json` (script `smoke:prod`).
+Todo en `main` y **CI verde** (`web` ✅ + `api` ✅, run sobre `9a43ae3`):
+- `9974fa2` fix CSP login; `a7008c4` CI guard + smoke; `9a43ae3` 2 fixes que **el propio CI destapó en su primer run** (local los ocultaba):
+  - **web no-hermético:** `next build` prerenderiza páginas con `useAuth` (`/activacion`, `/seguridad`) que necesitan `<ClerkProvider>` (monta solo si hay key). Local tenía key en `.env.local`, CI no → prerender tronaba. Fix: key dummy `pk_test_...` en el job web (se parsea local, sin red en prerender) — espeja el build de Railway con la key real.
+  - **test obsoleto:** `PublicReviews_ResponseShape` aserciaba `patientName`, pero el endpoint público devuelve `patientDisplayName` (anonimizado, `PublicReviewDto`, CWE-359). El test era previo a la anonimización y solo falló ahora porque los tests **nunca habían corrido en CI**. Código correcto; test actualizado.
 
 ---
 
 ## Próximos pasos (actualizado 2026-06-27)
 
-1. **Commitear + pushear CI/smoke** — `.github/`, `scripts/smoke-prod.mjs`, `package.json`. El primer push **dispara CI por primera vez**: vigilar que los jobs `web` y `api` queden verdes (el `api` baja `postgres:16-alpine` por Testcontainers, primera corrida más lenta).
-2. **Activar bloqueo de deploy** — Railway "Wait for CI" o branch protection en GitHub sobre `main`. Sin esto, CI avisa pero no impide un deploy roto. (Config manual, no código.)
+1. ✅ **Commitear + pushear CI/smoke** — hecho (`a7008c4`+`9a43ae3`); CI verde (`web`+`api`) tras destapar y corregir 2 problemas reales (ver Estado git arriba).
+2. **Activar bloqueo de deploy** — Railway "Wait for CI" o branch protection en GitHub sobre `main`. Sin esto, CI avisa pero no impide un deploy roto. (Config manual, no código.) **← siguiente acción.**
 3. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial. (Sin cambios; sigue pendiente.)
 4. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto. (Sin cambios.)
 5. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual). Endurecer check 3 del smoke si se quiere atrapar cualquier host equivocado, no sólo el railway.
-6. **Follow-ups menores previos** — (a) `whatsappNumber` en `GET /api/professionals` ¿intencional o se quita del DTO?; (b) ¿gatear PATCH de edición de servicios/disponibilidad? (hoy sin gate; resolver caso `clinic_admin`).
+
+---
+
+## Sesión 2026-07-01 — Gate PATCH edición + WhatsApp fuera del directorio público
+
+**Contexto:** cierre de los dos follow-ups menores de la sesión 2026-06-27 (punto 6). Decisión del usuario sobre WhatsApp: la comunicación inicial pasa por la primera solicitud de cita; solo si esa se concreta, el profesional decide compartir su WhatsApp directamente (no es un dato público del directorio).
+
+### Gate de suscripción en PATCH de servicios/disponibilidad ✅
+- `PATCH /api/professional-portal/services/{id}` ([Program.cs:2209](apps/api/Program.cs:2209)) y `PATCH /api/professional-portal/availability/{id}` ([Program.cs:2303](apps/api/Program.cs:2303)) editaban recursos existentes sin gate (los POST de creación ya estaban gateados desde `83d641e`).
+- El hueco real: `CanManageProfessionalConfigAsync` permite editar también a `clinic_admin`, que no tiene `Professional` propio → `CheckSubscriptionGateForActor(actor)` habría devuelto `null` (sin gate) sin importar el trial del profesional dueño del recurso.
+- Fix: gatear con `CheckSubscriptionGate(owner)` cargando al profesional dueño del `service.ProfessionalId`/`availability.ProfessionalId`, no al actor. Cubre por igual a profesional propio, `clinic_admin` e `internal_admin`.
+
+### WhatsApp oculto del directorio público ✅
+- Nuevo DTO `PublicProfessionalDto` + `ToPublicDto()` ([ApiContracts.cs](apps/api/Contracts/ApiContracts.cs), [MappingExtensions.cs](apps/api/Infrastructure/MappingExtensions.cs)) sin `WhatsappNumber`, mismo patrón que `PublicReviewDto`.
+- Aplicado a los 3 endpoints públicos sin auth: `GET /api/professionals`, `/by-slug/{slug}`, `/{id}` ([Program.cs:1840](apps/api/Program.cs:1840), [1862](apps/api/Program.cs:1862), [1875](apps/api/Program.cs:1875)).
+- Los endpoints autenticados del portal profesional (perfil propio, admin, verificación) siguen usando `ToDto()` con `WhatsappNumber` intacto — el profesional puede seguir viendo/editando su propio número.
+- Frontend: removidos los CTA "Contactar por WhatsApp" en `/profesionales/[slug]` y `ProfessionalCard` (portal-paciente), ya inalcanzables sin el dato.
+
+**Validado:** `dotnet build` ✅, `lint:web` ✅, `build:web` ✅ (27/27 rutas); confirmado por `curl` en vivo (API local + web dev) que ni el HTML del directorio ni la respuesta de `/api/professionals` contienen `whatsapp`/`wa.me`. Verificación de browser vía preview tool no disponible por un problema del entorno headless (no del código); se compensó con curl end-to-end.
+
+---
+
+## Próximos pasos (actualizado 2026-07-01)
+
+1. **Activar bloqueo de deploy** — Railway "Wait for CI" o branch protection en GitHub sobre `main`. **← siguiente acción.**
+2. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial.
+3. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto.
+4. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual).
+5. ✅ **Follow-ups menores previos** — cerrados ambos (gate PATCH + WhatsApp oculto, ver sesión 2026-07-01 arriba).
