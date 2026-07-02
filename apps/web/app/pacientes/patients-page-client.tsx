@@ -205,7 +205,7 @@ export function PatientsPageClient() {
                 </div>
                 <div>
                   <p className="font-medium">{patient.fullName}</p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 break-words text-sm text-slate-500">
                     {patient.email} · {patient.phone}
                   </p>
                 </div>

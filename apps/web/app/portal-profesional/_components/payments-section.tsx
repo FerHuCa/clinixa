@@ -52,12 +52,12 @@ export function PaymentsSection({
     <div id="cobros">
       <Panel
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               className={
                 paymentsMonth === currentMonth
-                  ? "rounded-md bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary ring-1 ring-teal-200"
-                  : "rounded-md border border-border bg-white px-3 py-1.5 text-xs font-medium text-slate-600"
+                  ? "rounded-md bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-teal-200"
+                  : "rounded-md border border-border bg-white px-3 py-2.5 text-xs font-medium text-slate-600"
               }
               onClick={() => onSetPaymentsMonth(currentMonth)}
               type="button"
@@ -67,8 +67,8 @@ export function PaymentsSection({
             <button
               className={
                 paymentsMonth === previousMonth
-                  ? "rounded-md bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary ring-1 ring-teal-200"
-                  : "rounded-md border border-border bg-white px-3 py-1.5 text-xs font-medium text-slate-600"
+                  ? "rounded-md bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-teal-200"
+                  : "rounded-md border border-border bg-white px-3 py-2.5 text-xs font-medium text-slate-600"
               }
               onClick={() => onSetPaymentsMonth(previousMonth)}
               type="button"
@@ -120,47 +120,89 @@ export function PaymentsSection({
               </dl>
 
               {payments.items.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-left text-xs uppercase text-slate-600">
-                        <th className="px-2 py-2 font-medium">Fecha</th>
-                        <th className="px-2 py-2 font-medium">Paciente</th>
-                        <th className="px-2 py-2 font-medium">Servicio</th>
-                        <th className="px-2 py-2 text-right font-medium">Bruto</th>
-                        <th className="px-2 py-2 text-right font-medium">Comisión</th>
-                        <th className="px-2 py-2 text-right font-medium">Neto</th>
-                        <th className="px-2 py-2 font-medium">Método</th>
-                        <th className="px-2 py-2 font-medium">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {payments.items.map((item) => {
-                        const methodUi = paymentMethodUi(item.provider);
-                        const estadoUi = pagoStatusUiFor({ paymentStatus: item.status });
+                (() => {
+                  const rows = payments.items.map((item) => ({
+                    item,
+                    methodUi: paymentMethodUi(item.provider),
+                    estadoUi: pagoStatusUiFor({ paymentStatus: item.status }),
+                    fecha: item.appointmentDate || item.createdAt.slice(0, 10),
+                    bruto: moneyExact(item.grossAmount),
+                    comision: item.commissionAmount > 0 ? `−${moneyExact(item.commissionAmount)}` : moneyExact(0),
+                    neto: moneyExact(item.netAmount),
+                  }));
 
-                        return (
-                          <tr key={item.paymentId}>
-                            <td className="whitespace-nowrap px-2 py-2.5">{item.appointmentDate || item.createdAt.slice(0, 10)}</td>
-                            <td className="px-2 py-2.5 font-medium">{item.patientName}</td>
-                            <td className="px-2 py-2.5 text-slate-600">{item.serviceName}</td>
-                            <td className="whitespace-nowrap px-2 py-2.5 text-right">{moneyExact(item.grossAmount)}</td>
-                            <td className="whitespace-nowrap px-2 py-2.5 text-right text-slate-500">
-                              {item.commissionAmount > 0 ? `−${moneyExact(item.commissionAmount)}` : moneyExact(0)}
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium">{moneyExact(item.netAmount)}</td>
-                            <td className="px-2 py-2.5">
+                  return (
+                    <>
+                      <div className="hidden overflow-x-auto md:block">
+                        <table className="w-full min-w-[720px] text-sm">
+                          <thead>
+                            <tr className="border-b border-border text-left text-xs uppercase text-slate-600">
+                              <th className="px-2 py-2 font-medium">Fecha</th>
+                              <th className="px-2 py-2 font-medium">Paciente</th>
+                              <th className="px-2 py-2 font-medium">Servicio</th>
+                              <th className="px-2 py-2 text-right font-medium">Bruto</th>
+                              <th className="px-2 py-2 text-right font-medium">Comisión</th>
+                              <th className="px-2 py-2 text-right font-medium">Neto</th>
+                              <th className="px-2 py-2 font-medium">Método</th>
+                              <th className="px-2 py-2 font-medium">Estado</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {rows.map(({ item, methodUi, estadoUi, fecha, bruto, comision, neto }) => (
+                              <tr key={item.paymentId}>
+                                <td className="whitespace-nowrap px-2 py-2.5">{fecha}</td>
+                                <td className="px-2 py-2.5 font-medium">{item.patientName}</td>
+                                <td className="px-2 py-2.5 text-slate-600">{item.serviceName}</td>
+                                <td className="whitespace-nowrap px-2 py-2.5 text-right">{bruto}</td>
+                                <td className="whitespace-nowrap px-2 py-2.5 text-right text-slate-500">{comision}</td>
+                                <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium">{neto}</td>
+                                <td className="px-2 py-2.5">
+                                  <StatusPill label={methodUi.label} status={methodUi.status} />
+                                </td>
+                                <td className="px-2 py-2.5">
+                                  <StatusPill label={estadoUi.label} status={estadoUi.pill} />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="space-y-3 md:hidden">
+                        {rows.map(({ item, methodUi, estadoUi, fecha, bruto, comision, neto }) => (
+                          <div key={item.paymentId} className="rounded-md border border-border bg-white p-4 text-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="font-medium">{item.patientName}</span>
+                              <span className="whitespace-nowrap text-slate-500">{fecha}</span>
+                            </div>
+                            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                              <div>
+                                <dt className="text-xs text-slate-500">Servicio</dt>
+                                <dd className="text-slate-600">{item.serviceName}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-xs text-slate-500">Bruto</dt>
+                                <dd>{bruto}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-xs text-slate-500">Comisión</dt>
+                                <dd className="text-slate-500">{comision}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-xs text-slate-500">Neto</dt>
+                                <dd className="font-medium">{neto}</dd>
+                              </div>
+                            </dl>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
                               <StatusPill label={methodUi.label} status={methodUi.status} />
-                            </td>
-                            <td className="px-2 py-2.5">
                               <StatusPill label={estadoUi.label} status={estadoUi.pill} />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()
               ) : (
                 <div className="rounded-md border border-border bg-slate-50 px-3 py-3 text-sm text-slate-500">
                   Sin cobros registrados en {monthLabel(paymentsMonth)}. Los pagos en línea y los cobros en efectivo que

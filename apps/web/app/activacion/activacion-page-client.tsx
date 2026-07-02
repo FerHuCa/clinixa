@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, BadgeCheck, CheckCircle2, ChevronRight, Clock, MapPin, Rocket, Save } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -125,7 +125,7 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
           onClick={onSkip}
@@ -134,7 +134,7 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
           Omitir por ahora
         </button>
         <button
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -256,7 +256,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
           onClick={onSkip}
@@ -265,7 +265,7 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
           Omitir por ahora
         </button>
         <button
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -360,7 +360,7 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
           onClick={onSkip}
@@ -369,7 +369,7 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
           Omitir por ahora
         </button>
         <button
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -531,6 +531,7 @@ export function ActivacionPageClient() {
   const [onboarding, setOnboarding] = useState<ProfessionalOnboarding | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [currentStep, setCurrentStep] = useState<StepId>(0);
+  const activePillRef = useRef<HTMLButtonElement | null>(null);
   const [stepStates, setStepStates] = useState<StepState[]>([
     { completed: false },
     { completed: false },
@@ -617,6 +618,10 @@ export function ActivacionPageClient() {
       cancelled = true;
     };
   }, [currentUser.id, currentUser.primaryRole, loadProfessionalDashboard, loadProfessionalOnboarding, ready]);
+
+  useEffect(() => {
+    activePillRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [currentStep]);
 
   async function refreshOnboarding() {
     const next = await loadProfessionalOnboarding();
@@ -773,11 +778,12 @@ export function ActivacionPageClient() {
                     className="flex shrink-0 items-center gap-0"
                     key={label}
                     onClick={() => goToStep(index as StepId)}
+                    ref={active ? activePillRef : null}
                     type="button"
                   >
                     <div
                       className={[
-                        "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition",
+                        "flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition",
                         active
                           ? "bg-primary text-white"
                           : done

@@ -32,7 +32,7 @@ type Props = {
 
 export function SidebarMyAppointments({ appointmentActionId, upcomingAppointments, onCancel, onPay, onReschedule }: Props) {
   return (
-    <div className="scroll-mt-24" id="mis-citas">
+    <div className="scroll-mt-32" id="mis-citas">
       <Panel title="Mis citas">
         <div className="divide-y divide-border">
           {upcomingAppointments.length > 0 ? (
@@ -57,10 +57,10 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                     <span>{appointment.time}</span>
                     <span>{modeLabel(appointment.mode)}</span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-3">
                     {canPayOnline(appointment) ? (
                       <button
-                        className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
                         disabled={appointmentActionId === appointment.id}
                         onClick={() => onPay(appointment)}
                         type="button"
@@ -69,7 +69,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                       </button>
                     ) : null}
                     <button
-                      className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-60"
+                      className="rounded-md border border-border px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
                       disabled={appointmentActionId === appointment.id}
                       onClick={() => onReschedule(appointment)}
                       type="button"
@@ -77,7 +77,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                       {appointmentActionId === appointment.id ? "Procesando..." : "Reprogramar"}
                     </button>
                     <button
-                      className="rounded-md border border-rose-200 px-2.5 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-60"
+                      className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 disabled:opacity-60"
                       disabled={appointmentActionId === appointment.id}
                       onClick={() => onCancel(appointment)}
                       type="button"

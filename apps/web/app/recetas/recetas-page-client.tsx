@@ -233,7 +233,7 @@ export function RecetasPageClient() {
                 value={draft.instructions}
               />
             </label>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <span>Resurtidos:</span>
                 <input
@@ -245,7 +245,7 @@ export function RecetasPageClient() {
                 />
               </label>
               <button
-                className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
                 disabled={saving}
                 onClick={handleCreate}
                 type="button"
@@ -289,13 +289,13 @@ export function RecetasPageClient() {
                   </div>
                   <button
                     aria-label="Imprimir / Descargar PDF"
-                    className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                     disabled={downloadingId === rx.id}
                     onClick={() => handleDownloadPdf(rx)}
                     title="Imprimir / Descargar PDF"
                     type="button"
                   >
-                    <Download size={14} />
+                    <Download size={16} />
                     {downloadingId === rx.id ? "..." : "PDF"}
                   </button>
                 </div>

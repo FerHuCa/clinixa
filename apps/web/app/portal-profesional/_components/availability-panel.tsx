@@ -59,22 +59,30 @@ export function AvailabilityPanel({
                   <option value={6}>Sábado</option>
                   <option value={7}>Domingo</option>
                 </select>
-                <input
-                  className="rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
-                  onChange={(event) =>
-                    onAvailabilityDraftChange((current) => ({ ...current, [slot.id]: { ...draft, startsAt: event.target.value } }))
-                  }
-                  type="time"
-                  value={draft.startsAt}
-                />
-                <input
-                  className="rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
-                  onChange={(event) =>
-                    onAvailabilityDraftChange((current) => ({ ...current, [slot.id]: { ...draft, endsAt: event.target.value } }))
-                  }
-                  type="time"
-                  value={draft.endsAt}
-                />
+                <div className="grid grid-cols-2 gap-2 sm:contents">
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-600 sm:sr-only">De</span>
+                    <input
+                      className="w-full rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
+                      onChange={(event) =>
+                        onAvailabilityDraftChange((current) => ({ ...current, [slot.id]: { ...draft, startsAt: event.target.value } }))
+                      }
+                      type="time"
+                      value={draft.startsAt}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-600 sm:sr-only">A</span>
+                    <input
+                      className="w-full rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
+                      onChange={(event) =>
+                        onAvailabilityDraftChange((current) => ({ ...current, [slot.id]: { ...draft, endsAt: event.target.value } }))
+                      }
+                      type="time"
+                      value={draft.endsAt}
+                    />
+                  </label>
+                </div>
                 <button
                   className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
                   disabled={configActionId === slot.id}
@@ -104,18 +112,26 @@ export function AvailabilityPanel({
             <option value={6}>Sábado</option>
             <option value={7}>Domingo</option>
           </select>
-          <input
-            className="rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
-            onChange={(event) => onNewAvailabilityChange((current) => ({ ...current, startsAt: event.target.value }))}
-            type="time"
-            value={newAvailability.startsAt}
-          />
-          <input
-            className="rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
-            onChange={(event) => onNewAvailabilityChange((current) => ({ ...current, endsAt: event.target.value }))}
-            type="time"
-            value={newAvailability.endsAt}
-          />
+          <div className="grid grid-cols-2 gap-2 sm:contents">
+            <label className="block">
+              <span className="mb-1 block text-xs text-slate-600 sm:sr-only">De</span>
+              <input
+                className="w-full rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
+                onChange={(event) => onNewAvailabilityChange((current) => ({ ...current, startsAt: event.target.value }))}
+                type="time"
+                value={newAvailability.startsAt}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs text-slate-600 sm:sr-only">A</span>
+              <input
+                className="w-full rounded-md border border-border px-3 py-2 outline-none focus:border-teal-400"
+                onChange={(event) => onNewAvailabilityChange((current) => ({ ...current, endsAt: event.target.value }))}
+                type="time"
+                value={newAvailability.endsAt}
+              />
+            </label>
+          </div>
           <button
             className="flex items-center justify-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"
             disabled={configActionId === "new-availability"}

@@ -40,14 +40,14 @@ export function UserMenu({ fullName }: UserMenuProps) {
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={`Menú de usuario: ${fullName}`}
-        className="flex items-center gap-2 rounded-md border border-border bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+        className="flex min-h-11 items-center gap-2 rounded-md border border-border bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
         <div aria-hidden="true" className="h-5 w-5 rounded-full bg-primary text-xs font-bold text-white flex items-center justify-center">
           {fullName.charAt(0)}
         </div>
-        <span>{fullName}</span>
+        <span className="max-w-[180px] truncate lg:max-w-none">{fullName}</span>
         <ChevronDown aria-hidden="true" className={`transition ${isOpen ? "rotate-180" : ""}`} size={16} />
       </button>
 

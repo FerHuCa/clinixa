@@ -125,7 +125,7 @@ export function AgendaPageClient() {
 
         <aside className="space-y-5">
           <Panel title="Crear cita">
-            <form className="space-y-4 p-4 text-sm" id="crear-cita" onSubmit={handleSubmit}>
+            <form className="scroll-mt-28 space-y-4 p-4 text-sm" id="crear-cita" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                 <select

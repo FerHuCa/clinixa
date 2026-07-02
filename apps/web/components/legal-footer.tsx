@@ -23,14 +23,14 @@ export function LegalFooter() {
   return (
     <footer className="border-t border-border px-5 py-6 text-center text-xs text-slate-500">
       <div className="flex flex-wrap items-center justify-center gap-4">
-        <Link className="hover:text-primary" href="/privacy">
+        <Link className="inline-block py-2 hover:text-primary" href="/privacy">
           Aviso de Privacidad
         </Link>
-        <Link className="hover:text-primary" href="/terms">
+        <Link className="inline-block py-2 hover:text-primary" href="/terms">
           Términos y Condiciones
         </Link>
       </div>
-      <p className="mt-3">{parts.join(" · ")}</p>
+      <p className="mt-3 break-words">{parts.join(" · ")}</p>
     </footer>
   );
 }

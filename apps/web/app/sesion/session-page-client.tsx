@@ -201,7 +201,7 @@ export function SessionPageClient() {
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-slate-500">{session.email}</p>
+                      <p className="mt-1 break-all text-sm text-slate-500">{session.email}</p>
                       <p className="mt-3 text-sm font-medium text-slate-700">{roleLabel(session.primaryRole)}</p>
                     </div>
                   </button>

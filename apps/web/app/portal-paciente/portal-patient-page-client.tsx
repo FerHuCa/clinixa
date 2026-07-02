@@ -293,6 +293,10 @@ export function PatientPortalPageClient() {
   }
 
   async function cancelPatientAppointment(appointment: Appointment) {
+    if (!window.confirm("¿Cancelar esta cita? Si ya pagaste, se emitirá un reembolso.")) {
+      return;
+    }
+
     setAppointmentActionId(appointment.id);
 
     const hadApprovedPayment = paymentStatusOf(appointment) === "approved";
@@ -405,11 +409,11 @@ export function PatientPortalPageClient() {
                   const paying = appointmentActionId === bookingSuccess.appointment.id;
 
                   return (
-                    <div className="scroll-mt-24" id="solicitud-enviada">
+                    <div className="scroll-mt-32" id="solicitud-enviada">
                       <Panel
                         action={
                           <button
-                            className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                            className="-m-2 p-2 text-xs font-medium text-slate-500 hover:text-slate-700"
                             onClick={() => setBookingSuccess(null)}
                             type="button"
                           >
@@ -557,9 +561,9 @@ export function PatientPortalPageClient() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-sm font-semibold text-slate-700">
                     {currentPatient?.initials ?? initials(currentUser.fullName)}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold">{currentPatient?.fullName ?? currentUser.fullName}</p>
-                    <p className="text-sm text-slate-500">{currentUser.email}</p>
+                    <p className="truncate text-sm text-slate-500">{currentUser.email}</p>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 text-sm">

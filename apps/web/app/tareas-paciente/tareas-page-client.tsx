@@ -139,7 +139,7 @@ export function TareasPageClient() {
                 value={draft.description}
               />
             </label>
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <label className="block flex-1">
                 <span className="text-xs font-medium uppercase text-slate-600">Fecha límite (opcional)</span>
                 <input
@@ -150,7 +150,7 @@ export function TareasPageClient() {
                 />
               </label>
               <button
-                className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
                 disabled={saving}
                 onClick={handleCreate}
                 type="button"
@@ -163,10 +163,10 @@ export function TareasPageClient() {
         </Panel>
 
         <Panel title="Tareas asignadas">
-          <div className="flex gap-1 border-b border-border px-4 pt-2">
+          <div className="flex gap-1 overflow-x-auto border-b border-border px-4 pt-2">
             {STATUS_TABS.map((tab) => (
               <button
-                className={`px-3 py-2 text-sm font-medium transition ${
+                className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium transition ${
                   activeTab === tab.value
                     ? "border-b-2 border-primary text-primary"
                     : "text-slate-500 hover:text-slate-700"
@@ -188,7 +188,8 @@ export function TareasPageClient() {
               {filtered.map((task) => (
                 <div className="flex items-start gap-3 p-4" key={task.id}>
                   <button
-                    className="mt-0.5 shrink-0 transition hover:opacity-70"
+                    aria-label={task.status === "pending" ? "Marcar como completada" : "Marcar como pendiente"}
+                    className="-mb-2.5 -ml-2.5 -mr-2.5 -mt-2 shrink-0 p-2.5 transition hover:opacity-70"
                     onClick={() => handleToggle(task)}
                     title={task.status === "pending" ? "Marcar como completada" : "Marcar como pendiente"}
                     type="button"

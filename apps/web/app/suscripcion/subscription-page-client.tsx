@@ -310,7 +310,7 @@ export function SubscriptionPageClient() {
                         </p>
                       ) : null}
                       <button
-                        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white text-center disabled:opacity-50 sm:w-auto"
                         disabled={registering}
                         onClick={registerInterest}
                         type="button"

@@ -44,7 +44,7 @@ export default async function ProfessionalsDirectoryPage({ searchParams }: Props
         </Link>
         <Link
           href="/sign-up"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
         >
           Crear cuenta
         </Link>
@@ -86,11 +86,11 @@ export default async function ProfessionalsDirectoryPage({ searchParams }: Props
         </form>
 
         {/* Chips de especialidad */}
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div className="mb-8 flex flex-wrap gap-x-2 gap-y-3">
           {/* Chip "Todas" */}
           <Link
             href={query ? `/profesionales?q=${encodeURIComponent(query)}` : "/profesionales"}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
               !especialidad || especialidad === "all"
                 ? "border-primary bg-primary text-white"
                 : "border-border bg-white text-slate-600 hover:border-primary/40 hover:text-primary"
@@ -107,7 +107,7 @@ export default async function ProfessionalsDirectoryPage({ searchParams }: Props
               <Link
                 key={opt.value}
                 href={href}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                   isActive
                     ? "border-primary bg-primary text-white"
                     : "border-border bg-white text-slate-600 hover:border-primary/40 hover:text-primary"

@@ -83,9 +83,9 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
                 <StatusPill label={patient.statusLabel} status={patient.status} />
               </div>
               <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-start gap-2 text-slate-600">
                   <Mail size={16} />
-                  {patient.email}
+                  <span className="min-w-0 break-all">{patient.email}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600">
                   <Phone size={16} />

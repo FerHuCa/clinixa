@@ -50,7 +50,7 @@ export function BookingRequestForm({
   onSubmit
 }: Props) {
   return (
-    <div className="scroll-mt-24" id="solicitar-cita">
+    <div className="scroll-mt-32" id="solicitar-cita">
       <Panel title="Solicitar cita">
         <div className="grid gap-4 p-4 lg:grid-cols-2">
           <div className="lg:col-span-2">

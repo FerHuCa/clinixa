@@ -33,7 +33,7 @@ type Props = {
 export function OnboardingChecklist({ canPublish, completedSteps, steps, missing, publishing, onPublish }: Props) {
   return (
     <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <Rocket size={20} className="mt-0.5 shrink-0 text-amber-600" />
           <div>
@@ -43,7 +43,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
             </p>
           </div>
         </div>
-        <span className="shrink-0 rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+        <span className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
           {completedSteps} de {steps.length} completados
         </span>
       </div>

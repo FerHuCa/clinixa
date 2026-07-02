@@ -319,7 +319,7 @@ export function MiSaludPageClient() {
                             ? "Marcar pendiente"
                             : "Marcar completada"
                         }
-                        className="mt-0.5 shrink-0 disabled:opacity-50"
+                        className="-mb-2.5 -ml-2.5 -mr-2.5 -mt-2 shrink-0 p-2.5 disabled:opacity-50"
                         disabled={isSaving}
                         onClick={() => { void handleToggleTaskStatus(task); }}
                         type="button"
@@ -359,7 +359,7 @@ export function MiSaludPageClient() {
                         <div className="mt-1.5 flex flex-wrap items-center gap-3">
                           {task.status !== "completed" && (
                             <button
-                              className="text-xs font-medium text-teal-600 hover:text-teal-800 disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-teal-600 hover:text-teal-800 disabled:opacity-50"
                               disabled={isSaving}
                               onClick={() => { void handleToggleTaskStatus(task); }}
                               type="button"
@@ -369,7 +369,7 @@ export function MiSaludPageClient() {
                           )}
                           {task.status === "completed" && (
                             <button
-                              className="text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
                               disabled={isSaving}
                               onClick={() => { void handleToggleTaskStatus(task); }}
                               type="button"
@@ -379,7 +379,7 @@ export function MiSaludPageClient() {
                           )}
                           {task.status === "skipped" && (
                             <button
-                              className="text-xs font-medium text-amber-600 hover:text-amber-800 disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-amber-600 hover:text-amber-800 disabled:opacity-50"
                               disabled={isSaving}
                               onClick={() => { void handleToggleTaskStatus(task); }}
                               type="button"

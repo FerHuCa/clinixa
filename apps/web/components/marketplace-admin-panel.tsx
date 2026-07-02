@@ -105,7 +105,7 @@ export function MarketplaceAdminPanel() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium">{item.displayName}</p>
-                  <p className="mt-1 text-sm text-slate-500">{item.email || "Sin correo"}</p>
+                  <p className="mt-1 break-all text-sm text-slate-500">{item.email || "Sin correo"}</p>
                   <p className="mt-1 text-xs text-slate-500">Conexión: {formatDate(item.connectedAt)}</p>
                 </div>
                 <StatusPill
@@ -113,9 +113,9 @@ export function MarketplaceAdminPanel() {
                   status={item.verificationStatus === "verified" ? "active" : item.verificationStatus === "rejected" ? "cancelled" : "pending"}
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
-                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"
                   disabled={actingId === item.id}
                   onClick={() => applyVerification(item, "verified")}
                   type="button"
@@ -124,7 +124,7 @@ export function MarketplaceAdminPanel() {
                   {actingId === item.id ? "Guardando..." : "Verificar"}
                 </button>
                 <button
-                  className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 disabled:opacity-50"
                   disabled={actingId === item.id}
                   onClick={() => applyVerification(item, "rejected")}
                   type="button"

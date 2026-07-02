@@ -46,7 +46,7 @@ export function NextAppointmentHero({ appointment, appointmentActionId, onPay }:
   return (
     <Panel
       action={
-        <a className="text-xs font-medium text-primary hover:underline" href="#mis-citas">
+        <a className="inline-flex items-center -m-2 p-2 text-xs font-medium text-primary hover:underline" href="#mis-citas">
           Ver todas mis citas
         </a>
       }

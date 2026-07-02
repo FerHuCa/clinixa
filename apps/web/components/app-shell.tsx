@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Activity, CalendarDays, ClipboardCheck, ClipboardList, HeartPulse, Home, LogIn, Pill, Salad, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { Activity, CalendarDays, ClipboardCheck, ClipboardList, HeartPulse, Home, LogIn, Menu, Pill, Salad, Settings, ShieldCheck, UserRound, X } from "lucide-react";
 import { clsx } from "clsx";
 import { LegalFooter } from "@/components/legal-footer";
 import { useHealthHubStore, type ProfessionalOnboarding, type SubscriptionStatus } from "@/lib/healthhub-store";
@@ -138,6 +138,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // equivocado).
   const homeHref = navReady ? getHomeHref(currentUser.primaryRole) : pathname || "#";
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+
+    // El drawer solo existe bajo lg: si el viewport cruza a escritorio con el
+    // menu abierto, cerrarlo para no dejar el body sin scroll.
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    function handleDesktop(event: MediaQueryListEvent) {
+      if (event.matches) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    desktop.addEventListener("change", handleDesktop);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      desktop.removeEventListener("change", handleDesktop);
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
   return (
     <main className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white px-5 py-6 lg:block">
@@ -191,29 +224,90 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="text-sm font-semibold">Clinixa</span>
           </Link>
+          <button
+            aria-controls="menu-movil"
+            aria-expanded={menuOpen}
+            aria-label="Abrir menú"
+            className="flex h-11 w-11 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+            onClick={() => setMenuOpen(true)}
+            type="button"
+          >
+            <Menu aria-hidden="true" size={22} />
+          </button>
         </div>
-        <nav aria-label="Navegación principal" className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(pathname, item.href);
-
-            return (
-              <Link
-                aria-current={active ? "page" : undefined}
-                className={clsx(
-                  "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2",
-                  active ? "border-teal-200 bg-teal-50 text-primary" : "border-border bg-white text-slate-700"
-                )}
-                href={item.href}
-                key={item.href}
-              >
-                <Icon aria-hidden="true" size={16} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
       </header>
+
+      {menuOpen ? (
+        <div className="lg:hidden">
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div
+            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] overflow-y-auto bg-white px-5 py-6"
+            id="menu-movil"
+          >
+            <div className="flex items-center justify-between">
+              <Link
+                aria-label="Inicio — Clinixa"
+                className="flex items-center gap-3"
+                href={homeHref}
+                onClick={() => setMenuOpen(false)}
+              >
+                <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
+                  <Activity size={22} />
+                </div>
+                <p className="text-sm font-semibold">Clinixa</p>
+              </Link>
+              <button
+                aria-label="Cerrar menú"
+                className="flex h-11 w-11 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+                onClick={() => setMenuOpen(false)}
+                type="button"
+              >
+                <X aria-hidden="true" size={22} />
+              </button>
+            </div>
+
+            <nav aria-label="Navegación principal" className="mt-10 space-y-1 text-sm">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(pathname, item.href);
+
+                return (
+                  <Link
+                    aria-current={active ? "page" : undefined}
+                    className={clsx(
+                      "flex min-h-11 w-full items-center gap-3 rounded-md px-3 py-2 text-left transition",
+                      active ? "bg-teal-50 font-medium text-primary" : "text-slate-700 hover:bg-slate-100"
+                    )}
+                    href={item.href}
+                    key={item.href}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Icon aria-hidden="true" size={18} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {activation ? (
+              <Link
+                className="mt-6 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                href="/activacion"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span>Activación</span>
+                <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                  {activation.done}/4
+                </span>
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <section className="lg:pl-64">
         {sessionError ? (

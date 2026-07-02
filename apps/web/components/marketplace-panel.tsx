@@ -107,8 +107,8 @@ export function MarketplacePanel() {
             {status.email ? (
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-slate-500">Cuenta</dt>
-                  <dd className="font-medium">{status.email}</dd>
+                  <dt className="shrink-0 text-slate-500">Cuenta</dt>
+                  <dd className="min-w-0 break-all text-right font-medium">{status.email}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-slate-500">Comisión de plataforma</dt>
@@ -132,8 +132,8 @@ export function MarketplacePanel() {
             {status.email ? (
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-slate-500">Cuenta</dt>
-                  <dd className="font-medium">{status.email}</dd>
+                  <dt className="shrink-0 text-slate-500">Cuenta</dt>
+                  <dd className="min-w-0 break-all text-right font-medium">{status.email}</dd>
                 </div>
               </dl>
             ) : null}

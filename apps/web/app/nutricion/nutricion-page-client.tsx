@@ -373,36 +373,62 @@ export function NutricionPageClient() {
               ) : measurements.length === 0 ? (
                 <div className="p-4 text-sm text-slate-500">Aún no hay medidas registradas.</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-600">
-                        <th className="px-4 py-2">Fecha</th>
-                        <th className="px-4 py-2">Paciente</th>
-                        <th className="px-4 py-2">Peso</th>
-                        <th className="px-4 py-2">Talla</th>
-                        <th className="px-4 py-2">Cintura</th>
-                        <th className="px-4 py-2">Cadera</th>
-                        <th className="px-4 py-2">% Grasa</th>
-                        <th className="px-4 py-2">Músculo</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {measurements.map((m) => (
-                        <tr className="hover:bg-slate-50" key={m.id}>
-                          <td className="px-4 py-3 text-slate-600">{m.measuredAt.slice(0, 10)}</td>
-                          <td className="px-4 py-3 font-medium">{m.patientName}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.weightKg ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.heightCm ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.waistCm ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.hipCm ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.bodyFatPercentage != null ? `${m.bodyFatPercentage}%` : "—"}</td>
-                          <td className="px-4 py-3 text-slate-600">{m.muscleMassKg ?? "—"}</td>
+                <>
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left text-xs font-medium uppercase text-slate-600">
+                          <th className="px-4 py-2">Fecha</th>
+                          <th className="px-4 py-2">Paciente</th>
+                          <th className="px-4 py-2">Peso</th>
+                          <th className="px-4 py-2">Talla</th>
+                          <th className="px-4 py-2">Cintura</th>
+                          <th className="px-4 py-2">Cadera</th>
+                          <th className="px-4 py-2">% Grasa</th>
+                          <th className="px-4 py-2">Músculo</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {measurements.map((m) => (
+                          <tr className="hover:bg-slate-50" key={m.id}>
+                            <td className="px-4 py-3 text-slate-600">{m.measuredAt.slice(0, 10)}</td>
+                            <td className="px-4 py-3 font-medium">{m.patientName}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.weightKg ?? "—"}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.heightCm ?? "—"}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.waistCm ?? "—"}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.hipCm ?? "—"}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.bodyFatPercentage != null ? `${m.bodyFatPercentage}%` : "—"}</td>
+                            <td className="px-4 py-3 text-slate-600">{m.muscleMassKg ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="space-y-3 p-4 md:hidden">
+                    {measurements.map((m) => (
+                      <div className="rounded-md border border-border bg-white p-4" key={m.id}>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium">{m.patientName}</p>
+                          <span className="shrink-0 text-xs text-slate-500">{m.measuredAt.slice(0, 10)}</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          <span className="text-slate-500">Peso</span>
+                          <span>{m.weightKg ?? "—"}</span>
+                          <span className="text-slate-500">Talla</span>
+                          <span>{m.heightCm ?? "—"}</span>
+                          <span className="text-slate-500">Cintura</span>
+                          <span>{m.waistCm ?? "—"}</span>
+                          <span className="text-slate-500">Cadera</span>
+                          <span>{m.hipCm ?? "—"}</span>
+                          <span className="text-slate-500">% Grasa</span>
+                          <span>{m.bodyFatPercentage != null ? `${m.bodyFatPercentage}%` : "—"}</span>
+                          <span className="text-slate-500">Músculo</span>
+                          <span>{m.muscleMassKg ?? "—"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </Panel>
           </>

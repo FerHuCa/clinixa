@@ -150,7 +150,7 @@ export function OnboardingPageClient() {
   if (phase === "error") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-        <div className="w-full max-w-md space-y-4 rounded-lg border border-amber-200 bg-white p-8 text-center shadow-sm">
+        <div className="w-full max-w-md space-y-4 rounded-lg border border-amber-200 bg-white p-5 sm:p-8 text-center shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">No pudimos cargar tu perfil</h1>
           <p className="text-sm text-slate-600">
             Hubo un problema al validar tu sesión. Revisa tu conexión e intenta de nuevo.
@@ -172,7 +172,7 @@ export function OnboardingPageClient() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-8">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-white p-5 sm:p-8 shadow-sm">
         <div className="text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-white mx-auto mb-3">
             <UserRound size={24} />
@@ -201,7 +201,7 @@ export function OnboardingPageClient() {
             <label className="block text-sm font-medium text-slate-900">¿Cuál es tu rol?</label>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <button
-                className={`flex items-center gap-2 rounded-md border-2 px-4 py-3 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-md border-2 px-3 py-3 text-sm font-medium transition ${
                   data.role === "patient"
                     ? "border-primary bg-primary/5 text-primary"
                     : "border-border bg-white text-slate-600 hover:border-slate-300"
@@ -214,7 +214,7 @@ export function OnboardingPageClient() {
                 Paciente
               </button>
               <button
-                className={`flex items-center gap-2 rounded-md border-2 px-4 py-3 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-md border-2 px-3 py-3 text-sm font-medium transition ${
                   data.role === "professional"
                     ? "border-primary bg-primary/5 text-primary"
                     : "border-border bg-white text-slate-600 hover:border-slate-300"

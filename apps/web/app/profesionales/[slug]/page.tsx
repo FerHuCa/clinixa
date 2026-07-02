@@ -100,7 +100,7 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
           </div>
         </Link>
         <Link
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          className="rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
           href="/sign-up"
         >
           Crear cuenta
@@ -139,7 +139,7 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
               {/* CTAs */}
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
-                  className="flex items-center gap-2 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground transition hover:bg-slate-50"
+                  className="flex items-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-slate-50"
                   href="/sign-up"
                 >
                   <UserRound size={16} />
@@ -160,7 +160,7 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
             {pro.bio && (
               <section className="rounded-md border border-border bg-white p-6">
                 <h2 className="mb-3 text-base font-semibold text-foreground">Acerca de</h2>
-                <p className="text-sm leading-7 text-slate-600 whitespace-pre-line">{pro.bio}</p>
+                <p className="text-sm leading-7 text-slate-600 whitespace-pre-line break-words">{pro.bio}</p>
               </section>
             )}
 
@@ -234,7 +234,7 @@ export default async function ProfessionalProfilePage({ params }: PageProps) {
                 ¿Quieres agendar una cita con {pro.displayName.split(" ")[0]}?
               </p>
               <Link
-                className="mt-3 block rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                className="mt-3 block rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
                 href="/sign-up"
               >
                 Crear cuenta para agendar

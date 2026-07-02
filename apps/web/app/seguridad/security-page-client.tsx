@@ -434,7 +434,7 @@ export function SecurityPageClient() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">{invitation.fullName}</p>
-                          <p className="mt-1 text-sm text-slate-500">{invitation.email}</p>
+                          <p className="mt-1 truncate text-sm text-slate-500">{invitation.email}</p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
                           <StatusPill
@@ -455,9 +455,9 @@ export function SecurityPageClient() {
                         </div>
                       </div>
                       {invitation.status === "pending" ? (
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-3">
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-border bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-md border border-border bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-700 disabled:opacity-50"
                             disabled={securityAction === `copy-${invitation.id}`}
                             onClick={() => copyInvitationLink(invitation)}
                             type="button"
@@ -466,7 +466,7 @@ export function SecurityPageClient() {
                             Copiar enlace
                           </button>
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
                             disabled={securityAction === `remind-${invitation.id}`}
                             onClick={() => remindInvitation(invitation.id)}
                             type="button"
@@ -475,7 +475,7 @@ export function SecurityPageClient() {
                             Reenviar
                           </button>
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
                             disabled={securityAction === `revoke-${invitation.id}`}
                             onClick={() => revokeInvitation(invitation.id)}
                             type="button"
@@ -563,7 +563,7 @@ export function SecurityPageClient() {
                               <p className="mt-1 text-xs text-slate-500">
                                 Cédula: <span className="font-medium text-slate-700">{item.licenseNumber || "No capturada"}</span>
                               </p>
-                              <p className="mt-1 text-xs text-slate-500">
+                              <p className="mt-1 truncate text-xs text-slate-500">
                                 {item.email || "Sin correo"} · Registrado {formatDate(item.createdAt)}
                               </p>
                             </div>
@@ -579,9 +579,9 @@ export function SecurityPageClient() {
                           </div>
                           {item.verificationStatus !== "verified" ? (
                             <div className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-3">
                                 <button
-                                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
+                                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
                                   disabled={securityAction === `verify-${item.id}`}
                                   onClick={() => applyVerification(item, "verified", "Cédula validada manualmente por el administrador.")}
                                   type="button"
@@ -591,7 +591,7 @@ export function SecurityPageClient() {
                                 </button>
                                 {item.verificationStatus !== "rejected" ? (
                                   <button
-                                    className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
                                     disabled={securityAction === `verify-${item.id}`}
                                     onClick={() => setRejectingId((current) => (current === item.id ? "" : item.id))}
                                     type="button"

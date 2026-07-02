@@ -22,7 +22,7 @@ export default function WelcomePage() {
             <p className="text-xs text-slate-500">Continuidad de atención</p>
           </div>
         </div>
-        <Link className="text-sm font-medium text-primary" href="/sign-in">
+        <Link className="-m-2 p-2 text-sm font-medium text-primary" href="/sign-in">
           Iniciar sesión
         </Link>
       </header>

@@ -15,7 +15,7 @@ export function LegalDocumentPage({ document }: { document: LegalDocument }) {
           </div>
           <p className="text-sm font-semibold">Clinixa</p>
         </div>
-        <Link className="flex items-center gap-1 text-sm font-medium text-primary" href="/bienvenida">
+        <Link className="-mx-2 flex min-h-11 items-center gap-1 px-2 text-sm font-medium text-primary" href="/bienvenida">
           <ArrowLeft size={15} />
           Volver
         </Link>

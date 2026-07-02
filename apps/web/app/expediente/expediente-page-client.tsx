@@ -126,7 +126,7 @@ export function ExpedientePageClient() {
 
         <aside className="space-y-5">
           <Panel title="Borrador SOAP">
-            <form className="space-y-4 p-4 text-sm" id="borrador-soap" onSubmit={handleSubmit}>
+            <form className="scroll-mt-28 space-y-4 p-4 text-sm" id="borrador-soap" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
                 <select

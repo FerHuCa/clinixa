@@ -76,11 +76,11 @@ export default function SignUpPage() {
 
           <p className="mt-4 text-center text-xs leading-5 text-slate-600">
             Al crear una cuenta aceptas el{" "}
-            <Link className="text-primary underline-offset-2 hover:underline" href="/privacy" target="_blank">
+            <Link className="inline-block py-1.5 text-primary underline-offset-2 hover:underline" href="/privacy" target="_blank">
               Aviso de Privacidad
             </Link>{" "}
             y los{" "}
-            <Link className="text-primary underline-offset-2 hover:underline" href="/terms" target="_blank">
+            <Link className="inline-block py-1.5 text-primary underline-offset-2 hover:underline" href="/terms" target="_blank">
               Términos
             </Link>
             . Confirmarás tu consentimiento al completar tu perfil.
@@ -89,7 +89,7 @@ export default function SignUpPage() {
       ) : (
         <div className="flex flex-col items-center gap-3">
           <button
-            className="flex items-center gap-1 text-sm font-medium text-primary"
+            className="-mx-3 flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-primary"
             onClick={() => setRole(null)}
             type="button"
           >
