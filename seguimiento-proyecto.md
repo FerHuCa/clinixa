@@ -3209,3 +3209,35 @@ Todo en `main` y **CI verde** (`web` ✅ + `api` ✅, run sobre `9a43ae3`):
 3. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto.
 4. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual).
 5. ✅ **Follow-ups menores previos** — cerrados ambos (gate PATCH + WhatsApp oculto, ver sesión 2026-07-01 arriba).
+
+---
+
+## Sesión 2026-07-01 (noche) — Overhaul UI móvil vertical (360-430px)
+
+**Objetivo:** revisar todo el frontend para móvil vertical y aplicar las mejoras (pacientes acceden mayormente desde el teléfono).
+
+### Auditoría multi-agente ✅
+15 agentes revisaron las ~30 páginas en 9 grupos + verificación adversarial línea por línea de cada hallazgo high: **51 hallazgos, 0 críticos**; de 9 high → 5 confirmados, 3 degradados a medium, **1 refutado** (la tab bar de `/mi-salud` NO desborda a 360px — medido empíricamente; no "arreglarla" en el futuro). Base responsive buena: grids colapsan a 1 col, viewport meta OK, sin anchos fijos rotos. Los problemas reales: navegación móvil que escondía >60% del menú, tap targets de 16-30px en acciones de dinero/citas, texto sin `break-words`, y 2 tablas de 8 columnas ilegibles en teléfono.
+
+### Implementación (12 agentes Opus 4.8 en paralelo, clusters de archivos disjuntos) ✅ — commit `75f01db`, 33 archivos
+- **Navegación:** hamburger + drawer en `app-shell.tsx` reemplaza la tira de pills (misma lista del sidebar, indicador "Activación x/4" ahora visible en móvil, header sticky de ~105px → una fila; cierre por backdrop/Escape/navegación, scroll-lock del body). Sidebar de escritorio intacto.
+- **Acciones críticas:** botones de cita del paciente (Pagar/Reprogramar/Cancelar) y de cobro en efectivo a tamaño táctil; **`window.confirm` antes de cancelar cita** (cancelaba con reembolso sin preguntar).
+- **Transversales:** `break-words`/`truncate` en ~10 puntos (emails, bio pública); **regla CSS global anti auto-zoom de iOS** (`font-size: max(16px,1em)` en inputs bajo `pointer: coarse`) en vez de tocar ~30 inputs; `scroll-mt` en anclas tapadas por el header sticky; barrido de ~20 tap targets.
+- **Tablas→cards:** estado de cuenta (cobros) e historial de medidas (nutrición) renderizan cards apiladas en `<md`, tabla original en `hidden md:block`.
+- **Onboarding/activación:** padding móvil, pies del wizard con CTA a ancho completo, stepper con `scrollIntoView` a la píldora activa, inputs de hora etiquetados "De"/"A".
+
+### Revisión adversarial del diff (3 lentes Opus) ✅
+2 defectos reales corregidos antes del push: (1) el scroll-lock del drawer persistía si el viewport cruzaba a ≥1024px con el menú abierto → listener `matchMedia` lo cierra; (2) el `truncate` del nombre en `user-menu` recortaba también en desktop → `lg:max-w-none`. + 1 error de lint (`react-hooks/set-state-in-effect`): el drawer cierra por `onClick` de sus links, no por effect sobre pathname.
+
+**Validado:** `lint:web` 0 errores (3 warnings `<img>` preexistentes), `build:web` 27/27, **CI verde** (run `28560438935`) → Railway desplegó con "Wait for CI".
+
+**Nota operativa:** el preview embebido (herramientas de browser en iframe) **no puede cargar la app**: `X-Frame-Options: DENY` + CSP por diseño (#7 headers). Verificación visual móvil = emulador de dispositivo del navegador sobre `npm run dev:web`; guard = `lint:web` + `build:web`.
+
+---
+
+## Próximos pasos (actualizado 2026-07-01, noche)
+
+1. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial. **← siguiente acción.**
+2. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto. (Idealmente hacerla **desde un teléfono**: valida el piloto y el overhaul móvil en un solo paso.)
+3. **QA visual móvil en dispositivo real** — el overhaul se validó por código/build/revisión, no en dispositivo. Pasada rápida en un teléfono real: drawer de navegación, booking, cancelar cita (nuevo confirm), cards de cobros/medidas, formularios sin zoom de iOS.
+4. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual); endurecer check 3 del smoke si se quiere atrapar cualquier host equivocado.
