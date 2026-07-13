@@ -3241,3 +3241,35 @@ Todo en `main` y **CI verde** (`web` ✅ + `api` ✅, run sobre `9a43ae3`):
 2. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto. (Idealmente hacerla **desde un teléfono**: valida el piloto y el overhaul móvil en un solo paso.)
 3. **QA visual móvil en dispositivo real** — el overhaul se validó por código/build/revisión, no en dispositivo. Pasada rápida en un teléfono real: drawer de navegación, booking, cancelar cita (nuevo confirm), cards de cobros/medidas, formularios sin zoom de iOS.
 4. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` justo tras cada deploy (hoy es horario + manual); endurecer check 3 del smoke si se quiere atrapar cualquier host equivocado.
+
+---
+
+## Sesión 2026-07-13 — Rediseño UI web + móvil (sistema de diseño)
+
+**Objetivo:** revisar la UI completa y rediseñarla para mejorar la experiencia de usuarios en web y móvil.
+
+### Auditoría ✅
+Un agente recorrió las ~30 páginas: 43 botones primarios + 68 secundarios con estilos copy-paste inconsistentes entre sí (`py-2` vs `py-2.5`, `text-slate-600` vs `700`), 82 inputs con `focus:border-teal-400` hardcodeado, ~70 usos de color fuera de tokens (slate/teal/emerald + mezcla `red`/`rose` para errores), ninguna fuente web (tipografía de sistema) y escala tipográfica plana de 2 niveles. Nota: el reporte marcó "2 tablas sin fallback móvil" — falso positivo, `75f01db` ya las cubre (cards en `<md` verificadas).
+
+### Sistema de diseño ✅ — 51 archivos
+- **Tipografía:** `next/font/google` en `layout.tsx` — **Fraunces** (display: títulos, wordmark, cifras de StatCard) + **Instrument Sans** (body). Primera fuente web del producto.
+- **Tokens** (`globals.css` + `tailwind.config.ts`): `--primary-strong` (hover), `--primary-soft` (fondos tintados, reemplaza `bg-teal-50/100`), `--muted-foreground` (reemplaza `text-slate-500/600`), fondo niebla con matiz teal, sombras `shadow-soft`/`shadow-lifted`. Formato HSL triplete → modificadores de opacidad (`text-foreground/80`) funcionan.
+- **Clases compartidas** (`@layer components`): `.btn` + `.btn-primary`/`.btn-secondary`/`.btn-ghost`/`.btn-danger`, `.input` (sin `w-full`; se añade en markup), `.card`. `.btn` sube a mínimo 44px en táctil (`pointer: coarse`). Barrido con perl de los ~110 botones/inputs ad-hoc → clases únicas; `rounded-md`→`rounded-lg`, errores unificados a `rose-*`, cero `slate-*`/`teal-*` hardcodeado restante.
+- **Componentes:** Panel/StatCard → `.card` (rounded-xl + sombra suave), StatusPill → pastilla redonda con punto de color, nav activo `primary-soft` (sidebar + drawer), header móvil con blur, **nuevo `EmptyState`** con línea de pulso ECG (firma visual) en dashboard y directorio público.
+- **Páginas públicas:** `/bienvenida` y `/profesionales` con héroe en Fraunces y CTAs del sistema.
+
+**Validado:** `lint:web` 0 errores (3 warnings `<img>` preexistentes), `build:web` 30/30 rutas, curl confirma fuentes (`Fraunces`/`Instrument Sans` + fallbacks en CSS), clases `.btn-*` compiladas y tokens con opacidad en el HTML/CSS servidos. Preview embebido sigue bloqueado por XFO/CSP (nota 2026-07-01); QA visual en navegador pendiente.
+
+**Hallazgo de pasada (preexistente, no del rediseño):** `/profesionales` devuelve 500 si la API está caída — `fetchPublicProfessionals` ([public-professionals.ts](apps/web/lib/public-professionals.ts)) no captura el fetch fallido. Fix pequeño pendiente.
+
+**Omitido consciente:** max-width del contenido de dashboard en pantallas ultra-wide; añadir si molesta.
+
+---
+
+## Próximos pasos (actualizado 2026-07-13)
+
+1. **#8 validación en vivo** — 1 suscripción real de bajo monto desde el portal profesional; confirmar webhook `/api/webhooks/mercadopago-subscription` → pro `active` y gate 402 al vencer trial. **← siguiente acción.**
+2. **Piloto: 1 tx real de cita** — pago real + reembolso al cancelar + OAuth marketplace. Cierra el piloto. (Idealmente desde un teléfono: valida piloto + móvil en un paso.)
+3. **QA visual en dispositivo real** — ahora cubre overhaul móvil **y rediseño**: drawer, booking, confirm de cancelación, cards de cobros/medidas, y el nuevo look (Fraunces, cards con sombra, botones 44px, estados vacíos con pulso).
+4. **Fix directorio público con API caída** — try/catch en `fetchPublicProfessionals` para degradar a estado vacío en vez de 500.
+5. **(Opcional) Trigger post-deploy real** — webhook de Railway → `repository_dispatch` que dispare `smoke-prod.yml` tras cada deploy.
