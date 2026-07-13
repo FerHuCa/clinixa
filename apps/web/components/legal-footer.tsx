@@ -21,7 +21,7 @@ export function LegalFooter() {
   }
 
   return (
-    <footer className="border-t border-border px-5 py-6 text-center text-xs text-slate-500">
+    <footer className="border-t border-border px-5 py-6 text-center text-xs text-muted-foreground">
       <div className="flex flex-wrap items-center justify-center gap-4">
         <Link className="inline-block py-2 hover:text-primary" href="/privacy">
           Aviso de Privacidad

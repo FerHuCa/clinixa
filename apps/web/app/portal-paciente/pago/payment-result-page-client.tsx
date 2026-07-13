@@ -47,16 +47,16 @@ export function PaymentResultPageClient() {
           <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
             <Icon className={content.iconClass} size={44} />
             <p className="text-lg font-semibold">{content.title}</p>
-            <p className="max-w-md text-sm leading-6 text-slate-600">{content.description}</p>
+            <p className="max-w-md text-sm leading-6 text-muted-foreground">{content.description}</p>
 
             {simulated ? (
-              <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 Modo simulado: no hay credenciales de Mercado Pago configuradas, por lo que no se procesó un pago real.
               </p>
             ) : null}
 
             <Link
-              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
+              className="mt-4 btn-primary"
               href="/portal-paciente"
             >
               Volver a mi portal

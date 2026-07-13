@@ -17,13 +17,13 @@ function appointmentModeLabel(mode: string): string {
 function appointmentModeClass(mode: string): string {
   switch (mode) {
     case "online":
-      return "bg-teal-50 text-teal-700";
+      return "bg-primary-soft text-primary";
     case "in_person":
       return "bg-blue-50 text-blue-700";
     case "hybrid":
       return "bg-violet-50 text-violet-700";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-muted text-foreground/80";
   }
 }
 
@@ -34,7 +34,7 @@ function Initials({ name }: { name: string }) {
       ? (parts[0][0] ?? "") + (parts[1][0] ?? "")
       : (parts[0]?.[0] ?? "?");
   return (
-    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-lg font-semibold uppercase text-primary">
+    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary-soft text-lg font-semibold uppercase text-primary">
       {initials.toUpperCase()}
     </div>
   );
@@ -48,7 +48,7 @@ export function ProfessionalCard({ pro }: Props) {
   return (
     <Link
       href={`/profesionales/${pro.slug}`}
-      className="flex flex-col rounded-lg border border-border bg-white p-5 shadow-sm transition hover:shadow-md hover:border-primary/40"
+      className="card flex flex-col p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lifted motion-reduce:transform-none"
     >
       {/* Avatar + nombre */}
       <div className="flex items-center gap-3">
@@ -63,13 +63,13 @@ export function ProfessionalCard({ pro }: Props) {
         )}
         <div className="min-w-0">
           <p className="truncate font-semibold text-foreground">{pro.displayName}</p>
-          <p className="truncate text-sm text-slate-500">{pro.specialtyLabel}</p>
+          <p className="truncate text-sm text-muted-foreground">{pro.specialtyLabel}</p>
         </div>
       </div>
 
       {/* Ubicación */}
       {pro.location ? (
-        <p className="mt-3 flex items-center gap-1 text-sm text-slate-500">
+        <p className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -91,7 +91,7 @@ export function ProfessionalCard({ pro }: Props) {
 
       {/* Rating */}
       {pro.reviewCount > 0 ? (
-        <p className="mt-2 flex items-center gap-1 text-sm text-slate-600">
+        <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -102,7 +102,7 @@ export function ProfessionalCard({ pro }: Props) {
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
           </svg>
           <span className="font-medium">{pro.averageRating.toFixed(1)}</span>
-          <span className="text-slate-600">({pro.reviewCount})</span>
+          <span className="text-muted-foreground">({pro.reviewCount})</span>
         </p>
       ) : null}
 
@@ -116,7 +116,7 @@ export function ProfessionalCard({ pro }: Props) {
             </span>
           </span>
         ) : (
-          <span className="text-sm text-slate-600">Consultar precio</span>
+          <span className="text-sm text-muted-foreground">Consultar precio</span>
         )}
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${appointmentModeClass(pro.appointmentMode)}`}

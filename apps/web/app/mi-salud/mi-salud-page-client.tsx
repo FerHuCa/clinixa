@@ -23,10 +23,10 @@ function prescriptionStatusLabel(status: string): string {
 }
 
 function prescriptionStatusClass(status: string): string {
-  if (status === "active") return "bg-teal-100 text-teal-700";
-  if (status === "expired") return "bg-slate-100 text-slate-500";
+  if (status === "active") return "bg-primary-soft text-primary";
+  if (status === "expired") return "bg-muted text-muted-foreground";
   if (status === "cancelled") return "bg-rose-100 text-rose-700";
-  return "bg-slate-100 text-slate-500";
+  return "bg-muted text-muted-foreground";
 }
 
 function dietStatusLabel(status: "active" | "archived"): string {
@@ -34,12 +34,12 @@ function dietStatusLabel(status: "active" | "archived"): string {
 }
 
 function dietStatusClass(status: "active" | "archived"): string {
-  return status === "active" ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500";
+  return status === "active" ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground";
 }
 
 function taskStatusIcon(status: "pending" | "completed" | "skipped") {
-  if (status === "completed") return <CheckCircle2 size={18} className="text-teal-500" />;
-  if (status === "skipped") return <Clock size={18} className="text-slate-400" />;
+  if (status === "completed") return <CheckCircle2 size={18} className="text-primary/70" />;
+  if (status === "skipped") return <Clock size={18} className="text-muted-foreground/70" />;
   return <Circle size={18} className="text-amber-400" />;
 }
 
@@ -166,7 +166,7 @@ export function MiSaludPageClient() {
           description="Tus recetas, tareas y planes de nutrición."
           title="Mi salud"
         />
-        <div className="px-5 py-8 text-sm text-slate-500 lg:px-8">Cargando...</div>
+        <div className="px-5 py-8 text-sm text-muted-foreground lg:px-8">Cargando...</div>
       </AppShell>
     );
   }
@@ -179,7 +179,7 @@ export function MiSaludPageClient() {
           title="Mi salud"
         />
         <div className="px-5 py-8 lg:px-8">
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             No pudimos validar tu sesión. Por favor inicia sesión de nuevo.
           </div>
         </div>
@@ -195,7 +195,7 @@ export function MiSaludPageClient() {
           title="Mi salud"
         />
         <div className="px-5 py-8 lg:px-8">
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Esta sección es exclusiva para pacientes. Si eres un profesional de la salud, accede desde el panel de profesionales.
           </div>
         </div>
@@ -220,7 +220,7 @@ export function MiSaludPageClient() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition ${
               activeTab === "recetas"
                 ? "border-b-2 border-primary text-primary"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-muted-foreground hover:text-foreground/80"
             }`}
             onClick={() => setActiveTab("recetas")}
             type="button"
@@ -232,7 +232,7 @@ export function MiSaludPageClient() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition ${
               activeTab === "tareas"
                 ? "border-b-2 border-primary text-primary"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-muted-foreground hover:text-foreground/80"
             }`}
             onClick={() => setActiveTab("tareas")}
             type="button"
@@ -244,7 +244,7 @@ export function MiSaludPageClient() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition ${
               activeTab === "nutricion"
                 ? "border-b-2 border-primary text-primary"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-muted-foreground hover:text-foreground/80"
             }`}
             onClick={() => setActiveTab("nutricion")}
             type="button"
@@ -258,11 +258,11 @@ export function MiSaludPageClient() {
         {activeTab === "recetas" ? (
           <Panel title="Mis recetas">
             {errorPrescriptions ? (
-              <div className="p-4 text-sm text-red-600">{errorPrescriptions}</div>
+              <div className="p-4 text-sm text-rose-600">{errorPrescriptions}</div>
             ) : loadingPrescriptions ? (
-              <div className="p-4 text-sm text-slate-500">Cargando recetas...</div>
+              <div className="p-4 text-sm text-muted-foreground">Cargando recetas...</div>
             ) : prescriptions.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500">Aún no tienes recetas registradas.</div>
+              <div className="p-4 text-sm text-muted-foreground">Aún no tienes recetas registradas.</div>
             ) : (
               <div className="divide-y divide-border">
                 {prescriptions.map((rx) => (
@@ -277,17 +277,17 @@ export function MiSaludPageClient() {
                           {prescriptionStatusLabel(rx.status)}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-sm text-slate-600">
+                      <p className="mt-0.5 text-sm text-muted-foreground">
                         {rx.dosage}
                         {rx.frequency ? ` · ${rx.frequency}` : ""}
                         {rx.duration ? ` · ${rx.duration}` : ""}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-600">
+                      <p className="mt-0.5 text-xs text-muted-foreground">
                         Emitida: {rx.issuedAt}
                         {rx.expiresAt ? ` · Vence: ${rx.expiresAt}` : ""}
                       </p>
                       {rx.instructions ? (
-                        <p className="mt-1 text-sm text-slate-600">{rx.instructions}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{rx.instructions}</p>
                       ) : null}
                     </div>
                   </div>
@@ -301,11 +301,11 @@ export function MiSaludPageClient() {
         {activeTab === "tareas" ? (
           <Panel title="Mis tareas">
             {errorTasks ? (
-              <div className="p-4 text-sm text-red-600">{errorTasks}</div>
+              <div className="p-4 text-sm text-rose-600">{errorTasks}</div>
             ) : loadingTasks ? (
-              <div className="p-4 text-sm text-slate-500">Cargando tareas...</div>
+              <div className="p-4 text-sm text-muted-foreground">Cargando tareas...</div>
             ) : tasks.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500">Aún no tienes tareas asignadas.</div>
+              <div className="p-4 text-sm text-muted-foreground">Aún no tienes tareas asignadas.</div>
             ) : (
               <div className="divide-y divide-border">
                 {tasks.map((task) => {
@@ -330,7 +330,7 @@ export function MiSaludPageClient() {
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <p
                             className={`font-medium ${
-                              task.status === "completed" ? "line-through text-slate-400" : ""
+                              task.status === "completed" ? "line-through text-muted-foreground/70" : ""
                             }`}
                           >
                             {task.title}
@@ -338,9 +338,9 @@ export function MiSaludPageClient() {
                           <span
                             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                               task.status === "completed"
-                                ? "bg-teal-100 text-teal-700"
+                                ? "bg-primary-soft text-primary"
                                 : task.status === "skipped"
-                                ? "bg-slate-100 text-slate-500"
+                                ? "bg-muted text-muted-foreground"
                                 : "bg-amber-100 text-amber-700"
                             }`}
                           >
@@ -348,18 +348,18 @@ export function MiSaludPageClient() {
                           </span>
                         </div>
                         {task.description ? (
-                          <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
+                          <p className="mt-0.5 text-sm text-muted-foreground">{task.description}</p>
                         ) : null}
                         {task.dueDate ? (
-                          <p className="mt-0.5 text-xs text-slate-600">Límite: {task.dueDate}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">Límite: {task.dueDate}</p>
                         ) : null}
                         {task.patientNotes ? (
-                          <p className="mt-1 text-sm italic text-slate-500">Nota: {task.patientNotes}</p>
+                          <p className="mt-1 text-sm italic text-muted-foreground">Nota: {task.patientNotes}</p>
                         ) : null}
                         <div className="mt-1.5 flex flex-wrap items-center gap-3">
                           {task.status !== "completed" && (
                             <button
-                              className="inline-flex min-h-11 items-center text-xs font-medium text-teal-600 hover:text-teal-800 disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-primary hover:text-primary-strong disabled:opacity-50"
                               disabled={isSaving}
                               onClick={() => { void handleToggleTaskStatus(task); }}
                               type="button"
@@ -369,7 +369,7 @@ export function MiSaludPageClient() {
                           )}
                           {task.status === "completed" && (
                             <button
-                              className="inline-flex min-h-11 items-center text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-muted-foreground hover:text-foreground/80 disabled:opacity-50"
                               disabled={isSaving}
                               onClick={() => { void handleToggleTaskStatus(task); }}
                               type="button"
@@ -389,7 +389,7 @@ export function MiSaludPageClient() {
                           )}
                         </div>
                         {rowError ? (
-                          <p className="mt-1 text-xs text-red-500">{rowError}</p>
+                          <p className="mt-1 text-xs text-rose-500">{rowError}</p>
                         ) : null}
                       </div>
                     </div>
@@ -404,11 +404,11 @@ export function MiSaludPageClient() {
         {activeTab === "nutricion" ? (
           <Panel title="Mis planes de nutrición">
             {errorDiets ? (
-              <div className="p-4 text-sm text-red-600">{errorDiets}</div>
+              <div className="p-4 text-sm text-rose-600">{errorDiets}</div>
             ) : loadingDiets ? (
-              <div className="p-4 text-sm text-slate-500">Cargando planes...</div>
+              <div className="p-4 text-sm text-muted-foreground">Cargando planes...</div>
             ) : diets.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500">Aún no tienes planes de nutrición asignados.</div>
+              <div className="p-4 text-sm text-muted-foreground">Aún no tienes planes de nutrición asignados.</div>
             ) : (
               <div className="divide-y divide-border">
                 {diets.map((diet) => (
@@ -424,12 +424,12 @@ export function MiSaludPageClient() {
                         {dietStatusLabel(diet.status)}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-slate-600">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       Desde {diet.validFrom}
                       {diet.validUntil ? ` hasta ${diet.validUntil}` : ""}
                     </p>
                     {diet.content ? (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{diet.content}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{diet.content}</p>
                     ) : null}
                   </div>
                 ))}

@@ -368,7 +368,7 @@ export function PatientPortalPageClient() {
         {bookingNotice ? (
           <div
             className={clsx(
-              "rounded-md border px-4 py-3 text-sm",
+              "rounded-lg border px-4 py-3 text-sm",
               bookingNoticeTone === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"
             )}
           >
@@ -377,11 +377,11 @@ export function PatientPortalPageClient() {
         ) : null}
 
         {currentUser.primaryRole !== "patient" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Esta es una sesión profesional. Cambia a una sesión de paciente en el acceso de demostración para solicitar citas y ver tus documentos.
           </div>
         ) : !currentPatient ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             No pudimos cargar tu perfil de paciente. Revisa tu conexión o vuelve a iniciar sesión.
           </div>
         ) : null}
@@ -413,7 +413,7 @@ export function PatientPortalPageClient() {
                       <Panel
                         action={
                           <button
-                            className="-m-2 p-2 text-xs font-medium text-slate-500 hover:text-slate-700"
+                            className="-m-2 p-2 text-xs font-medium text-muted-foreground hover:text-foreground/80"
                             onClick={() => setBookingSuccess(null)}
                             type="button"
                           >
@@ -428,41 +428,41 @@ export function PatientPortalPageClient() {
                             <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} />
                             <div>
                               <p className="text-sm font-semibold">Recibimos tu solicitud de cita</p>
-                              <p className="mt-1 text-sm leading-6 text-slate-600">
+                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                 El profesional confirmará tu solicitud. Si pagas en línea, tu cita se confirma al instante.
                               </p>
                             </div>
                           </div>
 
-                          <dl className="mt-4 grid gap-3 rounded-md border border-border bg-slate-50 px-4 py-3 text-sm sm:grid-cols-2">
+                          <dl className="mt-4 grid gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm sm:grid-cols-2">
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-600">Profesional</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">{bookingSuccess.professionalName}</dd>
+                              <dt className="text-xs font-medium uppercase text-muted-foreground">Profesional</dt>
+                              <dd className="mt-0.5 font-medium text-foreground">{bookingSuccess.professionalName}</dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-600">Servicio</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-xs font-medium uppercase text-muted-foreground">Servicio</dt>
+                              <dd className="mt-0.5 font-medium text-foreground">
                                 {bookingSuccess.serviceName} · {bookingSuccess.durationMinutes} min
                               </dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-600">Fecha y hora</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-xs font-medium uppercase text-muted-foreground">Fecha y hora</dt>
+                              <dd className="mt-0.5 font-medium text-foreground">
                                 {dateLabel(bookingSuccess.appointment.date)} · {bookingSuccess.appointment.time} h
                               </dd>
                             </div>
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-600">Modalidad</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">{modeLabel(bookingSuccess.appointment.mode)}</dd>
+                              <dt className="text-xs font-medium uppercase text-muted-foreground">Modalidad</dt>
+                              <dd className="mt-0.5 font-medium text-foreground">{modeLabel(bookingSuccess.appointment.mode)}</dd>
                             </div>
                             {bookingSuccess.servicePrice !== null ? (
                               <div>
-                                <dt className="text-xs font-medium uppercase text-slate-600">Precio</dt>
-                                <dd className="mt-0.5 font-medium text-slate-800">{money(bookingSuccess.servicePrice)}</dd>
+                                <dt className="text-xs font-medium uppercase text-muted-foreground">Precio</dt>
+                                <dd className="mt-0.5 font-medium text-foreground">{money(bookingSuccess.servicePrice)}</dd>
                               </div>
                             ) : null}
                             <div>
-                              <dt className="text-xs font-medium uppercase text-slate-600">Estado</dt>
+                              <dt className="text-xs font-medium uppercase text-muted-foreground">Estado</dt>
                               <dd className="mt-1 flex flex-wrap gap-1.5">
                                 <StatusPill label={successCitaUi.label} status={successCitaUi.pill} />
                                 <StatusPill label={successPagoUi.label} status={successPagoUi.pill} />
@@ -473,7 +473,7 @@ export function PatientPortalPageClient() {
                           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                             {bookingSuccess.servicePrice !== null && canPayOnline(bookingSuccess.appointment) ? (
                               <button
-                                className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                                className="btn-primary disabled:opacity-60"
                                 disabled={paying}
                                 onClick={() => payPatientAppointment(bookingSuccess.appointment)}
                                 type="button"
@@ -483,7 +483,7 @@ export function PatientPortalPageClient() {
                               </button>
                             ) : null}
                             <a
-                              className="flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                              className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-muted/60"
                               href="#mis-citas"
                             >
                               Ver mis citas
@@ -547,7 +547,7 @@ export function PatientPortalPageClient() {
                   );
                 })}
               </div>
-              <p className="border-t border-border px-4 py-3 text-xs leading-5 text-slate-500">
+              <p className="border-t border-border px-4 py-3 text-xs leading-5 text-muted-foreground">
                 La comunicación realizada mediante WhatsApp ocurre fuera de Clinixa y no forma parte
                 automáticamente del expediente clínico.
               </p>
@@ -558,21 +558,21 @@ export function PatientPortalPageClient() {
             <Panel title="Mi perfil">
               <div className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-sm font-semibold text-slate-700">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-sm font-semibold text-foreground/80">
                     {currentPatient?.initials ?? initials(currentUser.fullName)}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold">{currentPatient?.fullName ?? currentUser.fullName}</p>
-                    <p className="truncate text-sm text-slate-500">{currentUser.email}</p>
+                    <p className="truncate text-sm text-muted-foreground">{currentUser.email}</p>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Estado</span>
+                    <span className="text-muted-foreground">Estado</span>
                     {currentPatient ? <StatusPill label={currentPatient.statusLabel} status={currentPatient.status} /> : null}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Cuenta</span>
+                    <span className="text-muted-foreground">Cuenta</span>
                     <span className="flex items-center gap-1 font-medium text-emerald-700">
                       <BadgeCheck size={15} />
                       Activa
@@ -599,14 +599,14 @@ export function PatientPortalPageClient() {
                         <FileText size={16} className="text-primary" />
                         <p className="text-sm font-medium">{record.title}</p>
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {record.recordTypeLabel} · {record.professionalName}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{record.summary}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{record.summary}</p>
                     </div>
                   ))
                 ) : (
-                  <p className="px-4 py-4 text-sm text-slate-500">Aún no tienes documentos compartidos por tu profesional.</p>
+                  <p className="px-4 py-4 text-sm text-muted-foreground">Aún no tienes documentos compartidos por tu profesional.</p>
                 )}
               </div>
             </Panel>

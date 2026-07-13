@@ -40,7 +40,7 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
       <AppShell>
         <PageHeader
           action={
-            <Link className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white" href="/pacientes">
+            <Link className="btn-primary" href="/pacientes">
               Volver a pacientes
             </Link>
           }
@@ -58,7 +58,7 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
     <AppShell>
       <PageHeader
         action={
-          <Link className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white" href="/agenda">
+          <Link className="btn-primary" href="/agenda">
             Agendar cita
           </Link>
         }
@@ -71,27 +71,27 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
           <Panel>
             <div className="p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-md bg-teal-50 text-lg font-semibold text-primary">
+                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary-soft text-lg font-semibold text-primary">
                   {patient.initials}
                 </div>
                 <div>
                   <p className="font-semibold">{patient.fullName}</p>
-                  <p className="text-sm text-slate-500">{patient.age} años</p>
+                  <p className="text-sm text-muted-foreground">{patient.age} años</p>
                 </div>
               </div>
               <div className="mt-4">
                 <StatusPill label={patient.statusLabel} status={patient.status} />
               </div>
               <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-start gap-2 text-slate-600">
+                <div className="flex items-start gap-2 text-muted-foreground">
                   <Mail size={16} />
                   <span className="min-w-0 break-all">{patient.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone size={16} />
                   {patient.phone}
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <CalendarDays size={16} />
                   {patient.nextAppointment}
                 </div>
@@ -102,16 +102,16 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
           <Panel title="Resumen de seguimiento">
             <div className="space-y-4 p-4 text-sm">
               <div>
-                <p className="text-xs font-medium uppercase text-slate-600">Motivo principal</p>
-                <p className="mt-1 text-slate-700">{patient.mainReason}</p>
+                <p className="text-xs font-medium uppercase text-muted-foreground">Motivo principal</p>
+                <p className="mt-1 text-foreground/80">{patient.mainReason}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase text-slate-600">Riesgo</p>
-                <p className="mt-1 text-slate-700">{patient.riskLevel}</p>
+                <p className="text-xs font-medium uppercase text-muted-foreground">Riesgo</p>
+                <p className="mt-1 text-foreground/80">{patient.riskLevel}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase text-slate-600">Avance</p>
-                <p className="mt-1 leading-6 text-slate-700">{progressTextFor(patient.progress)}</p>
+                <p className="text-xs font-medium uppercase text-muted-foreground">Avance</p>
+                <p className="mt-1 leading-6 text-foreground/80">{progressTextFor(patient.progress)}</p>
               </div>
             </div>
           </Panel>
@@ -120,15 +120,15 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
         <section className="space-y-5">
           <Panel title="Expediente">
             <div className="grid gap-4 p-4 md:grid-cols-2">
-              <div className="rounded-md bg-slate-50 p-4">
+              <div className="rounded-lg bg-muted/40 p-4">
                 <ClipboardList size={18} className="text-primary" />
                 <p className="mt-3 text-2xl font-semibold">{notes.length}</p>
-                <p className="text-sm text-slate-500">Notas SOAP</p>
+                <p className="text-sm text-muted-foreground">Notas SOAP</p>
               </div>
-              <div className="rounded-md bg-slate-50 p-4">
+              <div className="rounded-lg bg-muted/40 p-4">
                 <CalendarDays size={18} className="text-primary" />
                 <p className="mt-3 text-2xl font-semibold">{patientAppointments.length}</p>
-                <p className="text-sm text-slate-500">Citas registradas</p>
+                <p className="text-sm text-muted-foreground">Citas registradas</p>
               </div>
             </div>
           </Panel>
@@ -141,15 +141,15 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium">{note.title}</p>
-                        <p className="mt-1 text-sm text-slate-500">{note.date}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{note.date}</p>
                       </div>
                       <StatusPill label={note.statusLabel} status={note.status} />
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{note.assessment}</p>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{note.assessment}</p>
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-start gap-2 px-4 py-6 text-sm text-slate-500">
+                <div className="flex flex-col items-start gap-2 px-4 py-6 text-sm text-muted-foreground">
                   <p>Aún no hay notas SOAP para este paciente.</p>
                   <Link className="font-medium text-primary underline-offset-2 hover:underline" href="/expediente">
                     Crear la primera nota →
@@ -166,17 +166,17 @@ export function PatientProfileClient({ patientId }: PatientProfileClientProps) {
                   <div className="grid gap-3 px-4 py-4 md:grid-cols-[110px_1fr_130px]" key={appointment.id}>
                     <div>
                       <p className="text-sm font-semibold">{appointment.date}</p>
-                      <p className="text-sm text-slate-500">{appointment.time}</p>
+                      <p className="text-sm text-muted-foreground">{appointment.time}</p>
                     </div>
                     <div>
                       <p className="font-medium">{appointment.type}</p>
-                      <p className="mt-1 text-sm text-slate-500">{appointment.reason}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{appointment.reason}</p>
                     </div>
                     <StatusPill label={appointment.statusLabel} status={appointment.status} />
                   </div>
                 ))
               ) : (
-                <div className="flex flex-col items-start gap-2 px-4 py-6 text-sm text-slate-500">
+                <div className="flex flex-col items-start gap-2 px-4 py-6 text-sm text-muted-foreground">
                   <p>Aún no hay citas con este paciente.</p>
                   <Link className="font-medium text-primary underline-offset-2 hover:underline" href="/agenda">
                     Agendar la primera cita →

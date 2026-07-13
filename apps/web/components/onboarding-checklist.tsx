@@ -32,7 +32,7 @@ type Props = {
  */
 export function OnboardingChecklist({ canPublish, completedSteps, steps, missing, publishing, onPublish }: Props) {
   return (
-    <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-4">
+    <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <Rocket size={20} className="mt-0.5 shrink-0 text-amber-600" />
@@ -43,7 +43,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
             </p>
           </div>
         </div>
-        <span className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+        <span className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
           {completedSteps} de {steps.length} completados
         </span>
       </div>
@@ -54,7 +54,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
             {step.done ? (
               <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" />
             ) : (
-              <Circle size={16} className="mt-0.5 shrink-0 text-slate-400" />
+              <Circle size={16} className="mt-0.5 shrink-0 text-muted-foreground/70" />
             )}
             <div>
               {step.href && !step.done ? (
@@ -65,7 +65,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
                   {step.label}
                 </Link>
               ) : (
-                <span className={step.done ? "text-slate-700" : "text-slate-500"}>{step.label}</span>
+                <span className={step.done ? "text-foreground/80" : "text-muted-foreground"}>{step.label}</span>
               )}
               {step.subText && !step.done ? (
                 <p className="mt-0.5 text-xs leading-5 text-amber-700">{step.subText}</p>
@@ -76,7 +76,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
       </ul>
 
       {missing.length > 0 ? (
-        <ul className="space-y-1 rounded-md border border-amber-300 bg-white px-3 py-2">
+        <ul className="space-y-1 rounded-lg border border-amber-300 bg-white px-3 py-2">
           {missing.map((msg) => (
             <li className="flex items-start gap-1.5 text-xs text-amber-800" key={msg}>
               <span className="mt-0.5 shrink-0">•</span>
@@ -88,7 +88,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="btn-primary"
           disabled={publishing || !canPublish}
           onClick={onPublish}
           type="button"
@@ -97,7 +97,7 @@ export function OnboardingChecklist({ canPublish, completedSteps, steps, missing
           {publishing ? "Publicando..." : "Publicar perfil"}
         </button>
         <Link
-          className="flex items-center gap-2 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-800"
+          className="flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-800"
           href="/portal-profesional"
         >
           <Settings size={16} />

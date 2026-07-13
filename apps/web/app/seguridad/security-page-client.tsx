@@ -296,7 +296,7 @@ export function SecurityPageClient() {
           title="Seguridad"
         />
         <div className="px-5 py-6 lg:px-8">
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             No tienes acceso a esta sección. Solo administradores de clínica y el administrador maestro pueden revisar la seguridad.
           </div>
         </div>
@@ -314,7 +314,7 @@ export function SecurityPageClient() {
 
       <div className="space-y-5 px-5 py-6 lg:px-8">
         {loading ? (
-          <div className="rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-500">Cargando seguridad...</div>
+          <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">Cargando seguridad...</div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -331,20 +331,20 @@ export function SecurityPageClient() {
                   clinics.map((clinic) => (
                     <div className="space-y-4 p-4" key={clinic.id}>
                       <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal-50 text-primary">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                           <Building2 size={18} />
                         </div>
                         <div>
                           <p className="font-semibold">{clinic.name}</p>
-                          <p className="mt-1 text-sm text-slate-500">{clinic.location}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{clinic.location}</p>
                         </div>
                       </div>
                       <div className="space-y-2">
                         {clinic.members.map((member) => (
-                          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-slate-50 px-3 py-2" key={member.id}>
+                          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2" key={member.id}>
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium">{member.fullName}</p>
-                              <p className="truncate text-xs text-slate-500">{member.email}</p>
+                              <p className="truncate text-xs text-muted-foreground">{member.email}</p>
                             </div>
                             <span className="shrink-0 text-xs font-medium text-primary">{roleLabel(member.role)}</span>
                           </div>
@@ -353,7 +353,7 @@ export function SecurityPageClient() {
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-sm text-slate-500">Sin alcance de clínica para esta cuenta.</div>
+                  <div className="p-4 text-sm text-muted-foreground">Sin alcance de clínica para esta cuenta.</div>
                 )}
               </div>
             </Panel>
@@ -363,7 +363,7 @@ export function SecurityPageClient() {
                 {notifications.length > 0 ? (
                   notifications.slice(0, 8).map((notification) => (
                     <button
-                      className="block w-full p-4 text-left transition hover:bg-slate-50"
+                      className="block w-full p-4 text-left transition hover:bg-muted/60"
                       key={notification.id}
                       onClick={() => markRead(notification)}
                       type="button"
@@ -371,14 +371,14 @@ export function SecurityPageClient() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">{notification.title}</p>
-                          <p className="mt-1 text-sm text-slate-500">{notification.body}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{notification.body}</p>
                         </div>
                         <StatusPill label={notification.status === "unread" ? "Nueva" : "Leída"} status={notification.status === "unread" ? "pending" : "active"} />
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="p-4 text-sm text-slate-500">Sin notificaciones para esta cuenta.</div>
+                  <div className="p-4 text-sm text-muted-foreground">Sin notificaciones para esta cuenta.</div>
                 )}
               </div>
             </Panel>
@@ -387,13 +387,13 @@ export function SecurityPageClient() {
               <div className="divide-y divide-border">
                 <div className="space-y-3 p-4">
                   <input
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                     onChange={(event) => setInvitationForm((current) => ({ ...current, fullName: event.target.value }))}
                     placeholder="Nombre completo"
                     value={invitationForm.fullName}
                   />
                   <input
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                     onChange={(event) => setInvitationForm((current) => ({ ...current, email: event.target.value }))}
                     placeholder="correo@clinica.com"
                     type="email"
@@ -401,7 +401,7 @@ export function SecurityPageClient() {
                   />
                   <div className="grid gap-2 sm:grid-cols-2">
                     <select
-                      className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                       onChange={(event) => setInvitationForm((current) => ({ ...current, specialty: event.target.value }))}
                       value={invitationForm.specialty}
                     >
@@ -412,14 +412,14 @@ export function SecurityPageClient() {
                       <option value="other">Salud</option>
                     </select>
                     <input
-                      className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                       onChange={(event) => setInvitationForm((current) => ({ ...current, licenseNumber: event.target.value }))}
                       placeholder="Cédula"
                       value={invitationForm.licenseNumber}
                     />
                   </div>
                   <button
-                    className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                    className="btn-primary"
                     disabled={securityAction === "invitation"}
                     onClick={createInvitation}
                     type="button"
@@ -434,7 +434,7 @@ export function SecurityPageClient() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">{invitation.fullName}</p>
-                          <p className="mt-1 truncate text-sm text-slate-500">{invitation.email}</p>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">{invitation.email}</p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
                           <StatusPill
@@ -450,14 +450,14 @@ export function SecurityPageClient() {
                             status={invitation.status === "pending" ? "pending" : invitation.status === "accepted" ? "active" : "cancelled"}
                           />
                           {expiresSoon(invitation) ? (
-                            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Por vencer</span>
+                            <span className="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Por vencer</span>
                           ) : null}
                         </div>
                       </div>
                       {invitation.status === "pending" ? (
                         <div className="flex flex-wrap items-center gap-3">
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-border bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-700 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs font-medium text-foreground/80 disabled:opacity-50"
                             disabled={securityAction === `copy-${invitation.id}`}
                             onClick={() => copyInvitationLink(invitation)}
                             type="button"
@@ -466,7 +466,7 @@ export function SecurityPageClient() {
                             Copiar enlace
                           </button>
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary-soft px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
                             disabled={securityAction === `remind-${invitation.id}`}
                             onClick={() => remindInvitation(invitation.id)}
                             type="button"
@@ -475,7 +475,7 @@ export function SecurityPageClient() {
                             Reenviar
                           </button>
                           <button
-                            className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
                             disabled={securityAction === `revoke-${invitation.id}`}
                             onClick={() => revokeInvitation(invitation.id)}
                             type="button"
@@ -488,7 +488,7 @@ export function SecurityPageClient() {
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-sm text-slate-500">Sin invitaciones recientes.</div>
+                  <div className="p-4 text-sm text-muted-foreground">Sin invitaciones recientes.</div>
                 )}
               </div>
             </Panel>
@@ -500,7 +500,7 @@ export function SecurityPageClient() {
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium">{channelLabel(preference.channel)}</p>
                       <button
-                        className="rounded-md border border-border bg-white px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50"
+                        className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground/80 disabled:opacity-50"
                         disabled={securityAction === `${preference.channel}-enabled`}
                         onClick={() => togglePreference(preference, "enabled")}
                         type="button"
@@ -515,7 +515,7 @@ export function SecurityPageClient() {
                         ["reminderUpdates", "Recordatorios"]
                       ].map(([field, label]) => (
                         <button
-                          className="rounded-md border border-border bg-slate-50 px-3 py-1.5 text-slate-700 disabled:opacity-50"
+                          className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-foreground/80 disabled:opacity-50"
                           disabled={securityAction === `${preference.channel}-${field}`}
                           key={field}
                           onClick={() => togglePreference(preference, field as keyof Omit<NotificationPreference, "id" | "channel">)}
@@ -542,7 +542,7 @@ export function SecurityPageClient() {
                     {([["pending", "Pendientes"], ["verified", "Verificadas"], ["rejected", "Rechazadas"], ["all", "Todas"]] as const).map(([value, label]) => (
                       <button
                         key={value}
-                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${verificationFilter === value ? "bg-primary text-white" : "border border-border bg-slate-50 text-slate-600 hover:border-slate-300"}`}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${verificationFilter === value ? "bg-primary text-white" : "border border-border bg-muted/40 text-muted-foreground hover:border-border"}`}
                         onClick={() => changeVerificationFilter(value)}
                         type="button"
                       >
@@ -557,13 +557,13 @@ export function SecurityPageClient() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="font-medium">{item.displayName}</p>
-                              <p className="mt-1 text-sm text-slate-500">
+                              <p className="mt-1 text-sm text-muted-foreground">
                                 {specialtyLabelFor(item.specialty)} · {item.location || "Sin ubicación"}
                               </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                Cédula: <span className="font-medium text-slate-700">{item.licenseNumber || "No capturada"}</span>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Cédula: <span className="font-medium text-foreground/80">{item.licenseNumber || "No capturada"}</span>
                               </p>
-                              <p className="mt-1 truncate text-xs text-slate-500">
+                              <p className="mt-1 truncate text-xs text-muted-foreground">
                                 {item.email || "Sin correo"} · Registrado {formatDate(item.createdAt)}
                               </p>
                             </div>
@@ -573,7 +573,7 @@ export function SecurityPageClient() {
                                 status={item.verificationStatus === "verified" ? "active" : item.verificationStatus === "rejected" ? "cancelled" : "pending"}
                               />
                               {item.verificationStatus === "verified" && item.licenseVerifiedAt ? (
-                                <span className="text-xs text-slate-600">{formatDate(item.licenseVerifiedAt)}</span>
+                                <span className="text-xs text-muted-foreground">{formatDate(item.licenseVerifiedAt)}</span>
                               ) : null}
                             </div>
                           </div>
@@ -581,7 +581,7 @@ export function SecurityPageClient() {
                             <div className="space-y-2">
                               <div className="flex flex-wrap items-center gap-3">
                                 <button
-                                  className="flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
+                                  className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary-soft px-3 py-2.5 text-xs font-medium text-primary disabled:opacity-50"
                                   disabled={securityAction === `verify-${item.id}`}
                                   onClick={() => applyVerification(item, "verified", "Cédula validada manualmente por el administrador.")}
                                   type="button"
@@ -591,7 +591,7 @@ export function SecurityPageClient() {
                                 </button>
                                 {item.verificationStatus !== "rejected" ? (
                                   <button
-                                    className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700 disabled:opacity-50"
                                     disabled={securityAction === `verify-${item.id}`}
                                     onClick={() => setRejectingId((current) => (current === item.id ? "" : item.id))}
                                     type="button"
@@ -604,13 +604,13 @@ export function SecurityPageClient() {
                               {rejectingId === item.id ? (
                                 <div className="flex flex-wrap items-center gap-2">
                                   <input
-                                    className="min-w-0 flex-1 rounded-md border border-border px-3 py-1.5 text-xs outline-none focus:border-rose-300"
+                                    className="min-w-0 flex-1 rounded-lg border border-border px-3 py-1.5 text-xs outline-none focus:border-rose-300"
                                     onChange={(event) => setRejectReason(event.target.value)}
                                     placeholder="Motivo del rechazo (obligatorio)"
                                     value={rejectReason}
                                   />
                                   <button
-                                    className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                                    className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                                     disabled={!rejectReason.trim() || securityAction === `verify-${item.id}`}
                                     onClick={() => applyVerification(item, "rejected", rejectReason.trim())}
                                     type="button"
@@ -624,7 +624,7 @@ export function SecurityPageClient() {
                         </div>
                       ))
                     ) : (
-                      <div className="p-4 text-sm text-slate-500">
+                      <div className="p-4 text-sm text-muted-foreground">
                         {verificationFilter === "pending" ? "No hay cédulas pendientes de revisión." : "Sin profesionales en este estado."}
                       </div>
                     )}
@@ -638,13 +638,13 @@ export function SecurityPageClient() {
               {auditLogs.length > 0 ? (
                 auditLogs.map((log) => (
                   <div className="grid gap-3 p-4 md:grid-cols-[180px_1fr_auto]" key={log.id}>
-                    <div className="text-sm text-slate-500">{formatDate(log.createdAt)}</div>
+                    <div className="text-sm text-muted-foreground">{formatDate(log.createdAt)}</div>
                     <div className="min-w-0">
                       <p className="font-medium capitalize">{actionLabel(log.action)}</p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {log.resourceType} · {log.resourceId}
                       </p>
-                      <p className="mt-1 text-xs text-slate-600">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Actor: {roleLabel(log.actorRole)} {log.actorUserId ? `· ${log.actorUserId}` : ""}
                       </p>
                     </div>
@@ -652,7 +652,7 @@ export function SecurityPageClient() {
                   </div>
                 ))
               ) : (
-                <div className="p-4 text-sm text-slate-500">Sin eventos visibles para esta cuenta.</div>
+                <div className="p-4 text-sm text-muted-foreground">Sin eventos visibles para esta cuenta.</div>
               )}
             </div>
           </Panel>
@@ -660,7 +660,7 @@ export function SecurityPageClient() {
         </div>
 
         {deniedCount > 0 ? (
-          <div className="flex items-center gap-3 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             <ShieldCheck size={18} />
             {deniedCount} evento(s) denegado(s) detectados en la bitácora visible.
           </div>

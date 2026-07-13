@@ -140,8 +140,8 @@ export function OnboardingPageClient() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-primary mx-auto mb-4" />
-          <p className="text-sm text-slate-600">Cargando...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Cargando...</p>
         </div>
       </div>
     );
@@ -151,12 +151,12 @@ export function OnboardingPageClient() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
         <div className="w-full max-w-md space-y-4 rounded-lg border border-amber-200 bg-white p-5 sm:p-8 text-center shadow-sm">
-          <h1 className="text-lg font-semibold text-slate-900">No pudimos cargar tu perfil</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-lg font-semibold text-foreground">No pudimos cargar tu perfil</h1>
+          <p className="text-sm text-muted-foreground">
             Hubo un problema al validar tu sesión. Revisa tu conexión e intenta de nuevo.
           </p>
           <button
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90"
+            className="w-full btn-primary"
             onClick={() => setRetryToken((token) => token + 1)}
             type="button"
           >
@@ -177,17 +177,17 @@ export function OnboardingPageClient() {
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-white mx-auto mb-3">
             <UserRound size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Completa tu perfil</h1>
-          <p className="mt-2 text-sm text-slate-600">Necesitamos algunos datos para configurar tu cuenta</p>
+          <h1 className="text-2xl font-bold text-foreground">Completa tu perfil</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Necesitamos algunos datos para configurar tu cuenta</p>
         </div>
 
-        {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>}
+        {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium text-slate-900">Nombre completo</label>
+            <label className="block text-sm font-medium text-foreground">Nombre completo</label>
             <input
-              className="mt-2 w-full rounded-md border border-border bg-white px-3 py-2 text-sm placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="mt-2 input w-full"
               disabled={saving}
               placeholder="Tu nombre"
               required
@@ -198,13 +198,13 @@ export function OnboardingPageClient() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900">¿Cuál es tu rol?</label>
+            <label className="block text-sm font-medium text-foreground">¿Cuál es tu rol?</label>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <button
-                className={`flex items-center gap-2 rounded-md border-2 px-3 py-3 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-3 text-sm font-medium transition ${
                   data.role === "patient"
                     ? "border-primary bg-primary/5 text-primary"
-                    : "border-border bg-white text-slate-600 hover:border-slate-300"
+                    : "border-border bg-white text-muted-foreground hover:border-border"
                 }`}
                 disabled={saving}
                 onClick={() => setData((d) => ({ ...d, role: "patient", specialty: "" }))}
@@ -214,10 +214,10 @@ export function OnboardingPageClient() {
                 Paciente
               </button>
               <button
-                className={`flex items-center gap-2 rounded-md border-2 px-3 py-3 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-3 text-sm font-medium transition ${
                   data.role === "professional"
                     ? "border-primary bg-primary/5 text-primary"
-                    : "border-border bg-white text-slate-600 hover:border-slate-300"
+                    : "border-border bg-white text-muted-foreground hover:border-border"
                 }`}
                 disabled={saving}
                 onClick={() => setData((d) => ({ ...d, role: "professional" }))}
@@ -231,9 +231,9 @@ export function OnboardingPageClient() {
 
           {isProfessional && (
             <div>
-              <label className="block text-sm font-medium text-slate-900">
+              <label className="block text-sm font-medium text-foreground">
                 ¿Cuál es tu especialidad?
-                <span className="ml-1 text-red-500">*</span>
+                <span className="ml-1 text-rose-500">*</span>
               </label>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {SPECIALTY_OPTIONS.map(({ value, label }) => {
@@ -242,10 +242,10 @@ export function OnboardingPageClient() {
                   return (
                   <button
                     key={value}
-                    className={`flex flex-col items-center gap-1.5 rounded-md border-2 px-3 py-3 text-xs font-medium transition ${
+                    className={`flex flex-col items-center gap-1.5 rounded-lg border-2 px-3 py-3 text-xs font-medium transition ${
                       data.specialty === value
                         ? "border-primary bg-primary/5 text-primary"
-                        : "border-border bg-white text-slate-600 hover:border-slate-300"
+                        : "border-border bg-white text-muted-foreground hover:border-border"
                     }`}
                     disabled={saving}
                     onClick={() => setData((d) => ({ ...d, specialty: value }))}
@@ -260,11 +260,11 @@ export function OnboardingPageClient() {
             </div>
           )}
 
-          <div className="space-y-3 rounded-md border border-border bg-slate-50 p-4">
-            <label className="flex items-start gap-3 text-xs leading-5 text-slate-600">
+          <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4">
+            <label className="flex items-start gap-3 text-xs leading-5 text-muted-foreground">
               <input
                 checked={acceptPrivacy}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-primary focus:ring-primary"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary"
                 disabled={saving}
                 onChange={(e) => setAcceptPrivacy(e.target.checked)}
                 type="checkbox"
@@ -281,10 +281,10 @@ export function OnboardingPageClient() {
                 .
               </span>
             </label>
-            <label className="flex items-start gap-3 text-xs leading-5 text-slate-600">
+            <label className="flex items-start gap-3 text-xs leading-5 text-muted-foreground">
               <input
                 checked={acceptDataProcessing}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-primary focus:ring-primary"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary"
                 disabled={saving}
                 onChange={(e) => setAcceptDataProcessing(e.target.checked)}
                 type="checkbox"
@@ -298,7 +298,7 @@ export function OnboardingPageClient() {
           </div>
 
           <button
-            className="mt-6 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90 disabled:opacity-50"
+            className="mt-6 w-full btn-primary"
             disabled={saving || !data.fullName.trim() || !consentComplete || specialtyRequired}
             type="submit"
           >
@@ -306,7 +306,7 @@ export function OnboardingPageClient() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-muted-foreground">
           Podrás cambiar estos datos más adelante desde la página de sesión.
         </p>
       </div>

@@ -30,8 +30,8 @@ export function SearchFilters({ mode, query, specialty, onModeChange, onQueryCha
   return (
     <div className="space-y-4 p-4">
       <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
-        <label className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-          <Search aria-hidden="true" className="text-slate-400" size={18} />
+        <label className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+          <Search aria-hidden="true" className="text-muted-foreground/70" size={18} />
           <input
             aria-label="Buscar profesional"
             className="w-full bg-transparent text-sm outline-none"
@@ -40,8 +40,8 @@ export function SearchFilters({ mode, query, specialty, onModeChange, onQueryCha
             value={query}
           />
         </label>
-        <label className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-          <SlidersHorizontal aria-hidden="true" className="text-slate-400" size={18} />
+        <label className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+          <SlidersHorizontal aria-hidden="true" className="text-muted-foreground/70" size={18} />
           <select
             className="w-full bg-transparent text-sm outline-none"
             onChange={(event) => onSpecialtyChange(event.target.value)}
@@ -60,8 +60,8 @@ export function SearchFilters({ mode, query, specialty, onModeChange, onQueryCha
         {modeFilters.map((item) => (
           <button
             className={clsx(
-              "rounded-md border px-3 py-2 text-sm transition",
-              mode === item.value ? "border-teal-200 bg-teal-50 font-medium text-primary" : "border-border bg-white text-slate-700 hover:bg-slate-50"
+              "rounded-lg border px-3 py-2 text-sm transition",
+              mode === item.value ? "border-primary/20 bg-primary-soft font-medium text-primary" : "border-border bg-white text-foreground/80 hover:bg-muted/60"
             )}
             key={item.value}
             onClick={() => onModeChange(item.value)}

@@ -7,10 +7,10 @@ import { LegalFooter } from "@/components/legal-footer";
 
 export function LegalDocumentPage({ document }: { document: LegalDocument }) {
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-muted/40">
       <header className="flex items-center justify-between border-b border-border bg-white px-5 py-4 lg:px-10">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
             <Activity size={20} />
           </div>
           <p className="text-sm font-semibold">Clinixa</p>
@@ -21,8 +21,8 @@ export function LegalDocumentPage({ document }: { document: LegalDocument }) {
         </Link>
       </header>
 
-      <article className="mx-auto max-w-3xl px-5 py-12 text-sm leading-7 text-slate-700">
-        <p className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+      <article className="mx-auto max-w-3xl px-5 py-12 text-sm leading-7 text-foreground/80">
+        <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
           Versión {document.version} · {document.date}. Documento pendiente de validación por abogado mexicano y de
           completar los campos marcados entre corchetes antes de operar con usuarios reales.
         </p>
@@ -47,7 +47,7 @@ export function LegalDocumentPage({ document }: { document: LegalDocument }) {
               </div>
             ),
             th: ({ children }) => (
-              <th className="border border-border bg-slate-100 px-3 py-2 font-semibold text-foreground">{children}</th>
+              <th className="border border-border bg-muted px-3 py-2 font-semibold text-foreground">{children}</th>
             ),
             td: ({ children }) => <td className="border border-border px-3 py-2 align-top">{children}</td>,
             hr: () => <hr className="my-8 border-border" />,

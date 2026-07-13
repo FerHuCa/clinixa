@@ -70,7 +70,7 @@ export function AgendaPageClient() {
     <AppShell>
       <PageHeader
         action={
-          <a className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white" href="#crear-cita">
+          <a className="btn-primary" href="#crear-cita">
             <CalendarPlus size={16} />
             Nueva cita
           </a>
@@ -82,7 +82,7 @@ export function AgendaPageClient() {
       <div className="grid gap-5 px-5 py-6 lg:grid-cols-[1fr_360px] lg:px-8">
         <section className="space-y-5">
           {createdAppointment ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               Cita creada: {createdAppointment}
             </div>
           ) : null}
@@ -90,12 +90,12 @@ export function AgendaPageClient() {
           <Panel title="Próximas citas">
             {sortedAppointments.length === 0 ? (
               <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 text-primary">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <CalendarPlus size={22} />
                 </div>
-                <p className="text-sm text-slate-600">Aún no tienes citas programadas.</p>
+                <p className="text-sm text-muted-foreground">Aún no tienes citas programadas.</p>
                 <a
-                  className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
+                  className="btn-primary"
                   href="#crear-cita"
                 >
                   <CalendarPlus size={16} />
@@ -108,13 +108,13 @@ export function AgendaPageClient() {
                 <div className="grid gap-4 px-4 py-4 lg:grid-cols-[100px_1fr_140px_130px]" key={appointment.id}>
                   <div>
                     <p className="text-sm font-semibold">{appointment.date}</p>
-                    <p className="mt-1 text-sm text-slate-500">{appointment.time}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{appointment.time}</p>
                   </div>
                   <div>
                     <p className="font-medium">{appointment.patientName}</p>
-                    <p className="mt-1 text-sm text-slate-500">{appointment.reason}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{appointment.reason}</p>
                   </div>
-                  <p className="text-sm text-slate-600">{appointment.type}</p>
+                  <p className="text-sm text-muted-foreground">{appointment.type}</p>
                   <StatusPill label={appointment.statusLabel} status={appointment.status} />
                 </div>
               ))}
@@ -127,9 +127,9 @@ export function AgendaPageClient() {
           <Panel title="Crear cita">
             <form className="scroll-mt-28 space-y-4 p-4 text-sm" id="crear-cita" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Paciente</span>
                 <select
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="patientId"
                   onChange={(event) => updateField("patientId", event.target.value)}
                   required
@@ -145,9 +145,9 @@ export function AgendaPageClient() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Fecha</span>
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Fecha</span>
                   <input
-                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="mt-1 w-full input"
                     name="date"
                     onChange={(event) => updateField("date", event.target.value)}
                     onInput={(event) => updateField("date", event.currentTarget.value)}
@@ -157,9 +157,9 @@ export function AgendaPageClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Hora</span>
-                  <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-                    <Clock size={16} className="text-slate-400" />
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Hora</span>
+                  <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                    <Clock size={16} className="text-muted-foreground/70" />
                     <input
                       className="w-full bg-transparent text-sm outline-none"
                       name="time"
@@ -175,9 +175,9 @@ export function AgendaPageClient() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Duración</span>
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Duración</span>
                   <select
-                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="mt-1 w-full input"
                     name="duration"
                     onChange={(event) => updateField("duration", event.target.value)}
                     value={form.duration}
@@ -189,9 +189,9 @@ export function AgendaPageClient() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Tipo</span>
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Tipo</span>
                   <select
-                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="mt-1 w-full input"
                     name="type"
                     onChange={(event) => updateField("type", event.target.value)}
                     value={form.type}
@@ -205,9 +205,9 @@ export function AgendaPageClient() {
               </div>
 
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Motivo</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Motivo</span>
                 <textarea
-                  className="mt-1 min-h-24 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 min-h-24 w-full input"
                   name="reason"
                   onChange={(event) => updateField("reason", event.target.value)}
                   placeholder="Escribir motivo de consulta"
@@ -216,14 +216,14 @@ export function AgendaPageClient() {
                 />
               </label>
 
-              <button className="w-full rounded-md bg-primary px-3 py-2 font-medium text-white disabled:opacity-60" disabled={saving} type="submit">
+              <button className="w-full btn-primary" disabled={saving} type="submit">
                 {saving ? "Guardando..." : "Guardar cita"}
               </button>
             </form>
           </Panel>
 
           <Panel title="Estados">
-            <div className="space-y-3 p-4 text-sm text-slate-600">
+            <div className="space-y-3 p-4 text-sm text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>Programadas</span>
                 <strong>{appointments.filter((appointment) => appointment.status === "scheduled" || appointment.status === "confirmed").length}</strong>

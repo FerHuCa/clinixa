@@ -59,25 +59,25 @@ export function NextAppointmentHero({ appointment, appointmentActionId, onPay }:
             <StatusPill label={citaUi.label} status={citaUi.pill} />
             <StatusPill label={pagoUi.label} status={pagoUi.pill} />
           </div>
-          <p className="mt-1 text-sm text-slate-500">{appointment.specialtyLabel ?? appointment.type}</p>
-          <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-muted-foreground">{appointment.specialtyLabel ?? appointment.type}</p>
+          <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
-              <CalendarDays aria-hidden="true" className="text-slate-400" size={15} />
+              <CalendarDays aria-hidden="true" className="text-muted-foreground/70" size={15} />
               {dateLabel(appointment.date)}
             </span>
             <span className="flex items-center gap-1">
-              <Clock aria-hidden="true" className="text-slate-400" size={15} />
+              <Clock aria-hidden="true" className="text-muted-foreground/70" size={15} />
               {appointment.time} h
             </span>
             <span className="flex items-center gap-1">
-              <Monitor aria-hidden="true" className="text-slate-400" size={15} />
+              <Monitor aria-hidden="true" className="text-muted-foreground/70" size={15} />
               {modeLabel(appointment.mode)}
             </span>
           </div>
         </div>
         {canPayOnline(appointment) ? (
           <button
-            className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="btn-primary shrink-0"
             disabled={appointmentActionId === appointment.id}
             onClick={() => onPay(appointment)}
             type="button"
@@ -88,7 +88,7 @@ export function NextAppointmentHero({ appointment, appointmentActionId, onPay }:
         ) : null}
       </div>
       {appointment.status === "scheduled" ? (
-        <p className="border-t border-border px-4 py-3 text-xs leading-5 text-slate-500">
+        <p className="border-t border-border px-4 py-3 text-xs leading-5 text-muted-foreground">
           Tu solicitud está pendiente de confirmación por el profesional. Si pagas en línea, tu cita se confirma al instante.
         </p>
       ) : null}

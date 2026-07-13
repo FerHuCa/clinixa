@@ -91,26 +91,26 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
 
   return (
     <div className="space-y-4 p-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Cuéntales a tus futuros pacientes quién eres, cuál es tu enfoque y dónde atiendes.
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-600">
-          Biografía <span className="text-slate-300">(mín. 20 caracteres)</span>
+        <span className="text-xs font-medium uppercase text-muted-foreground">
+          Biografía <span className="text-muted-foreground/50">(mín. 20 caracteres)</span>
         </span>
         <textarea
-          className="mt-1 min-h-28 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+          className="mt-1 min-h-28 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           onChange={(event) => setBio(event.target.value)}
           placeholder="Describe tu enfoque, experiencia y a quién ayudas."
           value={bio}
         />
-        <span className="mt-1 block text-xs text-slate-600">{bio.trim().length} / 20+ caracteres</span>
+        <span className="mt-1 block text-xs text-muted-foreground">{bio.trim().length} / 20+ caracteres</span>
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-600">Ubicación</span>
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-border px-3 py-2">
+        <span className="text-xs font-medium uppercase text-muted-foreground">Ubicación</span>
+        <div className="mt-1 flex items-center gap-2 rounded-lg border border-border px-3 py-2">
           <MapPin size={16} className="shrink-0 text-primary" />
           <input
             className="w-full bg-transparent text-sm outline-none"
@@ -122,19 +122,19 @@ function StepPerfil({ initial, onNext, onSave, onSkip }: StepPerfilProps) {
       </label>
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
-          className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
+          className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground/80"
           onClick={onSkip}
           type="button"
         >
           Omitir por ahora
         </button>
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -191,14 +191,14 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
 
   return (
     <div className="space-y-4 p-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Define al menos un servicio con precio para que los pacientes puedan agendar contigo.
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-600">Nombre del servicio</span>
+        <span className="text-xs font-medium uppercase text-muted-foreground">Nombre del servicio</span>
         <input
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm font-medium outline-none focus:border-teal-400"
+          className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm font-medium focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           onChange={(event) => setName(event.target.value)}
           placeholder="Ej. Consulta inicial"
           value={name}
@@ -206,9 +206,9 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
       </label>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-600">Descripción</span>
+        <span className="text-xs font-medium uppercase text-muted-foreground">Descripción</span>
         <textarea
-          className="mt-1 min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+          className="mt-1 min-h-20 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           onChange={(event) => setDescription(event.target.value)}
           placeholder="Breve descripción del servicio."
           value={description}
@@ -217,9 +217,9 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
 
       <div className="grid gap-2 sm:grid-cols-3">
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Duración (min)</span>
           <input
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             min={15}
             onChange={(event) => setDurationMinutes(Number(event.target.value))}
             type="number"
@@ -228,9 +228,9 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Precio (MXN)</span>
           <input
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             min={0}
             onChange={(event) => setPrice(Number(event.target.value))}
             type="number"
@@ -239,9 +239,9 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Modalidad</span>
           <select
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setMode(event.target.value)}
             value={mode}
           >
@@ -253,19 +253,19 @@ function StepServicio({ onNext, onSave, onSkip }: StepServicioProps) {
       </div>
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
-          className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
+          className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground/80"
           onClick={onSkip}
           type="button"
         >
           Omitir por ahora
         </button>
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -313,15 +313,15 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
 
   return (
     <div className="space-y-4 p-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Define tu primer horario de atención. Podrás agregar más franjas desde Configuración.
       </p>
 
       <div className="grid gap-2 sm:grid-cols-[1fr_110px_110px]">
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Día</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Día</span>
           <select
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setWeekday(Number(event.target.value))}
             value={weekday}
           >
@@ -336,9 +336,9 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Inicio</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Inicio</span>
           <input
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setStartsAt(event.target.value)}
             type="time"
             value={startsAt}
@@ -346,9 +346,9 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
         </label>
 
         <label className="block">
-          <span className="text-xs font-medium uppercase text-slate-600">Fin</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Fin</span>
           <input
-            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => setEndsAt(event.target.value)}
             type="time"
             value={endsAt}
@@ -357,19 +357,19 @@ function StepDisponibilidad({ onNext, onSave, onSkip }: StepDisponibilidadProps)
       </div>
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
-          className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700"
+          className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground/80"
           onClick={onSkip}
           type="button"
         >
           Omitir por ahora
         </button>
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -432,15 +432,15 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
 
   return (
     <div className="space-y-4 p-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Tu cédula profesional es necesaria para publicar tu perfil. El equipo de Clinixa la revisará
         manualmente. <strong>Este proceso tarda 1-2 días hábiles.</strong>
       </p>
 
       <label className="block">
-        <span className="text-xs font-medium uppercase text-slate-600">Número de cédula profesional</span>
+        <span className="text-xs font-medium uppercase text-muted-foreground">Número de cédula profesional</span>
         <input
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+          className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           onChange={(event) => {
             setLicenseNumber(event.target.value);
             setSaved(false);
@@ -450,7 +450,7 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
         />
       </label>
 
-      <div className="rounded-md border border-sky-200 bg-sky-50 px-4 py-3">
+      <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
         <div className="flex items-start gap-2">
           <Clock size={16} className="mt-0.5 shrink-0 text-sky-600" />
           <div className="text-sm text-sky-800">
@@ -465,19 +465,19 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
       </div>
 
       {saved ? (
-        <div className="flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary-soft px-3 py-2 text-sm text-primary-strong">
           <CheckCircle2 size={16} />
           Cédula guardada. Tu solicitud de verificación está en proceso.
         </div>
       ) : null}
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
       <div className="flex flex-col gap-3">
         <button
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="btn-primary"
           disabled={saving}
           onClick={handleSave}
           type="button"
@@ -488,7 +488,7 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
 
         {onboarding?.canPublish ? (
           <button
-            className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             disabled={publishing}
             onClick={handlePublish}
             type="button"
@@ -497,7 +497,7 @@ function StepCedula({ initialLicenseNumber, onboarding, onPublish, onSave }: Ste
             {publishing ? "Publicando..." : "Publicar perfil"}
           </button>
         ) : onboarding && onboarding.missing.length > 0 ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
             <p className="mb-2 text-xs font-medium uppercase text-amber-700">Pasos pendientes para publicar</p>
             <ul className="space-y-1">
               {onboarding.missing.map((msg) => (
@@ -721,7 +721,7 @@ export function ActivacionPageClient() {
         action={
           <div className="flex items-center gap-3">
             <Link
-              className="flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="btn-secondary hover:bg-muted/60"
               href="/portal-profesional"
             >
               Ir al portal
@@ -737,7 +737,7 @@ export function ActivacionPageClient() {
       <div className="space-y-5 px-5 py-6 lg:px-8">
         {/* Aviso: rol incorrecto */}
         {ready && currentUser.primaryRole !== "professional" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Esta página es solo para cuentas profesionales.{" "}
             <Link className="font-medium underline underline-offset-2" href="/portal-paciente">
               Ir a tu portal
@@ -748,14 +748,14 @@ export function ActivacionPageClient() {
 
         {/* Cargando */}
         {loadingInitial ? (
-          <div className="rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-500">
+          <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">
             Cargando tu perfil...
           </div>
         ) : null}
 
         {/* Publicado */}
         {published ? (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
             <BadgeCheck size={18} />
             Tu perfil ya está publicado y visible para pacientes.{" "}
             <Link className="underline underline-offset-2" href="/">
@@ -788,13 +788,13 @@ export function ActivacionPageClient() {
                           ? "bg-primary text-white"
                           : done
                             ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-500"
+                            : "bg-muted text-muted-foreground"
                       ].join(" ")}
                     >
                       <span
                         className={[
                           "flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold",
-                          active ? "bg-white text-primary" : done ? "bg-emerald-500 text-white" : "bg-slate-300 text-white"
+                          active ? "bg-white text-primary" : done ? "bg-emerald-500 text-white" : "bg-muted-foreground/40 text-white"
                         ].join(" ")}
                       >
                         {done && !active ? "✓" : index + 1}
@@ -802,7 +802,7 @@ export function ActivacionPageClient() {
                       {label}
                     </div>
                     {index < STEP_LABELS.length - 1 ? (
-                      <ChevronRight className="mx-0.5 shrink-0 text-slate-300" size={16} />
+                      <ChevronRight className="mx-0.5 shrink-0 text-muted-foreground/50" size={16} />
                     ) : null}
                   </button>
                 );
@@ -810,8 +810,8 @@ export function ActivacionPageClient() {
             </div>
 
             {/* Contador */}
-            <p className="text-sm text-slate-500">
-              <span className="font-semibold text-slate-700">{doneCuenta} de 4</span> pasos completados
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground/80">{doneCuenta} de 4</span> pasos completados
             </p>
 
             {/* Paso activo */}

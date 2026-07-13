@@ -137,8 +137,8 @@ export function RecetasPageClient() {
           <div
             className={
               message.kind === "success"
-                ? "rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800"
-                : "rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                ? "rounded-lg border border-primary/20 bg-primary-soft px-4 py-3 text-sm text-primary-strong"
+                : "rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
             }
           >
             {message.text}
@@ -148,9 +148,9 @@ export function RecetasPageClient() {
         <Panel title="Nueva receta">
           <div className="space-y-3 p-4">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Paciente</span>
               <select
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, patientId: e.target.value }))}
                 value={draft.patientId}
               >
@@ -161,11 +161,11 @@ export function RecetasPageClient() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-400">
-                Identificador del paciente <span className="normal-case text-slate-300">(CURP, fecha nac. — opcional)</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground/70">
+                Identificador del paciente <span className="normal-case text-muted-foreground/50">(CURP, fecha nac. — opcional)</span>
               </span>
               <input
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, patientIdentifier: e.target.value }))}
                 placeholder="Ej. LOOA881212HDFPLS09 o 12/12/1988"
                 value={draft.patientIdentifier}
@@ -173,29 +173,29 @@ export function RecetasPageClient() {
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Medicamento</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Medicamento</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, medicationName: e.target.value }))}
                   placeholder="Ej. Paracetamol 500 mg"
                   value={draft.medicationName}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Dosis</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Dosis</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, dosage: e.target.value }))}
                   placeholder="Ej. 1 tableta"
                   value={draft.dosage}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">
-                  Vía de administración <span className="text-red-400">*</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">
+                  Vía de administración <span className="text-rose-400">*</span>
                 </span>
                 <select
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, route: e.target.value }))}
                   value={draft.route}
                 >
@@ -206,18 +206,18 @@ export function RecetasPageClient() {
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Frecuencia</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Frecuencia</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, frequency: e.target.value }))}
                   placeholder="Ej. Cada 8 horas"
                   value={draft.frequency}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Duración</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Duración</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, duration: e.target.value }))}
                   placeholder="Ej. 5 días"
                   value={draft.duration}
@@ -225,19 +225,19 @@ export function RecetasPageClient() {
               </label>
             </div>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Indicaciones</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Indicaciones</span>
               <textarea
-                className="mt-1 min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 min-h-20 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, instructions: e.target.value }))}
                 placeholder="Indicaciones adicionales para el paciente"
                 value={draft.instructions}
               />
             </label>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex items-center gap-2 text-sm text-slate-600">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Resurtidos:</span>
                 <input
-                  className="w-16 rounded-md border border-border px-2 py-1 text-sm outline-none focus:border-teal-400"
+                  className="w-16 rounded-lg border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   min={0}
                   onChange={(e) => setDraft((d) => ({ ...d, refills: Number(e.target.value) }))}
                   type="number"
@@ -245,7 +245,7 @@ export function RecetasPageClient() {
                 />
               </label>
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
+                className="btn-primary w-full sm:w-auto"
                 disabled={saving}
                 onClick={handleCreate}
                 type="button"
@@ -259,9 +259,9 @@ export function RecetasPageClient() {
 
         <Panel title="Historial de recetas">
           {loading ? (
-            <div className="p-4 text-sm text-slate-500">Cargando recetas...</div>
+            <div className="p-4 text-sm text-muted-foreground">Cargando recetas...</div>
           ) : prescriptions.length === 0 ? (
-            <div className="p-4 text-sm text-slate-500">Aún no hay recetas registradas.</div>
+            <div className="p-4 text-sm text-muted-foreground">Aún no hay recetas registradas.</div>
           ) : (
             <div className="divide-y divide-border">
               {prescriptions.map((rx) => (
@@ -269,27 +269,27 @@ export function RecetasPageClient() {
                   <FileText size={18} className="mt-0.5 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{rx.medicationName}</p>
-                    <p className="mt-0.5 text-sm text-slate-600">
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {rx.dosage}
                       {rx.route ? ` · ${rx.route}` : ""}
                       {" · "}{rx.frequency} · {rx.duration}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-600">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {rx.patientName} · {rx.issuedAt}
                     </p>
                     {rx.prescriberName ? (
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-xs text-muted-foreground/70">
                         Dr. {rx.prescriberName}
                         {rx.prescriberLicense ? ` · Céd. ${rx.prescriberLicense}` : ""}
                       </p>
                     ) : null}
                     {rx.instructions ? (
-                      <p className="mt-1 text-sm text-slate-600">{rx.instructions}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{rx.instructions}</p>
                     ) : null}
                   </div>
                   <button
                     aria-label="Imprimir / Descargar PDF"
-                    className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 disabled:opacity-50"
                     disabled={downloadingId === rx.id}
                     onClick={() => handleDownloadPdf(rx)}
                     title="Imprimir / Descargar PDF"

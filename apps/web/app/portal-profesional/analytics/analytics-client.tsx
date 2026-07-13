@@ -47,7 +47,7 @@ function monthLabel(month: string) {
 function ProportionBar({ value, max, colorClass }: { value: number; max: number; colorClass: string }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
-    <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+    <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
       <div
         className={`h-full rounded-full transition-all ${colorClass}`}
         style={{ width: `${Math.max(pct, pct > 0 ? 4 : 0)}%` }}
@@ -62,7 +62,7 @@ function PeriodSection({ label, data, lifetime }: { label: string; data: Analyti
 
   return (
     <Panel>
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">{label}</h3>
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{label}</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Citas programadas"
@@ -90,22 +90,22 @@ function PeriodSection({ label, data, lifetime }: { label: string; data: Analyti
       {/* Barras de proporción para citas y pagos */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="mb-1 text-xs text-slate-500">
+          <p className="mb-1 text-xs text-muted-foreground">
             Citas completadas vs. total ({totalAppts > 0 ? Math.round((data.appointmentsCompleted / totalAppts) * 100) : 0}%)
           </p>
           <ProportionBar
             value={data.appointmentsCompleted}
             max={totalAppts}
-            colorClass="bg-teal-500"
+            colorClass="bg-primary"
           />
-          <div className="mt-1 flex justify-between text-xs text-slate-600">
+          <div className="mt-1 flex justify-between text-xs text-muted-foreground">
             <span>{data.appointmentsCompleted} completadas</span>
             <span>{totalAppts} total</span>
           </div>
         </div>
 
         <div>
-          <p className="mb-1 text-xs text-slate-500">
+          <p className="mb-1 text-xs text-muted-foreground">
             Este período vs. todos los tiempos ({lifetimeAppts > 0 ? Math.round((totalAppts / lifetimeAppts) * 100) : 0}%)
           </p>
           <ProportionBar
@@ -113,7 +113,7 @@ function PeriodSection({ label, data, lifetime }: { label: string; data: Analyti
             max={lifetimeAppts}
             colorClass="bg-blue-500"
           />
-          <div className="mt-1 flex justify-between text-xs text-slate-600">
+          <div className="mt-1 flex justify-between text-xs text-muted-foreground">
             <span>{totalAppts} citas</span>
             <span>{lifetimeAppts} en total</span>
           </div>
@@ -170,7 +170,7 @@ export function AnalyticsClient() {
     return (
       <AppShell>
         {header}
-        <div className="p-8 text-center text-slate-500">Cargando...</div>
+        <div className="p-8 text-center text-muted-foreground">Cargando...</div>
       </AppShell>
     );
   }
@@ -179,7 +179,7 @@ export function AnalyticsClient() {
     return (
       <AppShell>
         {header}
-        <div className="p-8 text-center text-red-500">{error ?? "Sin datos."}</div>
+        <div className="p-8 text-center text-rose-500">{error ?? "Sin datos."}</div>
       </AppShell>
     );
   }

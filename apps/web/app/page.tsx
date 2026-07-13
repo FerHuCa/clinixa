@@ -14,6 +14,7 @@ import {
   Wallet
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
 import { OnboardingChecklist, buildChecklistSteps } from "@/components/onboarding-checklist";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
@@ -95,13 +96,13 @@ function CashPaymentControl({ amount, busy, confirming, message, onCancel, onCon
   return (
     <div className="space-y-2">
       {confirming ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
           <p className="text-xs text-amber-800">
             {amount !== null ? `¿Recibiste ${money(amount)} en efectivo por esta cita?` : "¿Recibiste el pago en efectivo de esta cita?"}
           </p>
           <div className="flex items-center gap-3">
             <button
-              className="rounded-md bg-primary px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              className="btn-primary"
               disabled={busy}
               onClick={onConfirm}
               type="button"
@@ -109,7 +110,7 @@ function CashPaymentControl({ amount, busy, confirming, message, onCancel, onCon
               {busy ? "Registrando..." : "Sí, registrar pago"}
             </button>
             <button
-              className="rounded-md border border-border bg-white px-3 py-2.5 text-sm font-medium text-slate-600 disabled:opacity-50"
+              className="btn-secondary"
               disabled={busy}
               onClick={onCancel}
               type="button"
@@ -120,7 +121,7 @@ function CashPaymentControl({ amount, busy, confirming, message, onCancel, onCon
         </div>
       ) : (
         <button
-          className="flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-2.5 text-sm font-medium text-slate-700 disabled:opacity-50"
+          className="btn-secondary"
           disabled={busy}
           onClick={onStart}
           type="button"
@@ -416,15 +417,15 @@ export default function Home() {
 
       <div className="space-y-5 px-5 py-6 lg:px-8">
         {loadingData ? (
-          <div className="rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-500">Cargando tu información...</div>
+          <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">Cargando tu información...</div>
         ) : null}
 
         {actionMessage ? (
           <div
             className={
               actionMessage.kind === "success"
-                ? "rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800"
-                : "rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                ? "rounded-lg border border-primary/20 bg-primary-soft px-4 py-3 text-sm text-primary-strong"
+                : "rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
             }
           >
             {actionMessage.text}
@@ -461,7 +462,7 @@ export default function Home() {
                         </p>
                         <div className="min-w-0">
                           <p className="font-medium">{appointment.patientName}</p>
-                          <p className="mt-1 text-sm text-slate-500">
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {appointment.type} · {modeLabel(appointment.mode)}
                           </p>
                           {showCash || cashMessage ? (
@@ -490,7 +491,7 @@ export default function Home() {
                     );
                   })
                 ) : (
-                  <div className="px-4 py-4 text-sm text-slate-500">No tienes citas programadas para hoy.</div>
+                  <EmptyState hint="Cuando un paciente agende contigo, su cita aparecerá aquí." title="No tienes citas programadas para hoy" />
                 )}
               </div>
             </Panel>
@@ -508,7 +509,7 @@ export default function Home() {
                       <div className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between" key={appointment.id}>
                         <div className="min-w-0">
                           <p className="font-medium">{appointment.patientName}</p>
-                          <p className="mt-1 text-sm text-slate-500">
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {appointment.type} · {appointment.date} {appointment.time} · {modeLabel(appointment.mode)}
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -536,7 +537,7 @@ export default function Home() {
                         {appointment.status === "scheduled" ? (
                           <div className="flex shrink-0 items-center gap-3">
                             <button
-                              className="rounded-md bg-primary px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                              className="btn-primary"
                               disabled={actionId === appointment.id}
                               onClick={() => confirmRequest(appointment.id)}
                               type="button"
@@ -544,7 +545,7 @@ export default function Home() {
                               Confirmar
                             </button>
                             <button
-                              className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700 disabled:opacity-50"
+                              className="btn-danger"
                               disabled={actionId === appointment.id}
                               onClick={() => rejectRequest(appointment.id)}
                               type="button"
@@ -557,7 +558,7 @@ export default function Home() {
                     );
                   })
                 ) : (
-                  <div className="px-4 py-4 text-sm text-slate-500">No tienes solicitudes pendientes. Las nuevas aparecerán aquí.</div>
+                  <EmptyState hint="Las nuevas solicitudes de cita aparecerán aquí para que las confirmes." title="No tienes solicitudes pendientes" />
                 )}
               </div>
             </Panel>
@@ -567,15 +568,15 @@ export default function Home() {
               <StatCard detail="Con al menos una cita contigo" icon={UserRound} label="Pacientes activos" value={`${patientCount}`} />
               <StatCard detail="Consultas ya realizadas" icon={CheckCircle2} label="Citas completadas" value={`${completedCount}`} />
               <Link
-                className="block rounded-md border border-border bg-white p-4 transition hover:border-teal-300"
+                className="card block p-4 transition hover:border-primary/40 hover:shadow-lifted"
                 href="/portal-profesional#cobros"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-slate-500">Ingresos del mes (neto)</p>
+                  <p className="text-sm text-muted-foreground">Ingresos del mes (neto)</p>
                   <Wallet size={18} className="text-primary" />
                 </div>
                 <p className="mt-3 text-3xl font-semibold">{payments ? money(payments.summary.netTotal) : "—"}</p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {payments
                     ? `Efectivo ${money(payments.summary.cashTotal)} · En línea ${money(payments.summary.onlineTotal)} · Ver cobros →`
                     : "Consulta el detalle en Configuración → Cobros"}
@@ -591,11 +592,11 @@ export default function Home() {
                   <ClipboardList size={18} className="text-accent" />
                   <h2 className="text-sm font-semibold">Documentación clínica</h2>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Registra y revisa notas SOAP dentro del expediente de cada paciente.
                 </p>
                 <Link
-                  className="mt-4 flex w-full justify-center rounded-md border border-border px-3 py-2 text-sm font-medium"
+                  className="mt-4 flex w-full justify-center rounded-lg border border-border px-3 py-2 text-sm font-medium"
                   href="/expediente"
                 >
                   Crear nota SOAP
@@ -607,11 +608,11 @@ export default function Home() {
                 paciente-profesional ocurre por el WhatsApp del profesional. */}
             <Panel title="Comunicación con pacientes">
               <div className="p-4">
-                <div className="flex items-start gap-3 rounded-md bg-slate-50 p-3">
+                <div className="flex items-start gap-3 rounded-lg bg-muted/40 p-3">
                   <MessageSquare size={18} className="mt-0.5 shrink-0 text-primary" />
                   <div>
                     <p className="text-sm font-medium">WhatsApp directo</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       Tus pacientes te contactan por el WhatsApp que registraste en Configuración. Esa conversación ocurre
                       fuera de Clinixa y no se integra automáticamente al expediente clínico: registra en la plataforma
                       la información clínicamente relevante.

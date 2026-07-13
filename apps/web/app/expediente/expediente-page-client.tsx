@@ -74,7 +74,7 @@ export function ExpedientePageClient() {
       <div className="grid gap-5 px-5 py-6 lg:grid-cols-[1fr_420px] lg:px-8">
         <section className="space-y-5">
           {savedNote ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               Nota guardada: {savedNote}
             </div>
           ) : null}
@@ -82,12 +82,12 @@ export function ExpedientePageClient() {
           <Panel title="Notas SOAP recientes">
             {soapNotes.length === 0 ? (
               <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 text-primary">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
                   <ClipboardList size={22} />
                 </div>
-                <p className="text-sm text-slate-600">Aún no hay notas SOAP en el expediente.</p>
+                <p className="text-sm text-muted-foreground">Aún no hay notas SOAP en el expediente.</p>
                 <a
-                  className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
+                  className="btn-primary"
                   href="#borrador-soap"
                 >
                   <Save size={16} />
@@ -97,24 +97,24 @@ export function ExpedientePageClient() {
             ) : (
             <div className="divide-y divide-border">
               {soapNotes.map((note) => (
-                <Link className="block px-4 py-4 transition hover:bg-slate-50" href={`/pacientes/${note.patientId}`} key={note.id}>
+                <Link className="block px-4 py-4 transition hover:bg-muted/60" href={`/pacientes/${note.patientId}`} key={note.id}>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-medium">{note.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {note.patientName} · {note.date}
                       </p>
                     </div>
                     <StatusPill label={note.statusLabel} status={note.status} />
                   </div>
                   <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-                    <div className="rounded-md bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase text-slate-600">Evaluación</p>
-                      <p className="mt-1 text-slate-700">{note.assessment}</p>
+                    <div className="rounded-lg bg-muted/40 p-3">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Evaluación</p>
+                      <p className="mt-1 text-foreground/80">{note.assessment}</p>
                     </div>
-                    <div className="rounded-md bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase text-slate-600">Plan</p>
-                      <p className="mt-1 text-slate-700">{note.plan}</p>
+                    <div className="rounded-lg bg-muted/40 p-3">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Plan</p>
+                      <p className="mt-1 text-foreground/80">{note.plan}</p>
                     </div>
                   </div>
                 </Link>
@@ -128,9 +128,9 @@ export function ExpedientePageClient() {
           <Panel title="Borrador SOAP">
             <form className="scroll-mt-28 space-y-4 p-4 text-sm" id="borrador-soap" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Paciente</span>
                 <select
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="patientId"
                   onChange={(event) => updateField("patientId", event.target.value)}
                   required
@@ -146,9 +146,9 @@ export function ExpedientePageClient() {
 
               <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Título</span>
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Título</span>
                   <input
-                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="mt-1 w-full input"
                     name="title"
                     onChange={(event) => updateField("title", event.target.value)}
                     required
@@ -156,9 +156,9 @@ export function ExpedientePageClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs font-medium uppercase text-slate-600">Fecha</span>
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Fecha</span>
                   <input
-                    className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                    className="mt-1 w-full input"
                     name="date"
                     onChange={(event) => updateField("date", event.target.value)}
                     required
@@ -176,9 +176,9 @@ export function ExpedientePageClient() {
                   ["plan", "Plan"]
                 ].map(([field, label]) => (
                   <label className="block" key={field}>
-                    <span className="text-xs font-medium uppercase text-slate-600">{label}</span>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
                     <textarea
-                      className="mt-1 min-h-20 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="mt-1 min-h-20 w-full input"
                       name={field}
                       onChange={(event) => updateField(field as keyof typeof form, event.target.value)}
                       placeholder={`Escribir contenido de ${label.toLowerCase()}`}
@@ -190,9 +190,9 @@ export function ExpedientePageClient() {
               </div>
 
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Estado</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Estado</span>
                 <select
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="status"
                   onChange={(event) => updateField("status", event.target.value)}
                   value={form.status}
@@ -203,7 +203,7 @@ export function ExpedientePageClient() {
               </label>
 
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 font-medium text-white disabled:opacity-60"
+                className="w-full btn-primary"
                 disabled={saving}
                 type="submit"
               >
@@ -214,7 +214,7 @@ export function ExpedientePageClient() {
           </Panel>
 
           <Panel title="Alcance actual">
-            <div className="p-4 text-sm leading-6 text-slate-600">
+            <div className="p-4 text-sm leading-6 text-muted-foreground">
               Las notas SOAP se capturan manualmente. La generación asistida y los resúmenes automáticos llegarán en una fase posterior.
             </div>
           </Panel>

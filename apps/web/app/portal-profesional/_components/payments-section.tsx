@@ -56,8 +56,8 @@ export function PaymentsSection({
             <button
               className={
                 paymentsMonth === currentMonth
-                  ? "rounded-md bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-teal-200"
-                  : "rounded-md border border-border bg-white px-3 py-2.5 text-xs font-medium text-slate-600"
+                  ? "rounded-lg bg-primary-soft px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-primary/20"
+                  : "rounded-lg border border-border bg-white px-3 py-2.5 text-xs font-medium text-muted-foreground"
               }
               onClick={() => onSetPaymentsMonth(currentMonth)}
               type="button"
@@ -67,8 +67,8 @@ export function PaymentsSection({
             <button
               className={
                 paymentsMonth === previousMonth
-                  ? "rounded-md bg-teal-50 px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-teal-200"
-                  : "rounded-md border border-border bg-white px-3 py-2.5 text-xs font-medium text-slate-600"
+                  ? "rounded-lg bg-primary-soft px-3 py-2.5 text-xs font-medium text-primary ring-1 ring-primary/20"
+                  : "rounded-lg border border-border bg-white px-3 py-2.5 text-xs font-medium text-muted-foreground"
               }
               onClick={() => onSetPaymentsMonth(previousMonth)}
               type="button"
@@ -82,39 +82,39 @@ export function PaymentsSection({
         <div className="space-y-4 p-4">
           <div className="flex items-start gap-3">
             <Banknote size={18} className="mt-0.5 shrink-0 text-primary" />
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Estado de cuenta de <span className="font-medium capitalize">{monthLabel(paymentsMonth)}</span>: pagos en línea
               (Mercado Pago) y cobros en efectivo que registraste. Los totales solo consideran pagos aprobados.
             </p>
           </div>
 
           {paymentsLoading ? (
-            <div className="rounded-md border border-border bg-white px-3 py-2 text-sm text-slate-500">Cargando tus cobros...</div>
+            <div className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-muted-foreground">Cargando tus cobros...</div>
           ) : !payments ? (
-            <div className="rounded-md border border-border bg-slate-50 px-3 py-2 text-sm text-slate-500">
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
               No pudimos cargar tus cobros en este momento. Inténtalo de nuevo más tarde.
             </div>
           ) : (
             <>
               <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                <div className="rounded-md border border-border bg-white p-3">
-                  <dt className="text-xs text-slate-500">Ingreso bruto</dt>
+                <div className="rounded-lg border border-border bg-white p-3">
+                  <dt className="text-xs text-muted-foreground">Ingreso bruto</dt>
                   <dd className="mt-1 text-lg font-semibold">{moneyExact(payments.summary.grossTotal)}</dd>
                 </div>
-                <div className="rounded-md border border-border bg-white p-3">
-                  <dt className="text-xs text-slate-500">Comisión de plataforma</dt>
-                  <dd className="mt-1 text-lg font-semibold text-slate-600">−{moneyExact(payments.summary.commissionTotal)}</dd>
+                <div className="rounded-lg border border-border bg-white p-3">
+                  <dt className="text-xs text-muted-foreground">Comisión de plataforma</dt>
+                  <dd className="mt-1 text-lg font-semibold text-muted-foreground">−{moneyExact(payments.summary.commissionTotal)}</dd>
                 </div>
-                <div className="rounded-md border border-teal-200 bg-teal-50 p-3">
-                  <dt className="text-xs text-teal-700">Neto para ti</dt>
-                  <dd className="mt-1 text-lg font-semibold text-teal-800">{moneyExact(payments.summary.netTotal)}</dd>
+                <div className="rounded-lg border border-primary/20 bg-primary-soft p-3">
+                  <dt className="text-xs text-primary">Neto para ti</dt>
+                  <dd className="mt-1 text-lg font-semibold text-primary-strong">{moneyExact(payments.summary.netTotal)}</dd>
                 </div>
-                <div className="rounded-md border border-border bg-white p-3">
-                  <dt className="text-xs text-slate-500">En efectivo (neto)</dt>
+                <div className="rounded-lg border border-border bg-white p-3">
+                  <dt className="text-xs text-muted-foreground">En efectivo (neto)</dt>
                   <dd className="mt-1 text-lg font-semibold">{moneyExact(payments.summary.cashTotal)}</dd>
                 </div>
-                <div className="rounded-md border border-border bg-white p-3">
-                  <dt className="text-xs text-slate-500">En línea (neto)</dt>
+                <div className="rounded-lg border border-border bg-white p-3">
+                  <dt className="text-xs text-muted-foreground">En línea (neto)</dt>
                   <dd className="mt-1 text-lg font-semibold">{moneyExact(payments.summary.onlineTotal)}</dd>
                 </div>
               </dl>
@@ -136,7 +136,7 @@ export function PaymentsSection({
                       <div className="hidden overflow-x-auto md:block">
                         <table className="w-full min-w-[720px] text-sm">
                           <thead>
-                            <tr className="border-b border-border text-left text-xs uppercase text-slate-600">
+                            <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                               <th className="px-2 py-2 font-medium">Fecha</th>
                               <th className="px-2 py-2 font-medium">Paciente</th>
                               <th className="px-2 py-2 font-medium">Servicio</th>
@@ -152,9 +152,9 @@ export function PaymentsSection({
                               <tr key={item.paymentId}>
                                 <td className="whitespace-nowrap px-2 py-2.5">{fecha}</td>
                                 <td className="px-2 py-2.5 font-medium">{item.patientName}</td>
-                                <td className="px-2 py-2.5 text-slate-600">{item.serviceName}</td>
+                                <td className="px-2 py-2.5 text-muted-foreground">{item.serviceName}</td>
                                 <td className="whitespace-nowrap px-2 py-2.5 text-right">{bruto}</td>
-                                <td className="whitespace-nowrap px-2 py-2.5 text-right text-slate-500">{comision}</td>
+                                <td className="whitespace-nowrap px-2 py-2.5 text-right text-muted-foreground">{comision}</td>
                                 <td className="whitespace-nowrap px-2 py-2.5 text-right font-medium">{neto}</td>
                                 <td className="px-2 py-2.5">
                                   <StatusPill label={methodUi.label} status={methodUi.status} />
@@ -170,26 +170,26 @@ export function PaymentsSection({
 
                       <div className="space-y-3 md:hidden">
                         {rows.map(({ item, methodUi, estadoUi, fecha, bruto, comision, neto }) => (
-                          <div key={item.paymentId} className="rounded-md border border-border bg-white p-4 text-sm">
+                          <div key={item.paymentId} className="rounded-lg border border-border bg-white p-4 text-sm">
                             <div className="flex items-start justify-between gap-3">
                               <span className="font-medium">{item.patientName}</span>
-                              <span className="whitespace-nowrap text-slate-500">{fecha}</span>
+                              <span className="whitespace-nowrap text-muted-foreground">{fecha}</span>
                             </div>
                             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
                               <div>
-                                <dt className="text-xs text-slate-500">Servicio</dt>
-                                <dd className="text-slate-600">{item.serviceName}</dd>
+                                <dt className="text-xs text-muted-foreground">Servicio</dt>
+                                <dd className="text-muted-foreground">{item.serviceName}</dd>
                               </div>
                               <div>
-                                <dt className="text-xs text-slate-500">Bruto</dt>
+                                <dt className="text-xs text-muted-foreground">Bruto</dt>
                                 <dd>{bruto}</dd>
                               </div>
                               <div>
-                                <dt className="text-xs text-slate-500">Comisión</dt>
-                                <dd className="text-slate-500">{comision}</dd>
+                                <dt className="text-xs text-muted-foreground">Comisión</dt>
+                                <dd className="text-muted-foreground">{comision}</dd>
                               </div>
                               <div>
-                                <dt className="text-xs text-slate-500">Neto</dt>
+                                <dt className="text-xs text-muted-foreground">Neto</dt>
                                 <dd className="font-medium">{neto}</dd>
                               </div>
                             </dl>
@@ -204,7 +204,7 @@ export function PaymentsSection({
                   );
                 })()
               ) : (
-                <div className="rounded-md border border-border bg-slate-50 px-3 py-3 text-sm text-slate-500">
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
                   Sin cobros registrados en {monthLabel(paymentsMonth)}. Los pagos en línea y los cobros en efectivo que
                   registres aparecerán aquí.
                 </div>

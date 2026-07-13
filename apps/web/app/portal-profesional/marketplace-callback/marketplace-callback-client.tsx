@@ -89,12 +89,12 @@ export function MarketplaceCallbackClient() {
           <div className="space-y-4 p-4">
             {missingParams ? (
               <>
-                <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                   <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                   Falta informacion para completar la vinculacion. Vuelve a intentarlo desde el portal.
                 </div>
                 <Link
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm text-slate-700"
+                  className="btn-secondary"
                   href="/portal-profesional"
                 >
                   <ArrowLeft size={16} />
@@ -102,18 +102,18 @@ export function MarketplaceCallbackClient() {
                 </Link>
               </>
             ) : callbackState === "processing" ? (
-              <div className="flex items-center gap-2 rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-600">
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">
                 <Loader2 size={16} className="animate-spin" />
                 Vinculando tu cuenta de Mercado Pago...
               </div>
             ) : callbackState === "success" ? (
               <>
-                <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
                   Cuenta vinculada. Tu cuenta quedara activa cuando el equipo la verifique.
                 </div>
                 <Link
-                  className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white"
+                  className="btn-primary"
                   href="/portal-profesional"
                 >
                   <ArrowLeft size={16} />
@@ -122,12 +122,12 @@ export function MarketplaceCallbackClient() {
               </>
             ) : (
               <>
-                <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                   <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                   {errorMessage}
                 </div>
                 <Link
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm text-slate-700"
+                  className="btn-secondary"
                   href="/portal-profesional"
                 >
                   <ArrowLeft size={16} />

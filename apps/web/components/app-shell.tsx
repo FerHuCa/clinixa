@@ -175,13 +175,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <main className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-white px-5 py-6 lg:block">
         <Link aria-label="Inicio — Clinixa" className="flex items-center gap-3" href={homeHref}>
-          <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
+          <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white shadow-soft">
             <Activity size={22} />
           </div>
-          <p className="text-sm font-semibold">Clinixa</p>
+          <p className="font-display text-lg font-semibold tracking-tight">Clinixa</p>
         </Link>
 
-        <nav aria-label="Navegación principal" className="mt-10 space-y-1 text-sm">
+        <nav aria-label="Navegación principal" className="mt-8 space-y-1 text-sm">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
@@ -190,8 +190,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition",
-                  active ? "bg-teal-50 font-medium text-primary" : "text-slate-700 hover:bg-slate-100"
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
+                  active ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
                 href={item.href}
                 key={item.href}
@@ -205,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {activation ? (
           <Link
-            className="mt-6 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
+            className="mt-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
             href="/activacion"
           >
             <span>Activación</span>
@@ -216,19 +216,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
       </aside>
 
-      <header className="sticky top-0 z-20 border-b border-border bg-white px-4 py-3 lg:hidden">
+      <header className="sticky top-0 z-20 border-b border-border bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between">
           <Link aria-label="Inicio — Clinixa" className="flex items-center gap-2" href={homeHref}>
-            <div aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
+            <div aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
               <Activity size={19} />
             </div>
-            <span className="text-sm font-semibold">Clinixa</span>
+            <span className="font-display text-base font-semibold tracking-tight">Clinixa</span>
           </Link>
           <button
             aria-controls="menu-movil"
             aria-expanded={menuOpen}
             aria-label="Abrir menú"
-            className="flex h-11 w-11 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-foreground/70 hover:bg-muted"
             onClick={() => setMenuOpen(true)}
             type="button"
           >
@@ -245,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMenuOpen(false)}
           />
           <div
-            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] overflow-y-auto bg-white px-5 py-6"
+            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] overflow-y-auto rounded-r-2xl bg-white px-5 py-6 shadow-lifted"
             id="menu-movil"
           >
             <div className="flex items-center justify-between">
@@ -255,14 +255,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={homeHref}
                 onClick={() => setMenuOpen(false)}
               >
-                <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
+                <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
                   <Activity size={22} />
                 </div>
-                <p className="text-sm font-semibold">Clinixa</p>
+                <p className="font-display text-lg font-semibold tracking-tight">Clinixa</p>
               </Link>
               <button
                 aria-label="Cerrar menú"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-foreground/70 hover:bg-muted"
                 onClick={() => setMenuOpen(false)}
                 type="button"
               >
@@ -279,8 +279,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link
                     aria-current={active ? "page" : undefined}
                     className={clsx(
-                      "flex min-h-11 w-full items-center gap-3 rounded-md px-3 py-2 text-left transition",
-                      active ? "bg-teal-50 font-medium text-primary" : "text-slate-700 hover:bg-slate-100"
+                      "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
+                      active ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                     href={item.href}
                     key={item.href}
@@ -295,7 +295,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             {activation ? (
               <Link
-                className="mt-6 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                className="mt-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
                 href="/activacion"
                 onClick={() => setMenuOpen(false)}
               >
@@ -332,7 +332,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
           ) : trialBanner.status === "active_subscription" ? null : (
-            <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 lg:px-8">
+            <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800 lg:px-8">
               Tu periodo de prueba terminó — acceso limitado ·{" "}
               <Link className="font-medium underline underline-offset-2" href="/suscripcion">
                 Activa tu plan

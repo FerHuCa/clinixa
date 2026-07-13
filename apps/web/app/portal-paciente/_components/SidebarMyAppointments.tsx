@@ -45,14 +45,14 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">{appointment.professionalName || "Profesional por asignar"}</p>
-                      <p className="mt-1 text-xs text-slate-500">{appointment.specialtyLabel ?? appointment.type}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{appointment.specialtyLabel ?? appointment.type}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <StatusPill label={citaUi.label} status={citaUi.pill} />
                       <StatusPill label={pagoUi.label} status={pagoUi.pill} />
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+                  <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span>{appointment.date}</span>
                     <span>{appointment.time}</span>
                     <span>{modeLabel(appointment.mode)}</span>
@@ -60,7 +60,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                   <div className="mt-3 flex flex-wrap gap-3">
                     {canPayOnline(appointment) ? (
                       <button
-                        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                        className="btn-primary disabled:opacity-60"
                         disabled={appointmentActionId === appointment.id}
                         onClick={() => onPay(appointment)}
                         type="button"
@@ -69,7 +69,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                       </button>
                     ) : null}
                     <button
-                      className="rounded-md border border-border px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-60"
+                      className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground/80 disabled:opacity-60"
                       disabled={appointmentActionId === appointment.id}
                       onClick={() => onReschedule(appointment)}
                       type="button"
@@ -77,7 +77,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
                       {appointmentActionId === appointment.id ? "Procesando..." : "Reprogramar"}
                     </button>
                     <button
-                      className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 disabled:opacity-60"
+                      className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 disabled:opacity-60"
                       disabled={appointmentActionId === appointment.id}
                       onClick={() => onCancel(appointment)}
                       type="button"
@@ -89,7 +89,7 @@ export function SidebarMyAppointments({ appointmentActionId, upcomingAppointment
               );
             })
           ) : (
-            <p className="px-4 py-4 text-sm text-slate-500">Aún no tienes citas. Busca un profesional y envía tu primera solicitud.</p>
+            <p className="px-4 py-4 text-sm text-muted-foreground">Aún no tienes citas. Busca un profesional y envía tu primera solicitud.</p>
           )}
         </div>
       </Panel>

@@ -25,8 +25,8 @@ const STATUS_TABS = [
 ] as const;
 
 function statusIcon(status: string) {
-  if (status === "completed") return <CheckCircle2 size={18} className="text-teal-500" />;
-  if (status === "skipped") return <Clock size={18} className="text-slate-400" />;
+  if (status === "completed") return <CheckCircle2 size={18} className="text-primary/70" />;
+  if (status === "skipped") return <Clock size={18} className="text-muted-foreground/70" />;
   return <Circle size={18} className="text-amber-400" />;
 }
 
@@ -98,8 +98,8 @@ export function TareasPageClient() {
           <div
             className={
               message.kind === "success"
-                ? "rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800"
-                : "rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                ? "rounded-lg border border-primary/20 bg-primary-soft px-4 py-3 text-sm text-primary-strong"
+                : "rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
             }
           >
             {message.text}
@@ -109,9 +109,9 @@ export function TareasPageClient() {
         <Panel title="Nueva tarea">
           <div className="space-y-3 p-4">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Paciente</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Paciente</span>
               <select
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, patientId: e.target.value }))}
                 value={draft.patientId}
               >
@@ -122,18 +122,18 @@ export function TareasPageClient() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Título</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Título</span>
               <input
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                 placeholder="Ej. Ejercicio de respiración diario"
                 value={draft.title}
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Descripción</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Descripción</span>
               <textarea
-                className="mt-1 min-h-20 w-full resize-none rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 min-h-20 w-full resize-none rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                 placeholder="Instrucciones para el paciente"
                 value={draft.description}
@@ -141,16 +141,16 @@ export function TareasPageClient() {
             </label>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <label className="block flex-1">
-                <span className="text-xs font-medium uppercase text-slate-600">Fecha límite (opcional)</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Fecha límite (opcional)</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(e) => setDraft((d) => ({ ...d, dueDate: e.target.value }))}
                   type="date"
                   value={draft.dueDate}
                 />
               </label>
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto"
+                className="btn-primary w-full sm:w-auto"
                 disabled={saving}
                 onClick={handleCreate}
                 type="button"
@@ -169,7 +169,7 @@ export function TareasPageClient() {
                 className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium transition ${
                   activeTab === tab.value
                     ? "border-b-2 border-primary text-primary"
-                    : "text-slate-500 hover:text-slate-700"
+                    : "text-muted-foreground hover:text-foreground/80"
                 }`}
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
@@ -180,9 +180,9 @@ export function TareasPageClient() {
             ))}
           </div>
           {loading ? (
-            <div className="p-4 text-sm text-slate-500">Cargando tareas...</div>
+            <div className="p-4 text-sm text-muted-foreground">Cargando tareas...</div>
           ) : filtered.length === 0 ? (
-            <div className="p-4 text-sm text-slate-500">No hay tareas en esta categoría.</div>
+            <div className="p-4 text-sm text-muted-foreground">No hay tareas en esta categoría.</div>
           ) : (
             <div className="divide-y divide-border">
               {filtered.map((task) => (
@@ -197,13 +197,13 @@ export function TareasPageClient() {
                     {statusIcon(task.status)}
                   </button>
                   <div className="min-w-0 flex-1">
-                    <p className={`font-medium ${task.status === "completed" ? "line-through text-slate-400" : ""}`}>
+                    <p className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground/70" : ""}`}>
                       {task.title}
                     </p>
                     {task.description ? (
-                      <p className="mt-0.5 text-sm text-slate-600">{task.description}</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">{task.description}</p>
                     ) : null}
-                    <p className="mt-0.5 text-xs text-slate-600">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {task.patientName}
                       {task.dueDate ? ` · Límite: ${task.dueDate}` : ""}
                     </p>

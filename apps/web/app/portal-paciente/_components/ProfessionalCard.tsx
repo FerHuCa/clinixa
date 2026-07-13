@@ -49,36 +49,36 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
       <div className="grid gap-4 lg:grid-cols-[1fr_190px]">
         <div className="min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-teal-50 text-sm font-semibold text-primary">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-sm font-semibold text-primary">
               {initials(professional.displayName)}
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-semibold">{professional.displayName}</h2>
-                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">{professional.specialtyLabel}</span>
-                <span className="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                <span className="rounded-lg bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">{professional.specialtyLabel}</span>
+                <span className="flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
                   <Star size={13} />
                   {professional.averageRating.toFixed(1)} · {professional.reviewCount}
                 </span>
                 {professional.verificationStatus === "verified" ? (
-                  <span className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                  <span className="flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
                     <BadgeCheck size={13} />
                     Cédula {professional.licenseNumber} verificada
                   </span>
                 ) : null}
               </div>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{professional.bio}</p>
-              <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{professional.bio}</p>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <MapPin aria-hidden="true" className="text-slate-400" size={15} />
+                  <MapPin aria-hidden="true" className="text-muted-foreground/70" size={15} />
                   {professional.location}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Monitor aria-hidden="true" className="text-slate-400" size={15} />
+                  <Monitor aria-hidden="true" className="text-muted-foreground/70" size={15} />
                   {modeLabel(professional.appointmentMode)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock aria-hidden="true" className="text-slate-400" size={15} />
+                  <Clock aria-hidden="true" className="text-muted-foreground/70" size={15} />
                   {professional.nextAvailable}
                 </span>
               </div>
@@ -86,18 +86,18 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
           </div>
 
           {firstService ? (
-            <div className="mt-4 rounded-md border border-border bg-slate-50 px-3 py-3">
+            <div className="mt-4 rounded-lg border border-border bg-muted/40 px-3 py-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium">{firstService.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">{firstService.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{firstService.description}</p>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1 text-slate-600">
+                  <span className="flex items-center gap-1 text-muted-foreground">
                     <Clock size={15} />
                     {firstService.durationMinutes} min
                   </span>
-                  <span className="flex items-center gap-1 font-medium text-slate-800">
+                  <span className="flex items-center gap-1 font-medium text-foreground">
                     <WalletCards size={15} />
                     {money(firstService.price)}
                   </span>
@@ -109,7 +109,7 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
 
         <div className="flex flex-col gap-2">
           <button
-            className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white"
+            className="btn-primary"
             disabled={!currentPatient}
             onClick={() => onStartBooking(professional)}
             type="button"
@@ -118,15 +118,15 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
             {currentPatient ? "Solicitar cita" : "Sesión de paciente"}
           </button>
           <button
-            className="flex items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-slate-700"
+            className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground/80"
             onClick={() => onToggleReviews(professional.id)}
             type="button"
           >
             <Star size={16} />
             {expanded ? "Ocultar opiniones" : "Ver opiniones"}
           </button>
-          <div className="rounded-md border border-border px-3 py-2 text-sm text-slate-600">
-            Desde <span className="font-semibold text-slate-900">{money(professional.basePrice)}</span>
+          <div className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
+            Desde <span className="font-semibold text-foreground">{money(professional.basePrice)}</span>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {reviews.length > 0 ? (
             reviews.map((review) => (
-              <div className="rounded-md border border-border bg-white p-3" key={review.id}>
+              <div className="rounded-lg border border-border bg-white p-3" key={review.id}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium">{review.patientName}</p>
                   <span className="flex items-center gap-1 text-sm font-medium text-amber-700">
@@ -143,11 +143,11 @@ export function ProfessionalCard({ currentPatient, expanded, professional, revie
                     {review.rating}
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{review.comment}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.comment}</p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-500">Sin opiniones publicadas.</p>
+            <p className="text-sm text-muted-foreground">Sin opiniones publicadas.</p>
           )}
         </div>
       ) : null}

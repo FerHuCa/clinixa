@@ -397,17 +397,17 @@ export function ProfessionalPortalPageClient() {
 
       <div className="space-y-5 px-5 py-6 lg:px-8">
         {currentUser.primaryRole !== "professional" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Inicia sesión con una cuenta profesional para editar esta configuración.
           </div>
         ) : null}
 
         {loadingDashboard ? (
-          <div className="rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-500">Cargando tu configuración...</div>
+          <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">Cargando tu configuración...</div>
         ) : null}
 
         {statusMessage ? (
-          <div className="rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800">{statusMessage}</div>
+          <div className="rounded-lg border border-primary/20 bg-primary-soft px-4 py-3 text-sm text-primary-strong">{statusMessage}</div>
         ) : null}
 
         {onboarding && !onboarding.isPublished ? (
@@ -422,7 +422,7 @@ export function ProfessionalPortalPageClient() {
         ) : null}
 
         {onboarding?.isPublished ? (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 size={16} />
             Tu perfil está publicado y visible para pacientes.
           </div>
@@ -430,7 +430,7 @@ export function ProfessionalPortalPageClient() {
 
         {/* Estado de verificación de cédula: visible solo cuando la carga ya completó */}
         {!loadingDashboard && ownVerificationStatus === "pending" ? (
-          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <Clock size={16} className="shrink-0" />
             <span>
               <strong>Cédula en revisión.</strong> Tu número de cédula está siendo verificado por el equipo de Clinixa. Te avisaremos por correo cuando esté listo.
@@ -439,7 +439,7 @@ export function ProfessionalPortalPageClient() {
         ) : null}
 
         {!loadingDashboard && ownVerificationStatus === "verified" ? (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 size={16} className="shrink-0" />
             <span>
               <strong>Cédula verificada.</strong> Tu cédula profesional ha sido validada exitosamente.
@@ -448,7 +448,7 @@ export function ProfessionalPortalPageClient() {
         ) : null}
 
         {!loadingDashboard && ownVerificationStatus === "rejected" ? (
-          <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             <XCircle size={16} className="shrink-0" />
             <span>
               <strong>Cédula rechazada.</strong> No fue posible verificar tu número de cédula. Revisa tus datos en la sección de perfil y contáctanos si tienes dudas.
@@ -475,7 +475,7 @@ export function ProfessionalPortalPageClient() {
               />
             ) : (
               <Panel title="Perfil profesional">
-                <div className="p-4 text-sm text-slate-500">Sin perfil profesional activo.</div>
+                <div className="p-4 text-sm text-muted-foreground">Sin perfil profesional activo.</div>
               </Panel>
             )}
 
@@ -484,7 +484,7 @@ export function ProfessionalPortalPageClient() {
             <Panel>
               <div className="flex items-start gap-3 p-4">
                 <Home size={18} className="mt-0.5 shrink-0 text-primary" />
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-muted-foreground">
                   ¿Buscas tu agenda o las solicitudes de tus pacientes? Ahora viven en{" "}
                   <Link className="font-medium text-primary underline underline-offset-2" href="/">
                     Inicio

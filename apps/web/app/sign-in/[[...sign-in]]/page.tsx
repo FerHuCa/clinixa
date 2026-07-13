@@ -6,18 +6,18 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 px-4 py-12">
       <Link className="flex items-center gap-3" href="/bienvenida">
-        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-white">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
           <Activity size={22} />
         </div>
         <div>
           <p className="text-sm font-semibold">Clinixa</p>
-          <p className="text-xs text-slate-500">Iniciar sesion</p>
+          <p className="text-xs text-muted-foreground">Iniciar sesion</p>
         </div>
       </Link>
 
       <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/onboarding" />
 
-      <p className="text-center text-xs leading-5 text-slate-600">
+      <p className="text-center text-xs leading-5 text-muted-foreground">
         Consulta el{" "}
         <Link className="inline-block py-1.5 text-primary underline-offset-2 hover:underline" href="/privacy" target="_blank">
           Aviso de Privacidad

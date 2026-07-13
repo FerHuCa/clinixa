@@ -63,14 +63,14 @@ export function ServicesPanel({
             return (
               <div className="space-y-3 p-4" key={service.id}>
                 <input
-                  className="w-full rounded-md border border-border px-3 py-2 text-sm font-medium outline-none focus:border-teal-400"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(event) =>
                     onServiceDraftChange((current) => ({ ...current, [service.id]: { ...draft, name: event.target.value } }))
                   }
                   value={draft.name}
                 />
                 <textarea
-                  className="min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="min-h-20 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                   onChange={(event) =>
                     onServiceDraftChange((current) => ({ ...current, [service.id]: { ...draft, description: event.target.value } }))
                   }
@@ -78,9 +78,9 @@ export function ServicesPanel({
                 />
                 <div className="grid gap-2 sm:grid-cols-3">
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">Duración (min)</span>
                     <input
-                      className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                       min={15}
                       onChange={(event) =>
                         onServiceDraftChange((current) => ({
@@ -93,9 +93,9 @@ export function ServicesPanel({
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">Precio (MXN)</span>
                     <input
-                      className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                       min={0}
                       onChange={(event) =>
                         onServiceDraftChange((current) => ({ ...current, [service.id]: { ...draft, price: Number(event.target.value) } }))
@@ -105,9 +105,9 @@ export function ServicesPanel({
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
+                    <span className="text-xs font-medium uppercase text-muted-foreground">Modalidad</span>
                     <select
-                      className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                       onChange={(event) =>
                         onServiceDraftChange((current) => ({ ...current, [service.id]: { ...draft, mode: event.target.value } }))
                       }
@@ -120,11 +120,11 @@ export function ServicesPanel({
                   </label>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {draft.durationMinutes} min · {money(draft.price)} · {modeLabel(draft.mode)}
                   </p>
                   <button
-                    className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+                    className="btn-primary"
                     disabled={configActionId === service.id}
                     onClick={() => onSaveService(service.id)}
                     type="button"
@@ -137,26 +137,26 @@ export function ServicesPanel({
             );
           })
         ) : (
-          <div className="p-4 text-sm text-slate-500">Aún no tienes servicios publicados. Agrega el primero aquí abajo.</div>
+          <div className="p-4 text-sm text-muted-foreground">Aún no tienes servicios publicados. Agrega el primero aquí abajo.</div>
         )}
-        <div className="space-y-3 bg-slate-50 p-4">
+        <div className="space-y-3 bg-muted/40 p-4">
           <input
-            className="w-full rounded-md border border-border px-3 py-2 text-sm font-medium outline-none focus:border-teal-400"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => onNewServiceChange((current) => ({ ...current, name: event.target.value }))}
             placeholder="Nuevo servicio"
             value={newService.name}
           />
           <textarea
-            className="min-h-20 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+            className="min-h-20 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => onNewServiceChange((current) => ({ ...current, description: event.target.value }))}
             placeholder="Descripción"
             value={newService.description}
           />
           <div className="grid gap-2 sm:grid-cols-3">
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Duración (min)</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Duración (min)</span>
               <input
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 min={15}
                 onChange={(event) => onNewServiceChange((current) => ({ ...current, durationMinutes: Number(event.target.value) }))}
                 type="number"
@@ -164,9 +164,9 @@ export function ServicesPanel({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Precio (MXN)</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Precio (MXN)</span>
               <input
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 min={0}
                 onChange={(event) => onNewServiceChange((current) => ({ ...current, price: Number(event.target.value) }))}
                 type="number"
@@ -174,9 +174,9 @@ export function ServicesPanel({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium uppercase text-slate-600">Modalidad</span>
+              <span className="text-xs font-medium uppercase text-muted-foreground">Modalidad</span>
               <select
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-teal-400"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 onChange={(event) => onNewServiceChange((current) => ({ ...current, mode: event.target.value }))}
                 value={newService.mode}
               >
@@ -187,7 +187,7 @@ export function ServicesPanel({
             </label>
           </div>
           <button
-            className="flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary-soft px-3 py-2 text-xs font-medium text-primary disabled:opacity-50"
             disabled={configActionId === "new-service"}
             onClick={onAddService}
             type="button"

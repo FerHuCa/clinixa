@@ -40,7 +40,7 @@ export function UserMenu({ fullName }: UserMenuProps) {
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={`Menú de usuario: ${fullName}`}
-        className="flex min-h-11 items-center gap-2 rounded-md border border-border bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+        className="btn-secondary min-h-11"
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
@@ -54,11 +54,11 @@ export function UserMenu({ fullName }: UserMenuProps) {
       {isOpen && (
         <div
           aria-label="Opciones de usuario"
-          className="absolute right-0 top-full mt-2 w-48 rounded-md border border-border bg-white shadow-lg"
+          className="absolute right-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-lg border border-border bg-white shadow-lifted"
           role="menu"
         >
           <Link
-            className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-50"
+            className="flex items-center gap-3 px-4 py-3 text-sm text-foreground/80 transition hover:bg-muted"
             href="/sesion"
             onClick={() => setIsOpen(false)}
             role="menuitem"
@@ -67,7 +67,7 @@ export function UserMenu({ fullName }: UserMenuProps) {
             Página de sesión
           </Link>
           <button
-            className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50"
+            className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm text-rose-700 transition hover:bg-rose-50"
             onClick={() => {
               setIsOpen(false);
               void signOut({ redirectUrl: "/bienvenida" });

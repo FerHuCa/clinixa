@@ -67,7 +67,7 @@ export function PatientsPageClient() {
       <PageHeader
         action={
           <button
-            className="flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white"
+            className="btn-primary"
             onClick={() => setFormOpen((current) => !current)}
             type="button"
           >
@@ -84,9 +84,9 @@ export function PatientsPageClient() {
           <Panel title="Nuevo paciente">
             <form className="grid gap-4 p-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Nombre completo</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Nombre completo</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="fullName"
                   onChange={(event) => updateField("fullName", event.target.value)}
                   required
@@ -94,9 +94,9 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Edad</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Edad</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   min="1"
                   name="age"
                   onChange={(event) => updateField("age", event.target.value)}
@@ -106,9 +106,9 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Correo</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Correo</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="email"
                   onChange={(event) => updateField("email", event.target.value)}
                   required
@@ -117,9 +117,9 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Teléfono</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Teléfono</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="phone"
                   onChange={(event) => updateField("phone", event.target.value)}
                   required
@@ -127,9 +127,9 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Foco de atención</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Foco de atención</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="focus"
                   onChange={(event) => updateField("focus", event.target.value)}
                   placeholder="Ej. Seguimiento nutricional"
@@ -138,9 +138,9 @@ export function PatientsPageClient() {
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium uppercase text-slate-600">Motivo principal</span>
+                <span className="text-xs font-medium uppercase text-muted-foreground">Motivo principal</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                  className="mt-1 w-full input"
                   name="mainReason"
                   onChange={(event) => updateField("mainReason", event.target.value)}
                   placeholder="Ej. Control de hábitos"
@@ -150,13 +150,13 @@ export function PatientsPageClient() {
               </label>
               <div className="flex flex-col gap-2 md:col-span-2 sm:flex-row sm:justify-end">
                 <button
-                  className="rounded-md border border-border px-3 py-2 text-sm font-medium"
+                  className="rounded-lg border border-border px-3 py-2 text-sm font-medium"
                   onClick={() => setFormOpen(false)}
                   type="button"
                 >
                   Cancelar
                 </button>
-                <button className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60" disabled={saving} type="submit">
+                <button className="btn-primary" disabled={saving} type="submit">
                   {saving ? "Guardando..." : "Guardar paciente"}
                 </button>
               </div>
@@ -165,7 +165,7 @@ export function PatientsPageClient() {
         ) : null}
 
         {createdPatientName ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             Paciente creado: {createdPatientName}
           </div>
         ) : null}
@@ -179,12 +179,12 @@ export function PatientsPageClient() {
         <Panel title="Lista de pacientes">
           {patients.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 text-primary">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <UserRound size={22} />
               </div>
-              <p className="text-sm text-slate-600">Aún no tienes pacientes registrados.</p>
+              <p className="text-sm text-muted-foreground">Aún no tienes pacientes registrados.</p>
               <button
-                className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
+                className="btn-primary"
                 onClick={() => setFormOpen(true)}
                 type="button"
               >
@@ -196,25 +196,25 @@ export function PatientsPageClient() {
           <div className="divide-y divide-border">
             {patients.map((patient) => (
               <Link
-                className="grid gap-4 px-4 py-4 transition hover:bg-slate-50 lg:grid-cols-[64px_1fr_130px_160px_140px]"
+                className="grid gap-4 px-4 py-4 transition hover:bg-muted/60 lg:grid-cols-[64px_1fr_130px_160px_140px]"
                 href={`/pacientes/${patient.id}`}
                 key={patient.id}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-100 text-sm font-semibold text-slate-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-sm font-semibold text-foreground/80">
                   {patient.initials}
                 </div>
                 <div>
                   <p className="font-medium">{patient.fullName}</p>
-                  <p className="mt-1 break-words text-sm text-slate-500">
+                  <p className="mt-1 break-words text-sm text-muted-foreground">
                     {patient.email} · {patient.phone}
                   </p>
                 </div>
                 <StatusPill label={patient.statusLabel} status={patient.status} />
                 <div>
                   <p className="text-sm font-medium">{patient.nextAppointment}</p>
-                  <p className="mt-1 text-xs text-slate-500">Próxima cita</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Próxima cita</p>
                 </div>
-                <p className="text-sm text-slate-600">{patient.focus}</p>
+                <p className="text-sm text-muted-foreground">{patient.focus}</p>
               </Link>
             ))}
           </div>

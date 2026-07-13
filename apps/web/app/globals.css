@@ -3,12 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: 198 33% 98%;
-  --foreground: 216 28% 12%;
-  --muted: 210 20% 92%;
-  --primary: 173 76% 28%;
+  --background: 172 30% 97%;
+  --foreground: 192 32% 13%;
+  --muted: 174 16% 93%;
+  --muted-foreground: 196 14% 38%;
+  --primary: 173 72% 25%;
+  --primary-strong: 174 75% 19%;
+  --primary-soft: 170 45% 94%;
   --accent: 23 88% 52%;
-  --border: 210 18% 84%;
+  --border: 178 14% 86%;
 }
 
 * {
@@ -43,5 +46,47 @@ body {
   select,
   textarea {
     font-size: max(16px, 1em);
+  }
+}
+
+/**
+ * Sistema de componentes compartidos. Son clases (no componentes React) para
+ * poder adoptarlas en JSX existente con un diff mínimo; las utilidades Tailwind
+ * inline siguen ganando por orden de capas, así que admiten overrides puntuales.
+ */
+@layer components {
+  .btn {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* En táctil el objetivo mínimo sube a 44px (guía de accesibilidad móvil). */
+  @media (hover: none) and (pointer: coarse) {
+    .btn {
+      min-height: 2.75rem;
+    }
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-soft hover:bg-primary-strong;
+  }
+
+  .btn-secondary {
+    @apply btn border border-border bg-white text-foreground/80 hover:border-primary/30 hover:bg-primary-soft/40;
+  }
+
+  .btn-ghost {
+    @apply btn text-muted-foreground hover:bg-muted hover:text-foreground;
+  }
+
+  .btn-danger {
+    @apply btn border border-rose-200 bg-white text-rose-700 hover:bg-rose-50;
+  }
+
+  .input {
+    @apply rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:bg-muted disabled:text-muted-foreground;
+  }
+
+  .card {
+    @apply rounded-xl border border-border bg-white shadow-soft;
   }
 }

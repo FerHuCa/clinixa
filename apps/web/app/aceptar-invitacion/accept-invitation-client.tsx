@@ -167,43 +167,43 @@ export function AcceptInvitationClient() {
 
       <div className="space-y-5 px-5 py-6 lg:px-8">
         {missingInvite ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             No se encontró la invitación. Verifica el enlace que recibiste.
           </div>
         ) : null}
 
         {loading && token && !loadError ? (
-          <div className="rounded-md border border-border bg-white px-4 py-3 text-sm text-slate-500">Cargando invitación...</div>
+          <div className="rounded-lg border border-border bg-white px-4 py-3 text-sm text-muted-foreground">Cargando invitación...</div>
         ) : null}
 
-        {loadError ? <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{loadError}</div> : null}
+        {loadError ? <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{loadError}</div> : null}
 
         {invitation ? (
           <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
             <Panel title="Invitación">
               <div className="space-y-4 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-50 text-primary">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                     <Building2 size={20} />
                   </div>
                   <div>
                     <p className="font-semibold">{invitation.clinicName}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {invitationRoleLabel(invitation.role, invitation.roleLabel)} · {specialtyLabelFor(invitation.specialty)}
                     </p>
                   </div>
                 </div>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500">Correo</dt>
+                    <dt className="text-muted-foreground">Correo</dt>
                     <dd className="font-medium">{invitation.email}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500">Cédula</dt>
+                    <dt className="text-muted-foreground">Cédula</dt>
                     <dd className="font-medium">{invitation.licenseNumber}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500">Estado</dt>
+                    <dt className="text-muted-foreground">Estado</dt>
                     <dd className="font-medium">{invitationStatusLabel(invitation.status)}</dd>
                   </div>
                 </dl>
@@ -213,20 +213,20 @@ export function AcceptInvitationClient() {
             <Panel title={usesClerkFlow ? "Confirma tu cuenta Clerk" : invitation.requiresAccount ? "Crea tu cuenta" : "Confirma tu cuenta"}>
               <div className="space-y-4 p-4">
                 {notice ? (
-                  <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                     <CheckCircle2 size={16} />
                     {notice}
                   </div>
                 ) : null}
 
                 {actionError ? (
-                  <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{actionError}</div>
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{actionError}</div>
                 ) : null}
 
                 {blocked ? (
                   <div className="space-y-3">
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{blocked}</div>
-                    <Link className="inline-flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm text-slate-700" href="/sesion">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{blocked}</div>
+                    <Link className="btn-secondary" href="/sesion">
                       <LogIn size={16} />
                       Ir a iniciar sesión
                     </Link>
@@ -234,16 +234,16 @@ export function AcceptInvitationClient() {
                 ) : (
                   <form className="space-y-4" onSubmit={submit}>
                     <label className="block">
-                      <span className="text-xs font-medium uppercase text-slate-600">Nombre completo</span>
+                      <span className="text-xs font-medium uppercase text-muted-foreground">Nombre completo</span>
                       <input
-                        className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                        className="mt-1 w-full input"
                         onChange={(event) => setFullName(event.target.value)}
                         value={fullName}
                       />
                     </label>
 
                     {usesClerkFlow ? (
-                      <div className="space-y-3 rounded-md border border-border bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                      <div className="space-y-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
                         <p>Inicia sesión en Clerk con el correo de la invitación y después confirma para unirte.</p>
                         <Link className="inline-flex items-center gap-2 font-medium text-primary" href={`/sesion?redirect_url=${encodeURIComponent(returnUrl)}`}>
                           <LogIn size={16} />
@@ -253,9 +253,9 @@ export function AcceptInvitationClient() {
                     ) : invitation.requiresAccount ? (
                       <>
                         <label className="block">
-                          <span className="text-xs font-medium uppercase text-slate-600">Contraseña</span>
+                          <span className="text-xs font-medium uppercase text-muted-foreground">Contraseña</span>
                           <input
-                            className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                            className="mt-1 w-full input"
                             onChange={(event) => setPassword(event.target.value)}
                             placeholder="Mínimo 8 caracteres"
                             type="password"
@@ -263,9 +263,9 @@ export function AcceptInvitationClient() {
                           />
                         </label>
                         <label className="block">
-                          <span className="text-xs font-medium uppercase text-slate-600">Confirmar contraseña</span>
+                          <span className="text-xs font-medium uppercase text-muted-foreground">Confirmar contraseña</span>
                           <input
-                            className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400"
+                            className="mt-1 w-full input"
                             onChange={(event) => setConfirmPassword(event.target.value)}
                             type="password"
                             value={confirmPassword}
@@ -273,7 +273,7 @@ export function AcceptInvitationClient() {
                         </label>
                       </>
                     ) : (
-                      <div className="rounded-md border border-border bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                      <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
                         Ya existe una cuenta con este correo.{" "}
                         {currentUser.email === invitation.email
                           ? "Confirma para unirte a la clínica."
@@ -282,7 +282,7 @@ export function AcceptInvitationClient() {
                     )}
 
                     <button
-                      className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                      className="btn-primary disabled:opacity-60"
                       disabled={saving}
                       type="submit"
                     >
